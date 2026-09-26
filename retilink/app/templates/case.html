@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% from "_ui.html" import icon, status, stage, case_stage, relay, empty %}{% from "_oculomics.html" import body_map, state_tag, tier_tag %}
+{% extends "base.html" %}{% from "_ui.html" import icon, status, stage, case_stage, relay, empty %}{% from "_oculomics.html" import body_map, state_tag, tier_tag, contrib_bars, patient_inputs %}
 {% block title %}{{ case.patient.ref }} | RetiLink{% endblock %}
 {% block crumbs %}<a href="/inbox">Inbox</a> / Case {{ case.id }}{% endblock %}
 {% block content %}
@@ -174,10 +174,31 @@
 
 {# ============================================================ SYSTEMIC #}
 {% elif tab == 'systemic' %}
-{% macro bars(d, scale) -%}
-<div class="contrib">{% for k, v in d.items() %}{% set w = [((v|abs) / scale * 50), 50]|min %}
-<div class="c"><span>{{ k }}</span><span class="axis"><span class="{{ 'up' if v > 0 else 'down' }}" style="width:{{ w|round(1) }}%"></span></span><span class="num" style="text-align:right">{{ '%+.3f'|format(v) }}</span></div>{% endfor %}</div>
-{%- endmacro %}
+{% set missing = [] %}{% for k, l in [('age', 'Age'), ('sex', 'Sex'), ('dm_time', 'Years with diabetes')] %}{% if inputs[k] is none %}{% set _ = missing.append(l) %}{% endif %}{% endfor %}{% for k, l in [('insulin', 'Insulin'), ('oral_treatment', 'Oral medication')] %}{% if inputs[k] == 'unknown' %}{% set _ = missing.append(l) %}{% endif %}{% endfor %}
+<section class="panel" aria-labelledby="in-h" style="margin-bottom:var(--s5)">
+  <div class="panel-head"><h2 id="in-h">Clinical inputs the models use</h2><span class="hint">{{ 5 - missing|length }} of 5 entered</span></div>
+  <div class="panel-body stack">
+    <div class="inputs-summary">
+      <span class="tag {{ 'missing' if inputs.age is none }}">Age {{ inputs.age|int if inputs.age is not none else 'unknown' }}</span>
+      <span class="tag {{ 'missing' if not inputs.sex }}">Sex {{ inputs.sex or 'unknown' }}</span>
+      <span class="tag {{ 'missing' if inputs.dm_time is none }}">Diabetes {{ ('%g years'|format(inputs.dm_time)) if inputs.dm_time is not none else 'unknown' }}</span>
+      <span class="tag {{ 'missing' if inputs.insulin == 'unknown' }}">Insulin {{ inputs.insulin }}</span>
+      <span class="tag {{ 'missing' if inputs.oral_treatment == 'unknown' }}">Oral medication {{ inputs.oral_treatment }}</span>
+    </div>
+    {% if missing %}<p class="small" style="color:var(--caution)">{{ missing|join(', ') }} {{ 'is' if missing|length == 1 else 'are' }} unknown, so models that use them fill in cohort medians. Add them and re-run for a patient-specific score.</p>{% endif %}
+    {% if user.role in ('operator', 'referring') %}
+    <details {% if missing %}open{% endif %}><summary class="small"><strong>Edit inputs and history</strong></summary>
+      <form method="post" action="/cases/{{ case.id }}/intake" class="stack" style="margin-top:var(--s3)" data-busy="Saving and re-running">
+        <input type="hidden" name="tab" value="systemic">
+        <div class="grid-2" style="align-items:start">{{ patient_inputs(inputs) }}</div>
+        <div class="field"><label for="sym2">Symptoms or clinical context</label><textarea id="sym2" name="symptoms" rows="2">{{ case.symptoms }}</textarea></div>
+        {% if user.role == 'referring' %}<label class="check"><input type="checkbox" name="urgent_concern" {% if case.urgent_concern %}checked{% endif %}><span>Clinician-entered urgent concern</span></label>{% endif %}
+        <div class="row"><button type="submit" name="rerun" value="1" class="btn"><span class="spin" aria-hidden="true"></span>{{ icon('eye') }}<span data-label>Save and re-run analysis</span></button><button type="submit" class="btn quiet" formnovalidate>Save only</button></div>
+        <p class="xs muted">Saving creates a new case version; a signed interpretation from the previous version is kept but marked superseded.</p>
+      </form>
+    </details>{% endif %}
+  </div>
+</section>
 <section class="panel oc-patient" aria-labelledby="wb-h" style="margin-bottom:var(--s5)">
   <div class="oc-grid">
     <div class="oc-map panel-pad">
@@ -214,8 +235,8 @@
           <details class="small" style="margin-top:6px"><summary>How reliable, and why</summary>
             <div class="stack" style="margin-top:8px">
               <p class="xs">Cross-validated AUROC <strong>{{ s.cv_auroc }}</strong> (95% CI {{ s.cv_ci95[0] }} to {{ s.cv_ci95[1] }}), {{ s.n_pos }} positive of {{ s.n }} patients. Retinal added value over age, sex and diabetes history: {{ '%+.3f'|format(s.retinal_added_value.delta_auroc) }} (95% CI {{ s.retinal_added_value.ci95[0] }} to {{ s.retinal_added_value.ci95[1] }}){% if s.retinal_added_value.ci95[0] <= 0 %}, not shown to help{% endif %}.</p>
-              {% if s.contributions %}<p class="xs"><strong>This patient:</strong> change in score when each input is set to the cohort baseline (red raises, blue lowers).</p>{{ bars(s.contributions, 0.2) }}{% endif %}
-              <p class="xs"><strong>Across the cohort:</strong> AUROC lost when each input is shuffled.</p>{{ bars(s.global_importance, 0.1) }}
+              {% if s.contributions %}<p class="xs"><strong>This patient:</strong> change in score when each input is set to the cohort baseline (red raises, blue lowers).</p>{{ contrib_bars(s.contributions, 0.2) }}{% endif %}
+              <p class="xs"><strong>Across the cohort:</strong> AUROC lost when each input is shuffled.</p>{{ contrib_bars(s.global_importance, 0.1) }}
               {% if s.per_image %}{% set first = (s.per_image.keys()|list)[0] %}<p class="xs">Per-view scores: {% for iid, v in s.per_image.items() %}image {{ iid }} {{ v }}{{ ', ' if not loop.last }}{% endfor %}.</p>
                 <details><summary class="xs">Model attention on image {{ first }}</summary><img loading="lazy" src="/images/{{ first }}/explain?head={{ code }}" alt="Attention map for the {{ label|lower }} association on image {{ first }}" width="320" height="320" style="border-radius:8px;margin-top:6px"></details>{% endif %}
             </div>
@@ -229,16 +250,6 @@
     </tbody>
   </table></div>
 </section>
-{% if user.role in ('operator', 'referring') %}
-<details class="panel panel-pad" style="margin-top:var(--s4)"><summary><strong>Update recorded history or clinical context</strong> <span class="muted small">(creates a new case version)</span></summary>
-  <form method="post" action="/cases/{{ case.id }}/intake" class="stack" style="margin-top:var(--s4)">
-    <div class="grid-3">{% for code, label in conditions.items() %}<div class="field"><label for="c-{{ code }}">{{ label }}</label><select id="c-{{ code }}" name="cond_{{ code }}">{% for v in ['unknown', 'present', 'absent'] %}<option {% if (case.patient.conditions or {}).get(code, {}).get('value') == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>{% endfor %}</div>
-    <div class="field"><label for="sym">Symptoms or context</label><textarea id="sym" name="symptoms" rows="2">{{ case.symptoms }}</textarea></div>
-    {% if user.role == 'referring' %}<label class="check"><input type="checkbox" name="urgent_concern" {% if case.urgent_concern %}checked{% endif %}><span>Clinician-entered urgent concern</span></label>{% endif %}
-    <div><button class="btn quiet">Save changes</button></div>
-  </form>
-</details>
-{% endif %}
 
 {# ============================================================ REVIEW #}
 {% elif tab == 'review' %}

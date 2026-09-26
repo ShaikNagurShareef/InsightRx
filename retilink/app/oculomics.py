@@ -73,12 +73,13 @@ def _systemic_state(organ, conditions, systemic):
     fresh = [c for c in organ["conditions"] + extra if c not in recorded]
     signals = [c for c in fresh if (systemic.get(c) or {}).get("status") == "Research signal"]
     exploratory = [c for c in fresh if (systemic.get(c) or {}).get("status") == "Exploratory signal"]
+    # precedence: research-grade signal on something not yet known > known condition > exploratory signal
     if signals:
         state = "signal"
+    elif recorded:
+        state, signals = "recorded", exploratory
     elif exploratory:
         state, signals = "exploratory", exploratory
-    elif recorded:
-        state = "recorded"
     elif organ["conditions"] and len(absent) == len(organ["conditions"]):
         state = "clear"
     elif organ["conditions"]:
@@ -99,6 +100,10 @@ def patient_snapshot(patient, result, labels, metrics):
             state = {"Referable DR signal": "signal", "No model finding": "clear"}.get(
                 overall, "unknown" if overall else "na")
             note = overall or "Not analysed yet"
+            if state == "unknown":
+                out.append({**o, "state": "unknown", "state_text": overall, "note": "One or both eyes lack an assessable photo",
+                            "pos": POS[o["key"]], "evidence": evidence_tier(o, metrics)})
+                continue
             recorded, signals = [], (["Referable DR"] if state == "signal" else [])
         elif o["key"] == "metabolism":
             state, recorded, signals = _systemic_state(o, conditions, systemic)
@@ -112,7 +117,7 @@ def patient_snapshot(patient, result, labels, metrics):
             state, recorded, signals = _systemic_state(o, conditions, systemic)
             note = "; ".join(filter(None, [
                 ("Recorded: " + ", ".join(labels.get(c, c) for c in recorded)) if recorded else "",
-                (("Exploratory model signal: " if state == "exploratory" else "Model signal: ")
+                (("Model signal: " if state == "signal" else "Exploratory model signal: ")
                  + ", ".join(labels.get(c, c) for c in signals)) if signals else ""])) or STATE_TEXT[state]
         out.append({**o, "state": state, "state_text": STATE_TEXT[state], "note": note, "pos": POS[o["key"]],
                     "evidence": evidence_tier(o, metrics)})

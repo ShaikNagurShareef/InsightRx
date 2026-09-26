@@ -457,6 +457,15 @@ legend { font-size: var(--t-sm); font-weight: 600; color: var(--ink-2); margin-b
 @media (max-width: 1180px) { .oc-hero-in { grid-template-columns: 1fr 1fr; } .oc-hero-in .oc-col:last-child { grid-column: span 2; } .flow { grid-template-columns: repeat(3, minmax(0, 1fr)); } .flow li::after { display: none; } }
 @media (max-width: 860px) { .oc-grid, .oc-hero-in { grid-template-columns: minmax(0, 1fr); } .oc-hero-in .oc-col:last-child { grid-column: auto; } .oc-patient .oc-map { border-right: 0; border-bottom: 1px solid var(--line-2); } .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
+/* clinical inputs */
+.inputs { border: 1px solid var(--line); border-radius: var(--r); padding: var(--s3) var(--s4) var(--s4); }
+.inputs legend { padding: 0 6px; }
+.hist { display: grid; gap: 6px; }
+.hist .seg label { padding: 4px 9px; font-size: var(--t-xs); }
+.conds td { vertical-align: top; }
+.inputs-summary { display: flex; flex-wrap: wrap; gap: 6px; }
+.inputs-summary .tag.missing { border: 1px dashed #d99a00; background: var(--caution-wash); color: var(--caution); }
+
 /* access gate */
 .access { min-height: 100vh; display: grid; place-items: center; padding: var(--s5); background: radial-gradient(circle at 30% 20%, #22384a, var(--ink) 60%); }
 .access form { width: min(420px, 100%); }

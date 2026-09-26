@@ -1,4 +1,4 @@
-{% from "_ui.html" import icon %}
+{% from "_ui.html" import icon, status %}
 
 {# Whole-body map: organ markers coloured by state (always paired with the text list), dashed "window" lines from the eye. #}
 {% macro body_map(organs, mode="patient", label="Whole-body view") -%}
@@ -71,4 +71,63 @@
     <g class="feat" data-f="disc"><circle cx="205" cy="142" r="22" fill="url(#rt-disc)"/><circle cx="207" cy="142" r="9" fill="#fffaf0" opacity=".8"/></g>
   </g>
 </svg>
+{%- endmacro %}
+
+{# Diverging bars: + raises the score (warm), - lowers it (cool), neutral midpoint #}
+{% macro contrib_bars(d, scale) -%}
+<div class="contrib">{% for k, v in d.items() %}{% set w = [((v|abs) / scale * 50), 50]|min %}
+<div class="c"><span>{{ k }}</span><span class="axis"><span class="{{ 'up' if v > 0 else 'down' }}" style="width:{{ w|round(1) }}%"></span></span><span class="num" style="text-align:right">{{ '%+.3f'|format(v) }}</span></div>{% endfor %}</div>
+{%- endmacro %}
+
+{# The clinical inputs the systemic models read, plus reported history (drives the whole-body view) #}
+{% macro patient_inputs(d, compact=False) -%}
+<fieldset class="inputs"><legend>Patient details the models use</legend>
+  <div class="grid-{{ 2 if compact else 3 }}">
+    <div class="field"><label for="in-age">Age</label><input id="in-age" name="age" type="number" min="0" max="120" value="{{ d.age|int if d.age is not none else '' }}" placeholder="Unknown"></div>
+    <div class="field"><label for="in-sex">Sex</label><select id="in-sex" name="sex"><option value="">Unknown</option>{% for v in ['female', 'male'] %}<option {% if d.sex == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="in-dm">Years with diabetes</label><input id="in-dm" name="dm_time" type="number" min="0" max="90" step="0.5" value="{{ d.dm_time if d.dm_time is not none else '' }}" placeholder="Unknown"></div>
+    <div class="field"><label for="in-ins">Insulin</label><select id="in-ins" name="insulin">{% for v, l in [('unknown', 'Unknown'), ('yes', 'Yes'), ('no', 'No')] %}<option value="{{ v }}" {% if d.insulin == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="in-oral">Oral diabetes medication</label><select id="in-oral" name="oral_treatment">{% for v, l in [('unknown', 'Unknown'), ('yes', 'Yes'), ('no', 'No')] %}<option value="{{ v }}" {% if d.oral_treatment == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  </div>
+  <p class="xs muted" style="margin-top:6px">Leave unknown rather than guessing: the fused models impute missing values and say so.</p>
+</fieldset>
+<fieldset class="inputs"><legend>Reported history</legend>
+  <div class="hist">
+  {% for code, label in SYSTEMIC_LABELS.items() %}
+    <div class="row-between"><span class="small">{{ label }}</span>
+      <span class="seg" role="radiogroup" aria-label="{{ label }}">{% for v, l in [('unknown', 'Unknown'), ('present', 'Present'), ('absent', 'Absent')] %}<label><input type="radio" name="cond_{{ code }}" value="{{ v }}" {% if (d.conditions or {}).get(code, 'unknown') == v %}checked{% endif %}>{{ l }}</label>{% endfor %}</span></div>
+  {% endfor %}
+  </div>
+  <p class="xs muted" style="margin-top:6px">History is shown beside the model output and takes precedence over it; it is not a model input.</p>
+</fieldset>
+{%- endmacro %}
+
+{% macro organ_list(snapshot) -%}
+<ol class="organs">
+{% for o in snapshot %}
+  <li data-organ="{{ o.key }}" tabindex="0">
+    <div class="row-between"><strong>{{ o.label }}</strong>{{ state_tag(o.state, o.state_text) }}</div>
+    <p class="small" style="margin-top:2px">{{ o.note }}</p>
+    <p class="xs muted">{{ o.feature }}. {{ tier_tag(o.evidence) }} {{ o.evidence.detail }}.</p>
+  </li>
+{% endfor %}
+</ol>
+{%- endmacro %}
+
+{# One row per condition: score vs threshold, reliability, and what moved it #}
+{% macro condition_table(systemic) -%}
+<div class="table-wrap"><table class="table conds">
+  <thead><tr><th>Condition</th><th>Model output</th><th>Score vs threshold</th><th>What moved it for this patient</th></tr></thead>
+  <tbody>
+  {% for code, s in systemic.items() %}
+  <tr>
+    <td><strong>{{ s.label }}</strong><div class="xs muted">{{ s.inputs or '' }}</div></td>
+    <td>{{ status(s.status) }}{% if s.reliability_text %}<div class="xs" style="margin-top:4px;color:{{ 'var(--ink-2)' if s.reliability == 'research' else 'var(--research)' }}">{{ s.reliability_text }}</div>{% elif s.reason %}<div class="xs muted">{{ s.reason }}</div>{% endif %}</td>
+    <td style="min-width:150px">{% if s.score is defined %}{% set pct = [(s.score * 100)|round|int, 100]|min %}{% set tp = [(s.threshold * 100)|round|int, 100]|min %}
+      <div class="gauge {{ 'signal' if s.score >= s.threshold else 'clear' }}"><div class="track"><div class="fill" style="width:{{ pct }}%"></div><div class="thr" style="left:{{ tp }}%"></div></div><div class="lbl"><span>{{ s.score }}</span><span>{{ s.threshold }}</span></div></div>{% endif %}</td>
+    <td style="min-width:260px">{% if s.contributions %}{{ contrib_bars(s.contributions, 0.2) }}{% else %}<span class="xs muted">None</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
 {%- endmacro %}

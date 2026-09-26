@@ -1,13 +1,32 @@
-{% extends "base.html" %}{% from "_ui.html" import icon, status %}
+{% extends "base.html" %}{% from "_ui.html" import icon, status %}{% from "_oculomics.html" import body_map, organ_list, condition_table, patient_inputs %}
 {% block title %}Try an image | RetiLink{% endblock %}
 {% block crumbs %}Try an image{% endblock %}
 {% block content %}
 <div class="head">
-  <div><h1>Try an image</h1><p class="sub">Run the screening models on any fundus photograph. Nothing is saved, and no case or patient is created.</p></div>
+  <div><h1>Try an image</h1><p class="sub">Run every RetiLink model on any fundus photograph, add patient details, and see what each input changes. No case or patient is created.</p></div>
 </div>
-<div class="workspace" style="grid-template-columns:minmax(0,1fr) 340px">
+<div class="workspace" style="grid-template-columns:minmax(0,1fr) 380px">
   <div class="stack-lg">
   {% if results %}
+    <section class="panel oc-patient" aria-labelledby="wb-h">
+      <div class="oc-grid">
+        <div class="oc-map panel-pad">
+          <h2 id="wb-h">Whole-body view</h2>
+          <p class="xs muted" style="margin-top:4px">All {{ results|length }} photo{{ 's' if results|length != 1 }} treated as one patient, plus the details you entered.</p>
+          {{ body_map(snapshot, 'patient', 'Whole-body view for the uploaded photos') }}
+          <ul class="legend"><li><span class="sw signal"></span>Signal to review</li><li><span class="sw exploratory"></span>Exploratory</li><li><span class="sw recorded"></span>Known condition</li><li><span class="sw clear"></span>No finding</li><li><span class="sw unknown"></span>History unknown</li></ul>
+        </div>
+        <div class="panel-pad">{{ organ_list(snapshot) }}</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="sys-h">
+      <div class="panel-head"><h2 id="sys-h">Every systemic condition</h2><span class="hint">{{ n_inputs }} of 5 patient details entered</span></div>
+      {% if n_inputs < 5 %}<div class="panel-body" style="padding-bottom:0"><div class="note warn">{{ icon('alert') }}<span>{{ 'No patient details entered' if n_inputs == 0 else 'Some patient details are unknown' }}. Models that use age, sex or diabetes history fill the gaps with cohort medians, so those scores are less specific. Add details on the right and re-run to see how they change.</span></div></div>{% endif %}
+      {% if systemic %}{{ condition_table(systemic) }}{% else %}<div class="empty"><p>No systemic output: no photo passed the quality gate.</p></div>{% endif %}
+      <p class="xs muted" style="padding:var(--s3) var(--s5) var(--s4)">Red bars raise a score and blue bars lower it, relative to a typical patient in the cohort. Research signals passed the release gate; exploratory ones did not and are shown with their measured AUROC. None of these is a diagnosis.</p>
+    </section>
+
     {% for r in results %}
     <section class="panel" aria-labelledby="r{{ loop.index }}">
       <div class="panel-head"><h2 id="r{{ loop.index }}">{{ r.name }}</h2>{{ status(r.verdict) }}</div>
@@ -42,29 +61,35 @@
       </div>
     </section>
     {% endfor %}
-    <p class="xs muted">Model {{ version }}, {{ 'live' if source == 'live' else 'simulated' }}, {{ latency }} ms. One photo on its own cannot give a two-eye assessment; use a case for that.</p>
+    <p class="xs muted">Model {{ version }}, {{ 'live' if source == 'live' else 'simulated' }}, {{ latency }} ms. Photos are unlabelled by eye here, so the two-eye completeness rule does not apply; use a case for that.</p>
   {% else %}
     <section class="panel panel-pad stack">
-      <h2>What to expect</h2>
-      <p class="small">The models were trained on mBRSET: a handheld smartphone fundus camera, dilated pupils, adults with diabetes in Brazil. Other cameras and populations are a domain shift, so treat scores on them as exploratory.</p>
+      <h2>What you get</h2>
       <ul class="small" style="padding-left:18px;margin:0">
-        <li>Colour fundus photographs work best: macula- or disc-centred, the whole round field of view visible.</li>
-        <li>Public datasets for testing include APTOS 2019, Messidor-2, IDRiD and EyePACS; check each licence first.</li>
-        <li>Phone photos of a face or eye are rejected by the suitability check, by design.</li>
+        <li><strong>Retina:</strong> photo quality, referable diabetic retinopathy, grade probabilities, macular edema, and an attention map per photo.</li>
+        <li><strong>Whole body:</strong> all nine systemic conditions scored, each labelled research, exploratory or near chance, with the evidence behind it.</li>
+        <li><strong>Why:</strong> for each condition, how much the retinal images and each patient detail pushed the score up or down.</li>
       </ul>
+      <p class="small muted">The models were trained on mBRSET: a handheld smartphone camera, dilated pupils, adults with diabetes in Brazil. Other cameras are a domain shift, so treat scores on them as exploratory. Sample photos with labels are in <code>test_data/</code> on the research machine.</p>
     </section>
   {% endif %}
   </div>
+
   <aside style="position:sticky;top:76px">
     <form method="post" action="/try" enctype="multipart/form-data" class="panel panel-pad stack" data-busy="Analysing">
+      {% if token %}<input type="hidden" name="token" value="{{ token }}">
+      <div class="note">{{ icon('image') }}<span>{{ results|length }} photo{{ 's' if results|length != 1 }} held for 1 hour. Change any detail and re-run without uploading again, or drop new photos to replace them.</span></div>{% endif %}
       <div class="drop" data-drop>
-        {{ icon('upload') }}<div class="big">Drop fundus photos</div>
+        {{ icon('upload') }}<div class="big">{{ 'Replace photos' if token else 'Drop fundus photos' }}</div>
         <p class="xs muted">JPEG or PNG, up to 4 at a time. Large photos are resized in your browser.</p>
-        <label class="btn quiet sm" style="margin-top:8px">Choose files<input class="sr-only" type="file" name="files" accept="image/jpeg,image/png" multiple required></label>
+        <label class="btn quiet sm" style="margin-top:8px">Choose files<input class="sr-only" type="file" name="files" accept="image/jpeg,image/png" multiple {% if not token %}required{% endif %}></label>
         <p class="xs muted" data-drop-note aria-live="polite"></p><div class="previews"></div>
       </div>
-      <button type="submit" class="btn lg block"><span class="spin" aria-hidden="true"></span>{{ icon('eye') }}<span data-label>Analyse</span></button>
-      <p class="xs muted">Use only images you are allowed to share. They are processed in memory and discarded.</p>
+      <details {% if token %}open{% endif %}><summary class="small"><strong>Patient details</strong> <span class="muted">(optional, improves systemic scores)</span></summary>
+        <div class="stack" style="margin-top:var(--s3)">{{ patient_inputs(details, compact=True) }}</div>
+      </details>
+      <button type="submit" class="btn lg block"><span class="spin" aria-hidden="true"></span>{{ icon('eye') }}<span data-label>{{ 'Re-run with these details' if token else 'Analyse' }}</span></button>
+      <p class="xs muted">Use only images you are allowed to share. They are deleted after 1 hour.</p>
     </form>
   </aside>
 </div>

@@ -24,6 +24,7 @@ from . import workflow as wf
 from .db import APP_ROOT, IMAGE_STORE, Base, SessionLocal, engine, get_db
 from . import activity as act
 from . import oculomics as oc
+from . import trylab
 from .llm import draft_package, evidence_brief
 from .models import (AppSetting, AuditEvent, Barrier, Case, Image, Message, ModelRun, Notification, Patient, Referral, Review,
                      Task, Tenant, User, now)
@@ -343,6 +344,9 @@ async def edit_intake(case_id: int, request: Request, user: User = Depends(curre
     if user.role == "referring":
         case.urgent_concern = bool(f.get("urgent_concern"))
     p = case.patient
+    if "age" in f:                                   # model inputs (unknown stays unknown)
+        d = trylab.parse_details(f)
+        p.age, p.sex, p.dm_time, p.insulin, p.oral_treatment = d["age"], d["sex"], d["dm_time"], d["insulin"], d["oral_treatment"]
     for c in SYSTEMIC_LABELS:
         v = f.get(f"cond_{c}")
         if v and v != (p.conditions or {}).get(c, {}).get("value"):
@@ -350,9 +354,13 @@ async def edit_intake(case_id: int, request: Request, user: User = Depends(curre
             conds[c] = {"value": v, "source": f"updated by {user.name}", "date": now().date().isoformat(),
                         "verification": "reported"}
             p.conditions = conds
-    wf.bump_version(db, case, user, "intake edited")
+    wf.bump_version(db, case, user, "clinical inputs edited")
+    if f.get("rerun") and wf.active_images(db, case):
+        run_analysis(db, case, user)
+        db.commit()
+        return RedirectResponse(f"/cases/{case_id}?tab=systemic&msg=Inputs+saved+and+analysis+re-run", 303)
     db.commit()
-    return RedirectResponse(f"/cases/{case_id}", 303)
+    return RedirectResponse(f"/cases/{case_id}?tab={f.get('tab', 'retinal')}&msg=Inputs+saved", 303)
 
 
 # ------------------------------------------------------------------ images (FR03-FR05, FR08, FR10)
@@ -653,6 +661,9 @@ def case_page(case_id: int, request: Request, tab: str = "retinal", msg: str = "
         request, user, db, case=case, imgs=imgs, superseded=superseded, run=run, run_stale=run_stale, review=review,
         reviews=reviews, refs=refs, specialists=specialists, tab=tab, msg=msg, draft=draft, token=token, idem=idem,
         topic=topic, events=events, actors=actors, conditions=SYSTEMIC_LABELS, legs=relay_legs(db, case),
+        inputs={"age": case.patient.age, "sex": case.patient.sex, "dm_time": case.patient.dm_time,
+                "insulin": case.patient.insulin, "oral_treatment": case.patient.oral_treatment,
+                "conditions": {c: ((case.patient.conditions or {}).get(c) or {}).get("value", "unknown") for c in SYSTEMIC_LABELS}},
         snapshot=oc.patient_snapshot(case.patient, run.result if run and run.status == "completed" and not run_stale else None,
                                      {**SYSTEMIC_LABELS, **COMPOSITE_LABELS}, get_service().metrics),
         patient_line=patient_line(case.patient),
@@ -922,22 +933,33 @@ def task_done(tid: int, user: User = Depends(current_user), db: Session = Depend
 # ------------------------------------------------------------------ try an image (no case, nothing stored)
 @app.get("/try", response_class=HTMLResponse)
 def try_page(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    return templates.TemplateResponse(request, "try.html", ctx(request, user, db, active="try", results=None))
+    return templates.TemplateResponse(request, "try.html", ctx(request, user, db, active="try", results=None, token="",
+                                                                 details=trylab.parse_details({})))
 
 
 @app.post("/try", response_class=HTMLResponse)
-async def try_run(request: Request, files: list[UploadFile] = File(...), user: User = Depends(current_user),
-                  db: Session = Depends(get_db)):
+async def try_run(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Analyse new photos, or re-run stored ones (token) with changed patient details."""
     import base64
+    form = await request.form()
+    files = [f for f in form.getlist("files") if hasattr(f, "read") and getattr(f, "filename", "")]
     if len(files) > 4:
         wf.error(413, "too_many_images", "Try up to 4 photos at a time.")
-    blobs = []
-    for i, uf in enumerate(files):
-        data = await uf.read()
-        _validate_upload(data)
-        blobs.append((i + 1, uf.filename or f"photo {i + 1}", data))
+    if files:
+        blobs = []
+        for i, uf in enumerate(files):
+            data = await uf.read()
+            _validate_upload(data)
+            blobs.append((i + 1, uf.filename or f"photo {i + 1}", data))
+        token = trylab.store(db, user, blobs)
+    else:
+        token = form.get("token", "")
+        blobs = trylab.load(db, user, token)
+        if not blobs:
+            wf.error(410, "photos_expired", "Those photos are no longer held (kept for 1 hour). Upload them again.")
+    details = trylab.parse_details(form)
     svc = get_service()
-    res = svc.analyze([{"id": i, "laterality": "unknown", "bytes": d} for i, _, d in blobs], {})
+    res = svc.analyze([{"id": i, "laterality": "unknown", "bytes": d} for i, _, d in blobs], trylab.model_inputs(details))
     uri = lambda b, mt: f"data:{mt};base64," + base64.b64encode(b).decode()
     results = []
     for i, name, data in blobs:
@@ -953,11 +975,19 @@ async def try_run(request: Request, files: list[UploadFile] = File(...), user: U
                    "Uncertain quality" if q == "uncertain" else "No model finding")
         results.append({**r, "name": name, "quality": q, "src": uri(thumbnail(data, 900), "image/jpeg"),
                         "attn": attn, "verdict": verdict})
-    wf.audit(db, user.tenant_id, None, user.id, "try_image", f"{len(blobs)} photo(s), nothing stored")
+    labels = {**SYSTEMIC_LABELS, **COMPOSITE_LABELS}
+    # photos here carry no eye label, so the eye summary comes from the photos themselves
+    per = [r for r in results if r.get("quality") in ("assessable", "uncertain")]
+    overall = ("Referable DR signal" if any(r.get("dr_positive") for r in per) else
+               "No model finding" if per else "Unable to assess")
+    snapshot = oc.patient_snapshot(trylab.as_patient(details), {**res, "overall": overall}, labels, svc.metrics)
+    wf.audit(db, user.tenant_id, None, user.id, "try_image", f"{len(blobs)} photo(s), held 1 hour for re-runs")
     db.commit()
     return templates.TemplateResponse(request, "try.html", ctx(
         request, user, db, active="try", results=results, thr=res["thresholds"], version=res.get("model_version"),
-        source=res.get("source"), latency=res.get("latency_ms", 0)))
+        source=res.get("source"), latency=res.get("latency_ms", 0), token=token, details=details,
+        systemic=res.get("systemic", {}), snapshot=snapshot,
+        n_inputs=sum(v is not None and v != "unknown" for k, v in details.items() if k != "conditions")))
 
 
 # ------------------------------------------------------------------ oculomics (whole-body view)

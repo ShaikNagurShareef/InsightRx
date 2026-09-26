@@ -237,3 +237,27 @@ def test_access_gate(monkeypatch):
     r = c.post("/access", data={"code": "open-sesame", "next": "//evil.example"})
     assert r.headers["location"] == "/login"                            # no open redirect
     assert c.get("/login").status_code == 200
+
+
+def test_try_with_details_and_rerun_without_reupload():
+    pcp = client_as("Dr. Alex Morgan")
+    r = pcp.post("/try", data={"age": "63", "sex": "male", "dm_time": "17", "insulin": "yes", "oral_treatment": "no",
+                               "cond_systemic_hypertension": "present"},
+                 files=[("files", ("a.jpg", fundus_bytes(3), "image/jpeg"))])
+    assert r.status_code == 200 and "Whole-body view" in r.text and "Every systemic condition" in r.text
+    assert "5 of 5 patient details entered" in r.text and "Known condition" in r.text
+    token = re.search(r'name="token" value="([^"]+)"', r.text).group(1)
+    again = pcp.post("/try", data={"token": token, "age": "40"})                  # change a detail, no upload
+    assert again.status_code == 200 and "1 of 5 patient details entered" in again.text
+    assert client_as("Sam Rivera").post("/try", data={"token": token}).status_code == 410   # tokens are per user
+
+
+def test_case_inputs_edit_and_rerun(ready_case):
+    pcp = client_as("Dr. Alex Morgan")
+    page = pcp.get(f"/cases/{ready_case}?tab=systemic").text
+    assert "Clinical inputs the models use" in page and "Age unknown" in page
+    r = pcp.post(f"/cases/{ready_case}/intake", data={"tab": "systemic", "age": "58", "sex": "female", "dm_time": "9",
+                                                      "insulin": "no", "oral_treatment": "yes", "rerun": "1"})
+    assert "re-run" in r.headers["location"]
+    page = pcp.get(f"/cases/{ready_case}?tab=systemic").text
+    assert "Age 58" in page and "5 of 5 entered" in page
