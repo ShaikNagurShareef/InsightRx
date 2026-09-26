@@ -19,7 +19,7 @@
   <section class="panel mol" aria-labelledby="s-h">
     <div class="panel-head">
       <h2 id="s-h">{{ t.complex.title if view == 'complex' else 'AlphaFold predicted structure' }}</h2>
-      {% if t.has_complex %}<nav class="seg" aria-label="Structure"><a href="?view=complex" {% if view == 'complex' %}aria-current="page"{% endif %}>Drug complex</a><a href="?view=model" {% if view == 'model' %}aria-current="page"{% endif %}>AlphaFold</a></nav>{% endif %}
+      {% if t.has_complex %}{% set ctx_q = ('&case=%d'|format(case_id)) if case_id else ('&screen=' ~ screen) if screen else '' %}<nav class="seg" aria-label="Structure"><a href="?view=complex{{ ctx_q }}" {% if view == 'complex' %}aria-current="page"{% endif %}>Drug complex</a><a href="?view=model{{ ctx_q }}" {% if view == 'model' %}aria-current="page"{% endif %}>AlphaFold</a></nav>{% endif %}
     </div>
     <div class="mol-view" data-structure="/static/structures/{{ ('%s.pdb'|format(t.complex.pdb)) if view == 'complex' else ('AF-%s.pdb'|format(t.uniprot)) }}" data-mode="{{ view }}" data-partners="{{ (t.complex.partner_chains or [])|join(' ') if view == 'complex' else '' }}">
       <div class="mol-canvas" role="img" aria-label="Interactive 3D structure of {{ t.name }}. Drag to rotate, scroll to zoom."></div>
@@ -50,7 +50,7 @@
       {% endif %}
     </section>
     <section class="panel panel-pad stack">
-      <h2>Structure insights</h2>
+      <h2 id="si-h">Structure insights</h2>
       {% if si.pocket %}<p class="small"><strong>{{ si.pocket.residues|length }} drug-contact residues</strong> within {{ si.pocket.cutoff_A }} Å of the {{ si.pocket.drug }} in PDB {{ si.pocket.pdb }}; AlphaFold confidence there <strong>{{ '%.0f'|format(si.pocket.mean_plddt) }}</strong>{{ ': reliable for structure-based design' if si.pocket.mean_plddt >= 90 else ': validate against the experimental structure' if si.pocket.mean_plddt >= 70 else ': prefer the experimental structure' }}.</p>
       <p class="xs muted" style="overflow-wrap:anywhere">{{ si.pocket.aa|join(' ') }}</p>
       {% elif t.plddt %}<p class="small">No drug-bound structure in this set; the AlphaFold model is {{ '%.0f'|format(t.plddt.confident * 100) }}% confidently predicted, so pocket detection on those regions is the next step.</p>{% endif %}
