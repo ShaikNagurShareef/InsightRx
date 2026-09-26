@@ -226,3 +226,14 @@ def test_inbox_shows_role_stats_and_activity(ready_case):
     assert "signed an interpretation for RL-T1" in page or "opened a screening for RL-T1" in page
     spec = client_as("Dr. Priya Nair").get("/inbox").text
     assert "Median time to accept" in spec and "RL-T2" not in spec          # specialists only see referred cases
+
+
+def test_access_gate(monkeypatch):
+    monkeypatch.setattr(main, "ACCESS_CODE", "open-sesame")
+    c = TestClient(main.app, follow_redirects=False)
+    assert c.get("/login").headers["location"].startswith("/access")
+    assert c.get("/api/health").status_code == 200                      # worker health stays reachable
+    assert "error=1" in c.post("/access", data={"code": "wrong", "next": "/login"}).headers["location"]
+    r = c.post("/access", data={"code": "open-sesame", "next": "//evil.example"})
+    assert r.headers["location"] == "/login"                            # no open redirect
+    assert c.get("/login").status_code == 200

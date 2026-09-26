@@ -43,6 +43,19 @@ if os.environ.get("RETILINK_AUTOSEED", "1") == "1":         # fresh database -> 
         except IntegrityError:                                # another instance seeded concurrently
             _db.rollback()
 app = FastAPI(title="RetiLink")
+ACCESS_CODE = os.environ.get("RETILINK_ACCESS_CODE", "")
+OPEN_PATHS = ("/static/", "/access", "/api/health", "/api/vision/register", "/favicon")
+
+
+@app.middleware("http")
+async def access_gate(request: Request, call_next):
+    """Optional site-wide access code (keeps credentialed dataset images off the open web). Registered before the
+    session middleware so it runs inside it and can read the session."""
+    if ACCESS_CODE and not request.url.path.startswith(OPEN_PATHS) and not request.session.get("access_ok"):
+        return RedirectResponse("/access?next=" + request.url.path, 303)
+    return await call_next(request)
+
+
 app.add_middleware(SessionMiddleware, secret_key=os.environ.get("RETILINK_SECRET", secrets.token_hex(16)),
                    same_site="lax")
 # static assets live in public/static so Vercel serves them from its CDN; locally FastAPI serves the same files
@@ -168,6 +181,20 @@ def ctx(request, user, db, **kw):
 
 
 # ------------------------------------------------------------------ login
+@app.get("/access", response_class=HTMLResponse)
+def access_page(request: Request, next: str = "/login", error: str = ""):
+    return templates.TemplateResponse(request, "access.html", {"user": None, "next": next if next.startswith("/") else "/login",
+                                                               "error": error})
+
+
+@app.post("/access")
+def access_check(request: Request, code: str = Form(""), next: str = Form("/login")):
+    if ACCESS_CODE and secrets.compare_digest(code.strip(), ACCESS_CODE):
+        request.session["access_ok"] = True
+        return RedirectResponse(next if next.startswith("/") and not next.startswith("//") else "/login", 303)
+    return RedirectResponse("/access?error=1&next=" + (next if next.startswith("/") else "/login"), 303)
+
+
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request, db: Session = Depends(get_db)):
     users = db.scalars(select(User).where(User.active.is_(True)).order_by(User.tenant_id, User.id)).all()

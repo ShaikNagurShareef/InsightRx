@@ -457,6 +457,10 @@ legend { font-size: var(--t-sm); font-weight: 600; color: var(--ink-2); margin-b
 @media (max-width: 1180px) { .oc-hero-in { grid-template-columns: 1fr 1fr; } .oc-hero-in .oc-col:last-child { grid-column: span 2; } .flow { grid-template-columns: repeat(3, minmax(0, 1fr)); } .flow li::after { display: none; } }
 @media (max-width: 860px) { .oc-grid, .oc-hero-in { grid-template-columns: minmax(0, 1fr); } .oc-hero-in .oc-col:last-child { grid-column: auto; } .oc-patient .oc-map { border-right: 0; border-bottom: 1px solid var(--line-2); } .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
+/* access gate */
+.access { min-height: 100vh; display: grid; place-items: center; padding: var(--s5); background: radial-gradient(circle at 30% 20%, #22384a, var(--ink) 60%); }
+.access form { width: min(420px, 100%); }
+
 /* inbox: activity column */
 .inbox-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--s5); align-items: start; }
 .inbox-side { position: sticky; top: 76px; }
