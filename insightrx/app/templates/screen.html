@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% from "_ui.html" import icon, status %}{% from "_oculomics.html" import body_map, organ_list, condition_table, patient_inputs %}{% from "_therapy.html" import therapy_cards, alert_row, sponsored_block %}
+{% extends "base.html" %}{% from "_ui.html" import icon, status %}{% from "_oculomics.html" import body_map, organ_list, condition_table, patient_inputs %}{% from "_therapy.html" import therapy_cards, alert_row, sponsored_block, priority_list %}
 {% block title %}Screen | Insight Rx{% endblock %}
 {% block crumbs %}Screen a patient{% endblock %}
 {% block content %}
@@ -48,6 +48,7 @@
         <button type="submit" class="btn"><span class="spin" aria-hidden="true"></span>{{ icon('send') }}<span data-label>{{ 'Save patient & consult a specialist' if user.role == 'referring' else 'Save patient for clinician review' }}</span></button>
       </form>
       {% endif %}
+      <a class="btn quiet" href="/screen/report.pdf?token={{ token }}">{{ icon('file') }}Therapy and target report (PDF)</a>
       <a class="btn quiet" href="/performance">{{ icon('chart') }}How reliable is this?</a>
     </div>
 
@@ -101,6 +102,15 @@
         {{ therapy_cards(options, limit=4) }}
         {% if options|length > 4 %}<p class="xs muted">{{ options|length - 4 }} more option{{ 's' if options|length - 4 != 1 }}, the targets behind them and matching trials appear on the patient's Therapy and trials page once saved.</p>{% endif %}
         {{ sponsored_block(sponsored) }}
+      </div>
+    </section>
+
+    <section class="panel personal" aria-labelledby="pt-h">
+      <div class="panel-head"><h2 id="pt-h">Personalised therapeutics: where this patient's phenotype points</h2><span class="hint">Targets ranked for this patient</span></div>
+      <div class="panel-body stack">
+        <p class="xs muted">From this photo to the proteins behind the findings, the drugs acting on them and their structures. Open a target to see why it ranks here for this patient.</p>
+        {% if priorities %}{{ priority_list(priorities, '?screen=' ~ token) }}{% else %}<p class="small muted">No targets linked to these findings.</p>{% endif %}
+        <div class="row"><a class="btn" href="/screen/report.pdf?token={{ token }}">{{ icon('file') }}Download personalised report (PDF)</a><a class="btn quiet" href="/therapeutics">{{ icon('flask') }}Explore all targets</a></div>
       </div>
     </section>
 

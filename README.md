@@ -127,6 +127,10 @@ Recorded history always takes precedence. A model signal only raises a flag for 
 | Trials, NPI Registry, labels | ClinicalTrials.gov v2, CMS NPPES, openFDA: live, cached, snapshot fallback | `insightrx/app/external.py` |
 | CMS quality and billing | CMS131 / MIPS #117, HEDIS EED, CPT 92227-92229 | `data/cms.json`, `/quality` |
 
+**Personalised therapeutics.** Every screening (saved or not) ranks the targets its phenotype points to with a transparent priority index: phenotype link x (0.5 guideline actionability + 0.3 structural tractability at the drug-contact site + 0.2 clinical fit). Actionability comes from US guideline strength, so a drug approved only abroad does not lift a target. Target pages opened from a patient show that patient's rank and reasons.
+
+**PDF reports** (reportlab, vector charts): a *patient therapy and target report* (from Screen before saving, or from a case), a *target dossier* (AlphaFold confidence track with UniProt features, a structure snapshot, drug-contact residues computed at 4.5 A from the PDB complex and mapped to UniProt numbering, drug landscape, trials and rule-based discovery insights) and a *portfolio report* (opportunity matrix of eye-detected demand vs approved drugs). `scripts/fetch_structures.py --insights-only` recomputes the structure analysis.
+
 Only a fixed condition term or specialty and the clinic ZIP are ever sent to public APIs; no patient data leaves the app. Refresh the static data with `python scripts/fetch_structures.py` (`--snapshots-only` for trials and NPI snapshots). The 3D viewer is self-hosted 3Dmol.js (BSD-3), so the strict CSP stays `script-src 'self'`.
 
 ## Explainability

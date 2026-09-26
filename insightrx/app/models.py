@@ -250,3 +250,14 @@ class MedInfoRequest(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     requester: Mapped["User"] = relationship(foreign_keys=[requester_id])
+
+
+class ScreenResult(Base):
+    """The latest analysis of a held Screen token (kept 1 hour like its photos), so reports need no re-run."""
+    __tablename__ = "screen_results"
+    token: Mapped[str] = mapped_column(String(40), primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(Integer)
+    user_id: Mapped[int] = mapped_column(Integer)
+    result: Mapped[dict] = mapped_column(JSON)
+    details: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)

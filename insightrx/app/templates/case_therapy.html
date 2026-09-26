@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% from "_ui.html" import icon, status %}{% from "_therapy.html" import therapy_cards, alert_row, finding_chips, sponsored_block, trial_rows, value_chain %}
+{% extends "base.html" %}{% from "_ui.html" import icon, status %}{% from "_therapy.html" import therapy_cards, alert_row, finding_chips, sponsored_block, trial_rows, value_chain, priority_list %}
 {% block title %}Therapy and trials, {{ case.patient.ref }} | Insight Rx{% endblock %}
 {% block crumbs %}<a href="/patients">Patients</a> / <a href="/cases/{{ case.id }}">{{ case.patient.ref }}</a> / Therapy and trials{% endblock %}
 {% block content %}
@@ -8,6 +8,7 @@
   <div class="row">
     {% if user.role == 'referring' %}<a class="btn quiet" href="/cases/{{ case.id }}/consult">{{ icon('send') }}Consult a specialist</a>{% endif %}
     <a class="btn quiet" href="/cases/{{ case.id }}?tab=systemic">{{ icon('sliders') }}Edit medicines</a>
+    <a class="btn" href="/cases/{{ case.id }}/report.pdf">{{ icon('file') }}Report (PDF)</a>
   </div>
 </div>
 {{ value_chain('therapy') }}
@@ -49,14 +50,8 @@
 
   <aside class="stack-lg" style="position:sticky;top:76px">
     <section class="panel" aria-labelledby="tg-h">
-      <div class="panel-head"><h2 id="tg-h">Targets behind these findings</h2></div>
-      <div class="panel-body">
-        <ul class="tglist">{% for t in targets %}
-          <li><a href="/therapeutics/targets/{{ t.gene }}"><span class="gene">{{ t.gene }}</span><span class="xs muted">{{ t.name }}</span></a>
-            <span class="xs">{{ t.drugs|selectattr('phase', 'equalto', 'Approved')|list|length }} approved</span></li>
-        {% endfor %}</ul>
-        <p class="xs muted" style="margin-top:8px">3D structures from AlphaFold and the PDB, with the drugs that act on each target.</p>
-      </div>
+      <div class="panel-head"><h2 id="tg-h">Personalised target priorities</h2></div>
+      <div class="panel-body">{{ priority_list(priorities, '?case=' ~ case.id) }}</div>
     </section>
 
     <section class="panel" aria-labelledby="g-h">
@@ -64,7 +59,7 @@
       <div class="panel-body stack">
         <p class="small"><span class="tag {{ 'clear' if gap == 'closed' else 'caution' if gap == 'pending' else '' }}">{{ icon('check' if gap == 'closed' else 'clock') }}Diabetic eye exam gap: {{ gap }}</span></p>
         <p class="small">{{ gap_text }}</p>
-        <ul class="codes">{% for c in cms.codes %}<li class="{{ c.applies }}"><strong>CPT {{ c.code }}</strong> <span class="xs muted">{{ c.name }}</span><br><span class="xs">{{ c.fit }}</span></li>{% endfor %}</ul>
+        <ul class="codes">{% for c in cms.codes %}<li class="{{ c.applies }}"><strong class="small">CPT {{ c.code }}</strong><p class="xs muted">{{ c.name }}</p><p class="xs">{{ c.fit }}</p></li>{% endfor %}</ul>
         <p class="xs muted">Measures: {% for m in cms.measures %}{{ m.id }}{{ '; ' if not loop.last }}{% endfor %}. Verify codes and payment with your MAC. <a href="/quality">Clinic view</a></p>
       </div>
     </section>

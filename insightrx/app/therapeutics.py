@@ -185,12 +185,13 @@ def target(gene):
         return None
     raw = (_load("chembl_drugs.json").get(gene) or {})
     drugs, seen = [], set()
-    for d in raw.get("drugs", []):
+    for d in t.get("extra_drugs", []) + raw.get("drugs", []):          # curated additions carry their provenance
         name = _drug_name(d["name"])
         if name in seen or name in HIDE.get(gene, set()):
             continue
         seen.add(name)
         drugs.append({**d, "name": name, "phase": PHASE.get(int(d["max_phase"]), "Early or unknown phase")})
+    drugs.sort(key=lambda d: (-d["max_phase"], d["name"]))
     cx = t.get("complex")
     return {**t, "drugs": drugs, "chembl_id": raw.get("target_chembl_id"), "plddt": plddt(t["uniprot"]),
             "has_model": os.path.exists(os.path.join(STRUCT_DIR, f"AF-{t['uniprot']}.pdb")),

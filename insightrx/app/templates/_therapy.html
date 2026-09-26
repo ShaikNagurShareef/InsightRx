@@ -66,7 +66,8 @@
 {% macro sponsored_block(items) -%}
 {% if items %}
 <aside class="sponsored" aria-label="Sponsored content">
-  <p class="xs"><span class="tag outline">Sponsored</span> <span class="muted">Shown after the guideline options and never changes them, the scores or who you refer to.</span></p>
+  <span class="tag outline">Sponsored</span>
+  <p class="xs muted" style="margin-top:6px">Shown after the guideline options and never changes them, the scores or who you refer to.</p>
   {% for s in items %}<div style="margin-top:8px"><p class="small"><strong>{{ s.title }}</strong></p><p class="xs muted">{{ s.text }} From {{ s.sponsor }}.</p></div>{% endfor %}
 </aside>
 {% endif %}
@@ -95,4 +96,22 @@
   <li class="{{ 'on' if k == active }}"><span class="dot">{{ icon(i) }}</span><strong>{{ t }}</strong><span class="xs muted">{{ d }}</span></li>
   {% endfor %}
 </ol>
+{%- endmacro %}
+
+{# Personalised target priorities: index bar, why, link to the target in this patient's context #}
+{% macro priority_list(priorities, ctx_qs='', limit=6) -%}
+<ol class="prio">
+{% for p in priorities[:limit] %}
+  <li>
+    <a href="/therapeutics/targets/{{ p.gene }}{{ ctx_qs }}" class="prio-row">
+      <span class="gene">{{ p.gene }}</span>
+      <span class="prio-name">{{ p.name }}</span>
+      <span class="prio-score"><span class="bar"><span style="width:{{ p.priority }}%"></span></span><strong>{{ p.priority }}</strong></span>
+    </a>
+    <p class="xs muted">{{ p.why }}</p>
+    <p class="xs">{% if p.approved %}<span class="tag clear">{{ p.approved }} approved</span>{% endif %}{% if p.pipeline %} <span class="tag research">{{ p.pipeline }} pipeline</span>{% endif %}{% if p.engaged %} <span class="tag outline">on {{ p.engaged|join(', ') }}</span>{% endif %}</p>
+  </li>
+{% endfor %}
+</ol>
+<p class="xs muted" style="margin-top:6px">Priority = phenotype link × (guideline actionability, structural tractability at the drug site, clinical fit). Where to look for this patient, not a prescription.</p>
 {%- endmacro %}

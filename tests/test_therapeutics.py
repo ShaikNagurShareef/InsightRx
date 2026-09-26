@@ -194,3 +194,56 @@ def test_quality_page():
 def test_other_tenant_cannot_open_therapy(med_case):
     assert client_as("Dr. Jamie Outside").get(f"/cases/{med_case}/therapy").status_code in (403, 404)
     assert uid("Dr. Jamie Outside")
+
+
+# ------------------------------------------------------------------ personalised priorities and PDF reports
+def test_priorities_follow_guideline_strength_not_foreign_approvals():
+    from insightrx.app import personalize
+    pr = personalize.target_priorities(tx.findings(DR_RESULT, []), [])
+    genes = [p["gene"] for p in pr]
+    assert genes[0] == "VEGFA"
+    assert genes.index("AKR1B1") > genes.index("PPARA")          # epalrestat is approved abroad only
+    assert all(0 <= p["priority"] <= 100 and p["why"] for p in pr)
+
+
+def test_priority_marks_drugs_the_patient_already_takes():
+    from insightrx.app import personalize
+    pr = personalize.target_priorities(tx.findings(None, KIDNEY_SNAPSHOT), ["losartan", "empagliflozin"])
+    by = {p["gene"]: p for p in pr}
+    assert "losartan" in by["AGTR1"]["engaged"] and "empagliflozin" in by["SLC5A2"]["engaged"]
+
+
+def _is_pdf(r):
+    return r.status_code == 200 and r.headers["content-type"] == "application/pdf" and r.content[:5] == b"%PDF-"
+
+
+def test_case_target_and_portfolio_pdfs(med_case):
+    pcp = client_as("Dr. Alex Morgan")
+    assert _is_pdf(pcp.get(f"/cases/{med_case}/report.pdf"))
+    assert _is_pdf(pcp.get("/therapeutics/targets/ACE/report.pdf", params={"case": med_case}))
+    assert _is_pdf(pcp.get("/therapeutics/report.pdf"))
+    assert pcp.get("/therapeutics/targets/NOPE/report.pdf").status_code == 404
+
+
+def test_pdf_access_is_scoped(med_case):
+    assert client_as("Dr. Jamie Outside").get(f"/cases/{med_case}/report.pdf").status_code in (403, 404)
+    assert client_as("Morgan Lee, PharmD").get(f"/cases/{med_case}/report.pdf").status_code in (403, 404)
+
+
+def test_screen_report_from_unsaved_screening_escapes_text():
+    import re
+    pcp = client_as("Dr. Alex Morgan")
+    r = pcp.post("/screen", data={"age": "61", "med": ["semaglutide"], "med_other": "losartan"},
+                 files=[("files_OD", ("od.jpg", fundus_bytes(7), "image/jpeg"))])
+    assert r.status_code == 200 and "Personalised therapeutics" in r.text
+    token = re.search(r"/screen/report\.pdf\?token=([\w-]+)", r.text).group(1)
+    assert _is_pdf(pcp.get("/screen/report.pdf", params={"token": token}))
+    page = pcp.get("/therapeutics/targets/VEGFA", params={"screen": token}).text
+    assert "For this screening" in page
+    assert client_as("Dr. Casey Patel").get("/screen/report.pdf", params={"token": token}).status_code == 410
+
+
+def test_pdf_cells_render_user_text_literally():
+    from insightrx.app.reports import M, cells
+    assert cells(["<b>x</b> & y"])[0].getPlainText() == "<b>x</b> & y"      # escaped, not interpreted
+    assert cells([M("<b>x</b>")])[0].getPlainText() == "x"                   # trusted markup is interpreted

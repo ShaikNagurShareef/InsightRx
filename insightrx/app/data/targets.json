@@ -39,6 +39,9 @@
    "complex": {"pdb": "4JIR", "title": "Aldose reductase bound to epalrestat", "ligand": "EPR"}},
   {"gene": "CACNA2D1", "uniprot": "P54289", "name": "Voltage-gated calcium channel subunit alpha-2/delta-1", "organ": "nerves", "findings": ["nerves"],
    "role": "Target of gabapentinoids used for painful diabetic neuropathy.",
-   "eye_link": "Neuropathy signal."}
+   "eye_link": "Neuropathy signal.",
+   "extra_drugs": [
+    {"chembl_id": "CHEMBL1059", "name": "pregabalin", "max_phase": 4.0, "action": "modulator", "type": "small molecule", "via": "ChEMBL records the mechanism against the calcium channel complex CHEMBL2363032"},
+    {"chembl_id": "CHEMBL940", "name": "gabapentin", "max_phase": 4.0, "action": "modulator", "type": "small molecule", "via": "ChEMBL records the mechanism against the calcium channel complex CHEMBL2363032"}]}
  ]
 }

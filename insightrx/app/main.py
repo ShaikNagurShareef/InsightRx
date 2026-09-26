@@ -25,11 +25,12 @@ from .db import APP_ROOT, IMAGE_STORE, Base, SessionLocal, engine, ensure_column
 from . import activity as act
 from . import consult
 from . import oculomics as oc
+from . import personalize
 from . import therapeutics as tx
 from . import trylab
 from .llm import draft_package, evidence_brief
 from .models import (AppSetting, AuditEvent, Barrier, Case, Image, Message, ModelRun, Notification, Patient, Referral, Review,
-                     Task, Tenant, User, now)
+                     ScreenResult, Task, Tenant, User, now)
 from .vision import COMPOSITE_LABELS, ICDR_NAMES, META_LABELS, SYSTEMIC_LABELS, get_service
 
 HERE = os.path.dirname(__file__)
@@ -1088,8 +1089,10 @@ async def screen_run(request: Request, user: User = Depends(current_user), db: S
     labels = {**SYSTEMIC_LABELS, **COMPOSITE_LABELS}
     snapshot = oc.patient_snapshot(trylab.as_patient(details), {**res, "overall": overall}, labels, svc.metrics)
     evidence = trylab.evidence_for(overall, any(r.get("edema_flag") for r in results), snapshot)
-    fnd = tx.findings({**res, "overall": overall}, snapshot)
     meds = details["medications"]
+    personal = personalize.bundle({**res, "overall": overall}, snapshot, meds, with_trials=False)
+    db.merge(ScreenResult(token=token, tenant_id=user.tenant_id, user_id=user.id, result={**res, "overall": overall},
+                          details=details, created_at=now()))
     wf.audit(db, user.tenant_id, None, user.id, "screen", f"{len(blobs)} photo(s), held 1 hour")
     db.commit()
     eyes_known = any(eye != "unknown" for *_, eye in blobs)
@@ -1098,8 +1101,8 @@ async def screen_run(request: Request, user: User = Depends(current_user), db: S
         thr=res["thresholds"], version=res.get("model_version"), source=res.get("source"),
         latency=res.get("latency_ms", 0), token=token, details=details, systemic=res.get("systemic", {}),
         snapshot=snapshot, evidence=evidence, patient_ref=form.get("patient_ref", ""),
-        options=tx.options_for(fnd, meds), sponsored=tx.sponsored_for(fnd),
-        current_alerts=tx.merge_alerts(tx.check_interactions(meds, (), [f["key"] for f in fnd])),
+        options=personal["options"], sponsored=personal["sponsored"], current_alerts=personal["current_alerts"],
+        priorities=personal["priorities"],
         n_inputs=sum(v is not None and v != "unknown" for k, v in details.items() if k not in ("conditions", "medications"))))
 
 
