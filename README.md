@@ -100,20 +100,39 @@ GPU=0 RETILINK_EXP_NO=1 bash scripts/train_local.sh
 FastAPI with server-rendered Jinja/Tailwind pages and SQLAlchemy (SQLite by default; set `DATABASE_URL` to use Postgres). Vision inference runs on the local GPU.
 
 ```bash
-python scripts/seed_demo.py --reset          # synthetic orgs, users, 5 scenario cases, simulated history
+python scripts/seed_demo.py --reset          # synthetic orgs, users, 5 scenario cases (local mBRSET images), simulated history
 bash scripts/run_app.sh                       # uses ./weights (override with RETILINK_MODEL_DIR)
 # open http://127.0.0.1:8000  -> pick a role
 ```
 
 Optional: put `GEMINI_API_KEY=...` in `.env` to have evidence briefs written by Gemini. Only the generic question and the curated public passages are sent; a guard blocks case, patient and image content. Without a key, or if the call fails, RetiLink falls back to a deterministic template.
 
-### Deploy (Hugging Face Space)
+### Deploy for free: Vercel + GPU worker tunnel
 
-```bash
-python scripts/deploy_space.py               # private Docker Space <hf-user>/RetiLink
+```
+browser ──► Vercel (FastAPI workspace, free Hobby) ──► Neon Postgres (free): cases, reviews, referrals, images
+                         │  HTTPS + shared key
+                         ▼
+            Cloudflare quick tunnel (free, no account) ──► this machine: retilink/vision_api.py on the GPU
 ```
 
-The Space is built from `deploy/space/Dockerfile`, using the exact library versions the models were trained with and CUDA 12.6 torch. Choose **T4 GPU** hardware in the Space settings: analysis then takes a few seconds, whereas free CPU needs about a minute per image. The Space starts with a synthetic workspace and no images, so upload fundus photographs you are authorised to use. Add `GEMINI_API_KEY` as a Space secret to enable LLM evidence briefs. The SQLite store resets whenever the Space restarts.
+- **Vercel** runs the whole HCP workspace: `api/index.py`, `vercel.json`, and the light dependencies in `requirements.txt`. Weights and training code are excluded from the bundle.
+- **Model inference** stays on the research machine. `scripts/run_vision_tunnel.sh` starts the vision worker, opens a quick tunnel and registers the tunnel URL with the app every 5 minutes. When the worker is off, the site keeps working and shows **Vision model: SIMULATED**.
+- **What travels:** only the images a user uploads go to the worker, and only scores and explanation maps come back. mBRSET images and the weights never leave this machine.
+
+One-time setup:
+
+1. Deploy with `vercel deploy --prod`, or import the GitHub repo in the Vercel dashboard.
+2. In the Vercel project, open *Storage* → add **Neon** (free). This sets `DATABASE_URL`.
+3. Add these environment variables:
+   - `RETILINK_SECRET`: random; signs sessions.
+   - `RETILINK_VISION_KEY`: random; the shared secret with the worker.
+   - optional `GEMINI_API_KEY`.
+4. On this machine, put `RETILINK_VISION_KEY=<same>` and `RETILINK_APP_URL=https://<project>.vercel.app` in `.env` (git-ignored), then run `bash scripts/run_vision_tunnel.sh` for the demo.
+
+The database seeds itself with the synthetic workspace (no images) on first start.
+
+Alternative, paid: `python scripts/deploy_space.py` builds a Hugging Face Docker Space from `deploy/space/` (needs HF PRO plus T4 hardware).
 
 ### Demo script (3 minutes)
 
@@ -145,8 +164,10 @@ The tests cover:
 
 ```
 retilink/ml/    config, data, model, train_image, evaluate, frozen, systemic_cv, explain (train_systemic: P1-split reference)
-retilink/app/   main (routes), models, workflow (state machine / audit / tasks), vision, llm, evidence, templates/
-scripts/        JobSubmit.sh, train_local.sh, seed_demo.py, run_app.sh, deploy_space.py
+retilink/app/   main (routes), models, workflow (state machine / audit / tasks), vision, remote_vision, seed, llm, evidence, templates/
+retilink/vision_api.py  GPU vision worker API (used by the deployed app through the tunnel)
+scripts/        JobSubmit.sh, train_local.sh, seed_demo.py, run_app.sh, run_vision_tunnel.sh, deploy_space.py
+api/, vercel.json  Vercel entry point + config (requirements.txt = web app deps; requirements-ml.txt = models)
 deploy/space/   Dockerfile + pinned requirements for the Hugging Face Space
 weights/        released checkpoints (Git LFS) + calibration + aggregate metrics
 tests/          test_workflow.py

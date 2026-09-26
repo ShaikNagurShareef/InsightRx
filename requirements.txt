@@ -1,20 +1,11 @@
-# ML (already in conda env remote-dip-env)
-torch>=2.3
-torchvision
-transformers>=4.40
-scikit-learn>=1.4
-scipy
-pandas
-numpy
-pillow
-joblib
-# App (venv at /data/users3/nshaik3/Projects/Oculomics/RetiLink/venv, --system-site-packages on remote-dip-env)
-fastapi
-uvicorn[standard]
-sqlalchemy>=2.0
-jinja2
-python-multipart
-itsdangerous
-google-genai
-httpx
-pytest
+# Web app only (this is what Vercel installs). Models / training / vision worker: requirements-ml.txt
+fastapi==0.141.1
+sqlalchemy==2.0.54
+psycopg[binary]==3.2.10
+jinja2==3.1.6
+python-multipart==0.0.32
+itsdangerous==2.2.0
+pillow==12.3.0
+numpy==2.2.6
+httpx==0.28.1
+google-genai==2.25.0

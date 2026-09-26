@@ -1,0 +1,20 @@
+# Models, training and the GPU vision worker (conda env remote-dip-env + app venv). Web app only: requirements.txt
+torch>=2.3
+torchvision
+transformers>=4.40
+scikit-learn>=1.4
+scipy
+pandas
+numpy
+pillow
+joblib
+# App (venv at /data/users3/nshaik3/Projects/Oculomics/RetiLink/venv, --system-site-packages on remote-dip-env)
+fastapi
+uvicorn[standard]
+sqlalchemy>=2.0
+jinja2
+python-multipart
+itsdangerous
+google-genai
+httpx
+pytest

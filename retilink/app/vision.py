@@ -126,7 +126,27 @@ class VisionService:
 
     # -------------------------------------------------------------- case-level analysis
     def analyze(self, images, patient):
-        """images: list of dicts {id, path, laterality}; patient: metadata dict. Returns a result dict."""
+        """images: list of dicts {id, laterality, path or bytes}; patient: metadata dict. Returns a result dict."""
+        import tempfile
+        tmp = None
+        if any(not im.get("path") for im in images):              # byte-only images (database store)
+            tmp = tempfile.mkdtemp(prefix="retilink_")
+            images = [dict(im, path=im.get("path") or self._spill(tmp, im)) for im in images]
+        try:
+            return self._analyze(images, patient)
+        finally:
+            if tmp:
+                import shutil
+                shutil.rmtree(tmp, ignore_errors=True)
+
+    @staticmethod
+    def _spill(tmp, im):
+        p = os.path.join(tmp, f"{im['id']}.img")
+        with open(p, "wb") as fh:
+            fh.write(im["bytes"])
+        return p
+
+    def _analyze(self, images, patient):
         t0 = time.time()
         suit = {im["id"]: suitability(im["path"]) for im in images}
         ok_imgs = [im for im in images if suit[im["id"]]["suitable"]]
@@ -294,6 +314,14 @@ class VisionService:
         from retilink.ml.explain import overlay_png, patch_relevance, systemic_image_direction
         if self.mode != "live":
             return None
+        if isinstance(path, (bytes, bytearray)):                  # database-stored image
+            import tempfile
+            with tempfile.NamedTemporaryFile(suffix=".img", delete=False) as fh:
+                fh.write(path)
+            try:
+                return self.explain(fh.name, head)
+            finally:
+                os.unlink(fh.name)
         with self.lock:
             if head in ("dr_referable", "quality_poor", "edema"):
                 x = eval_transform(self.size)(open_fundus(path, self.size))[None].to(self.device)
@@ -319,7 +347,12 @@ _service = None
 
 
 def get_service():
+    """Local models by default; RETILINK_VISION=remote uses a vision worker over HTTP (e.g. from Vercel)."""
     global _service
     if _service is None:
-        _service = VisionService()
+        if os.environ.get("RETILINK_VISION") == "remote":
+            from .remote_vision import RemoteVisionService
+            _service = RemoteVisionService()
+        else:
+            _service = VisionService()
     return _service

@@ -1,7 +1,7 @@
 """Relational model. Every clinical row carries tenant_id; signed rows are never updated in place."""
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
@@ -67,7 +67,8 @@ class Image(Base):
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"))
     case_id: Mapped[int] = mapped_column(ForeignKey("cases.id"))
     sha256: Mapped[str] = mapped_column(String(64))
-    path: Mapped[str] = mapped_column(String(400))
+    path: Mapped[str] = mapped_column(String(400), default="")       # filesystem store (local deployments)
+    data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True, deferred=True)   # database store (Vercel)
     laterality: Mapped[str] = mapped_column(String(10))       # OD | OS | unknown
     view: Mapped[str] = mapped_column(String(30), default="macula-centred")
     source: Mapped[str] = mapped_column(String(80))
@@ -206,3 +207,11 @@ class AuditEvent(Base):
     detail: Mapped[str] = mapped_column(Text, default="")
     version: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class AppSetting(Base):
+    """Small key/value settings, e.g. the currently registered vision-worker URL."""
+    __tablename__ = "app_settings"
+    key: Mapped[str] = mapped_column(String(60), primary_key=True)
+    value: Mapped[str] = mapped_column(Text)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)

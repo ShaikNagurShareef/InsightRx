@@ -1,0 +1,7 @@
+weights/
+tests/
+deploy/
+scripts/
+*.docx
+.env
+**/__pycache__/

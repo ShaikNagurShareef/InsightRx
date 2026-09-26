@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.exception_handlers import http_exception_handler
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from PIL import Image as PILImage
@@ -20,17 +20,25 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
 from . import workflow as wf
-from .db import APP_ROOT, Base, engine, get_db
+from .db import APP_ROOT, IMAGE_STORE, Base, SessionLocal, engine, get_db
 from .llm import draft_package, evidence_brief
-from .models import (AuditEvent, Barrier, Case, Image, Message, ModelRun, Notification, Patient, Referral, Review,
+from .models import (AppSetting, AuditEvent, Barrier, Case, Image, Message, ModelRun, Notification, Patient, Referral, Review,
                      Task, Tenant, User, now)
 from .vision import COMPOSITE_LABELS, ICDR_NAMES, META_LABELS, SYSTEMIC_LABELS, get_service
 
 HERE = os.path.dirname(__file__)
-MAX_BYTES, MAX_IMAGES = 10 * 1024 * 1024, 8
+MAX_BYTES = int(os.environ.get("RETILINK_MAX_IMAGE_MB", "10")) * 1024 * 1024   # Vercel: 4 (request body limit)
+MAX_IMAGES = 8
 CLINICAL_ROLES = {"referring"}
 
 Base.metadata.create_all(engine)
+if os.environ.get("RETILINK_AUTOSEED", "1") == "1":         # fresh database -> synthetic demo workspace, no images
+    from .seed import seed
+    with SessionLocal() as _db:
+        try:
+            seed(_db, with_images=False, verbose=False)
+        except IntegrityError:                                # another instance seeded concurrently
+            _db.rollback()
 app = FastAPI(title="RetiLink")
 app.add_middleware(SessionMiddleware, secret_key=os.environ.get("RETILINK_SECRET", secrets.token_hex(16)),
                    same_site="lax")
@@ -253,7 +261,10 @@ def _validate_upload(data: bytes):
 
 
 def _store(case, data, img):
+    """-> (sha256, path). Database store keeps bytes on the Image row instead (path '')."""
     sha = hashlib.sha256(data).hexdigest()
+    if IMAGE_STORE == "db":
+        return sha, ""
     ext = ".png" if img.format == "PNG" else ".jpg"
     path = os.path.join(APP_ROOT, "images", f"t{case.tenant_id}", f"{sha}{ext}")
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -284,7 +295,8 @@ async def upload_images(case_id: int, request: Request, files: list[UploadFile] 
             continue
         im = Image(tenant_id=case.tenant_id, case_id=case.id, sha256=sha, path=path,
                    laterality=laterality if laterality in ("OD", "OS") else "unknown", view=view,
-                   source=case.device, width=img.size[0], height=img.size[1], uploaded_by=user.id)
+                   source=case.device, width=img.size[0], height=img.size[1], uploaded_by=user.id,
+                   data=None if path else data)
         db.add(im)
         existing.append(im)
         added += 1
@@ -326,7 +338,8 @@ async def recapture(image_id: int, file: UploadFile = File(...), user: User = De
     img = _validate_upload(data)
     sha, path = _store(case, data, img)
     new = Image(tenant_id=case.tenant_id, case_id=case.id, sha256=sha, path=path, laterality=im.laterality, view=im.view,
-                source=case.device, width=img.size[0], height=img.size[1], uploaded_by=user.id)
+                source=case.device, width=img.size[0], height=img.size[1], uploaded_by=user.id,
+                data=None if path else data)
     db.add(new)
     db.flush()
     im.superseded_by = new.id
@@ -341,7 +354,17 @@ def image_file(image_id: int, user: User = Depends(current_user), db: Session = 
     if not im:
         wf.error(404, "not_found", "Image not found.")
     case_for(db, user, im.case_id)
-    return FileResponse(im.path, headers={"Cache-Control": "private, max-age=300"})
+    if im.path:
+        return FileResponse(im.path, headers={"Cache-Control": "private, max-age=300"})
+    mt = "image/png" if im.data[:4] == b"\x89PNG" else "image/jpeg"
+    return Response(im.data, media_type=mt, headers={"Cache-Control": "private, max-age=300"})
+
+
+def image_bytes(im: Image) -> bytes:
+    if im.path:
+        with open(im.path, "rb") as fh:
+            return fh.read()
+    return im.data
 
 
 @app.get("/images/{image_id}/explain")
@@ -357,7 +380,7 @@ def image_explain(image_id: int, head: str = "dr_referable", user: User = Depend
         wf.error(422, "bad_head", "Unknown head.")
     path = os.path.join(APP_ROOT, "explain", f"{im.sha256}_{head}_{hashlib.sha1(svc.version.encode()).hexdigest()[:10]}.png")
     if not os.path.exists(path):
-        png = svc.explain(im.path, head)
+        png = svc.explain(im.path or image_bytes(im), head)
         if png is None:
             wf.error(404, "no_explanation", "No explanation available for this output.")
         os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -384,19 +407,21 @@ def analyze(case_id: int, user: User = Depends(current_user), db: Session = Depe
         wf.error(409, "missing_identity", "Resolve patient identity before analysis.")
     svc = get_service()
     try:
-        res = svc.analyze([{"id": i.id, "path": i.path, "laterality": i.laterality} for i in imgs],
+        res = svc.analyze([{"id": i.id, "path": i.path, "laterality": i.laterality,
+                            **({} if i.path else {"bytes": image_bytes(i)})} for i in imgs],
                           {k: (v if v is not None else float("nan")) for k, v in patient_meta(case.patient).items()})
         status = "completed"
     except Exception as e:
         res, status = {"error": type(e).__name__, "overall": "Model unavailable - manual review"}, "failed"
     run = ModelRun(tenant_id=case.tenant_id, case_id=case.id, case_version=case.version, image_ids=[i.id for i in imgs],
-                   model_version=svc.version, threshold_version=res.get("threshold_version", "-"), source=svc.mode,
+                   model_version=res.get("model_version", svc.version), threshold_version=res.get("threshold_version", "-"),
+                   source=res.get("source", svc.mode),
                    status=status, result=res, latency_ms=res.get("latency_ms", 0))
     db.add(run)
     db.flush()
     case.status = "Unable to assess" if res.get("overall") == "Unable to assess" else "HCP review"
     wf.audit(db, case.tenant_id, case.id, user.id, "model_run",
-             f"run #{run.id} [{svc.mode}] {res.get('overall')} ({svc.version})", case.version)
+             f"run #{run.id} [{run.source}] {res.get('overall')} ({run.model_version})", case.version)
     wf.add_task(db, case, "review", f"Review screening result for {case.patient.ref}", case.owner_id,
                 due=wf.DEMO_DUE["review"])
     wf.notify(db, case.owner, f"Screening result ready to review ({case.patient.ref})", f"/cases/{case.id}")
@@ -759,6 +784,25 @@ def analytics(request: Request, view: str = "workflow", user: User = Depends(cur
 
 
 # ------------------------------------------------------------------ JSON API (subset of spec §13)
+@app.post("/api/vision/register")
+async def register_vision(request: Request, db: Session = Depends(get_db)):
+    """Called by the vision worker (scripts/run_vision_tunnel.sh) to announce its current tunnel URL."""
+    key = os.environ.get("RETILINK_VISION_KEY", "")
+    if not key or not secrets.compare_digest(request.headers.get("X-RetiLink-Key", ""), key):
+        wf.error(401, "bad_key", "Not authorised.")
+    url = (await request.json()).get("url", "")
+    if not url.startswith("https://"):
+        wf.error(422, "bad_url", "HTTPS URL required.")
+    s = db.get(AppSetting, "vision_url") or AppSetting(key="vision_url", value="")
+    s.value = url
+    db.merge(s)
+    db.commit()
+    svc = get_service()
+    if hasattr(svc, "reset"):
+        svc.reset()
+    return {"registered": url, "vision": svc.mode}
+
+
 @app.get("/api/health")
 def health():
     svc = get_service()
