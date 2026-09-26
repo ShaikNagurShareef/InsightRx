@@ -457,6 +457,21 @@ legend { font-size: var(--t-sm); font-weight: 600; color: var(--ink-2); margin-b
 @media (max-width: 1180px) { .oc-hero-in { grid-template-columns: 1fr 1fr; } .oc-hero-in .oc-col:last-child { grid-column: span 2; } .flow { grid-template-columns: repeat(3, minmax(0, 1fr)); } .flow li::after { display: none; } }
 @media (max-width: 860px) { .oc-grid, .oc-hero-in { grid-template-columns: minmax(0, 1fr); } .oc-hero-in .oc-col:last-child { grid-column: auto; } .oc-patient .oc-map { border-right: 0; border-bottom: 1px solid var(--line-2); } .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
+/* inbox: activity column */
+.inbox-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--s5); align-items: start; }
+.inbox-side { position: sticky; top: 76px; }
+.spark { width: 100%; height: 64px; display: block; margin: var(--s3) 0 4px; }
+.spark rect { fill: #9bb4c9; }
+.spark rect.today { fill: var(--blue); }
+.spark line { stroke: var(--line); }
+.feed { list-style: none; margin: 0; padding: var(--s2) var(--s5) var(--s4); display: grid; gap: 12px; }
+.feed li { display: grid; grid-template-columns: 32px 1fr; gap: 10px; align-items: start; }
+.feed .avatar { background: var(--line-2); color: var(--ink-2); font-size: var(--t-xs); }
+.feed .avatar.me { background: var(--fundus); color: #fff; }
+.feed a { color: var(--ink-2); text-decoration: none; }
+.feed a:hover { color: var(--blue); text-decoration: underline; }
+@media (max-width: 1180px) { .inbox-grid { grid-template-columns: minmax(0, 1fr); } .inbox-side { position: static; } }
+
 /* landing: story panel on dark */
 .kicker { color: var(--fundus); font-weight: 650; font-size: var(--t-sm); }
 .proof { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s4); margin: 0; }

@@ -15,3 +15,7 @@ app_store*/
 .agents/
 .claude/
 skills-lock.json
+
+# credentialed PhysioNet images (mBRSET/BRSET): never commit or deploy
+test_data/*
+!test_data/README.md

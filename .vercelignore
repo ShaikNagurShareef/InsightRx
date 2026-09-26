@@ -9,3 +9,4 @@ scripts/
 .agents/
 .claude/
 skills-lock.json
+test_data/

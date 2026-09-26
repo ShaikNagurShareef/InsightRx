@@ -218,3 +218,11 @@ def test_oculomics_views_and_role_scoping(ready_case):
     assert admin.status_code == 200 and "Patients screened" in admin.text and "RL-T1" not in admin.text   # no clinical access
     other = client_as("Dr. Jamie Outside").get("/oculomics")
     assert "RL-T1" not in other.text                                                                    # other tenant
+
+
+def test_inbox_shows_role_stats_and_activity(ready_case):
+    page = client_as("Dr. Alex Morgan").get("/inbox").text
+    assert "Results reviewed" in page and "Recent activity" in page and "Your last 14 days" in page
+    assert "signed an interpretation for RL-T1" in page or "opened a screening for RL-T1" in page
+    spec = client_as("Dr. Priya Nair").get("/inbox").text
+    assert "Median time to accept" in spec and "RL-T2" not in spec          # specialists only see referred cases

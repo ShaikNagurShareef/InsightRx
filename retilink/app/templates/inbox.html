@@ -13,11 +13,10 @@
   </div>
 </div>
 
+<div class="inbox-grid">
+<div class="inbox-main">
 <div class="grid-4" style="margin-bottom:var(--s5)">
-  <div class="panel stat"><div class="k">Your open actions</div><div class="v">{{ tasks|length }}</div><div class="d">assigned to you by the workflow</div></div>
-  <div class="panel stat"><div class="k">Overdue</div><div class="v" style="{{ 'color:var(--signal)' if overdue }}">{{ overdue }}</div><div class="d">against simulated demo due times</div></div>
-  <div class="panel stat"><div class="k">{{ 'New consultations' if user.role == 'specialist' else 'Awaiting acknowledgement' }}</div><div class="v">{{ awaiting }}</div><div class="d">sent but not yet accepted</div></div>
-  <div class="panel stat"><div class="k">{{ 'Cases in your organisation' if user.role in ('operator', 'coordinator') else 'Your cases' }}</div><div class="v">{{ cases|length }}</div><div class="d">{{ in_review }} waiting for clinician review</div></div>
+  {% for k, v, d in week %}<div class="panel stat"><div class="k">{{ k }}</div><div class="v">{{ v }}</div><div class="d">{{ d }}</div></div>{% endfor %}
 </div>
 
 <section class="panel" aria-labelledby="next-h" style="margin-bottom:var(--s5)">
@@ -84,4 +83,28 @@
   </table></div>
 </section>
 {% endif %}
+</div>
+<aside class="inbox-side stack-lg" aria-label="Your activity">
+  <section class="panel panel-pad" aria-labelledby="wk-h">
+    <div class="row-between"><h2 id="wk-h">Your last 14 days</h2><span class="xs muted">{{ spark|sum }} actions</span></div>
+    {% set mx = [spark|max, 1]|max %}
+    <svg class="spark" viewBox="0 0 280 64" role="img" aria-label="Actions per day over the last 14 days: {{ spark|join(', ') }}">
+      {% for v in spark %}<rect x="{{ loop.index0 * 20 + 2 }}" y="{{ 56 - (48 * v / mx)|round(1) }}" width="16" height="{{ [(48 * v / mx)|round(1), 1.5]|max }}" rx="3" class="{{ 'today' if loop.last else '' }}"><title>{{ v }} action{{ 's' if v != 1 }}, {{ 13 - loop.index0 }} day{{ 's' if 13 - loop.index0 != 1 }} ago</title></rect>{% endfor %}
+      <line x1="0" y1="57" x2="280" y2="57" />
+    </svg>
+    <div class="row-between xs muted"><span>2 weeks ago</span><span>Today</span></div>
+  </section>
+  <section class="panel" aria-labelledby="act-h">
+    <div class="panel-head"><h2 id="act-h">Recent activity</h2><span class="hint">Your organisation</span></div>
+    {% if activity %}
+    <ol class="feed">
+      {% for a in activity %}
+      <li><span class="avatar {{ 'me' if a.you }}" aria-hidden="true">{{ a.who.replace('Dr. ', '').split()[0][0] }}{{ a.who.split()[-1][0] }}</span>
+        <div><p class="small"><strong>{{ 'You' if a.you else a.who }}</strong> <a href="/cases/{{ a.case_id }}">{{ a.text }}</a></p><p class="xs muted">{{ a.when }}</p></div></li>
+      {% endfor %}
+    </ol>
+    {% else %}<div class="empty"><p>No activity yet.</p></div>{% endif %}
+  </section>
+</aside>
+</div>
 {% endblock %}

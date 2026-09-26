@@ -1,7 +1,7 @@
 """
 Seed the RetiLink demo workspace: two synthetic organizations, role accounts, synthetic patients, the five
-acceptance scenarios (negative, positive, unusable, one eye, discrepant views) and a few historical SIMULATED
-referrals so workflow analytics are not empty.
+acceptance scenarios (negative, positive, unusable, one eye, discrepant views) and, with images, a four-week caseload
+of real test-split patients analysed by the real models (retilink/app/demo_data.py).
 
 Scenario images are taken from the mBRSET *test* split (never seen in training) and stay in the local research
 environment. Patient identities and histories are synthetic and are NOT linked to the mBRSET record.
@@ -122,57 +122,12 @@ def seed(db, with_images=False, verbose=True):
             if verbose:
                 print(f"{ref:9s} scenario {key:10s} <- mBRSET test patient {picks[key]} ({n} images)")
 
-    # ---- historical SIMULATED referrals so the engagement analytics have a denominator
-    stages = ["Closed", "Closed", "Closed", "Response received", "Scheduled", "Acknowledged", "Sent", "Patient declined",
-              "Unreachable", "Declined"]
-    rng = random.Random(3)
-    for j, stage in enumerate(stages):
-        p = Patient(tenant_id=t1.id, ref=f"RL-P09{j:02d}", age=rng.randint(40, 80), sex=rng.choice(["female", "male"]),
-                    dm_time=rng.randint(2, 25), conditions=cond(systemic_hypertension=rng.choice(["present", "absent"])))
-        db.add(p)
-        db.flush()
-        sent = now() - timedelta(days=rng.randint(3, 20), hours=rng.randint(0, 12))
-        c = Case(tenant_id=t1.id, patient_id=p.id, owner_id=U["pcp2"].id, created_by=U["op"].id,
-                 encounter_date=sent.date().isoformat(), device="Portable smartphone fundus camera (dilated)",
-                 status="Signed", created_at=sent - timedelta(hours=3))
-        db.add(c)
-        db.flush()
-        rv = Review(tenant_id=t1.id, case_id=c.id, case_version=1, hcp_id=U["pcp2"].id, decision="manual_review",
-                    interpretation="SIMULATED historical case for workflow analytics.", next_action="refer_retina",
-                    signature=wf.digest({"sim": j}), signed_at=sent - timedelta(hours=1))
-        db.add(rv)
-        db.flush()
-        spec = U["ret"] if j % 3 else U["ret2"]
-        pkg = {"topic": "retinal", "question": "SIMULATED", "facts": [{"text": "SIMULATED historical referral", "source": "seed"}],
-               "gaps": [], "limitations": [], "evidence": {"answer": "", "references": []}, "image_ids": []}
-        r = Referral(tenant_id=t1.id, case_id=c.id, review_id=rv.id, sender_id=U["pcp2"].id, recipient_id=spec.id,
-                     owner_id=spec.id, topic="retinal", question="SIMULATED: assess for referable DR.", package=pkg,
-                     package_hash=wf.digest(pkg), signature=wf.digest({"s": j}), idempotency_key=f"seed-{j}",
-                     stage="Sent", sent_at=sent, due_at=sent + wf.DEMO_DUE["acknowledge"])
-        db.add(r)
-        db.flush()
-        path = {"Closed": ["Acknowledged", "Scheduled", "Visit recorded", "Response received", "Closed"],
-                "Response received": ["Acknowledged", "Scheduled", "Visit recorded", "Response received"],
-                "Scheduled": ["Acknowledged", "Scheduled"], "Acknowledged": ["Acknowledged"], "Sent": [],
-                "Patient declined": ["Acknowledged", "Patient declined"], "Unreachable": ["Acknowledged", "Unreachable"],
-                "Declined": ["Declined"]}[stage]
-        for s in path:
-            actor = spec if s in ("Acknowledged", "Response received", "Declined", "Visit recorded") else \
-                U["pcp2"] if s == "Closed" else U["coord"]
-            if s == "Response received":
-                db.add(Message(tenant_id=t1.id, referral_id=r.id, author_id=spec.id, kind="response",
-                               body="SIMULATED signed response.", recommendation="Specialist follow-up visit",
-                               signature=wf.digest({"r": j})))
-                db.flush()
-            if s == "Scheduled":
-                r.appointment = {"date": (sent + timedelta(days=5)).date().isoformat(), "time": "10:00",
-                                 "timezone": "America/New_York", "facility": "Synthetic Eye Clinic", "confirmation": "phone"}
-            wf.transition(db, r, s, actor, "SIMULATED")
-        if r.acknowledged_at:
-            r.acknowledged_at = sent + timedelta(hours=rng.uniform(1.5, 30))
-        # accountable owner as the live workflow would leave it
-        r.owner_id = {"Acknowledged": U["coord"].id, "Scheduled": spec.id, "Response received": U["pcp2"].id,
-                      "Closed": U["pcp2"].id, "Declined": U["pcp2"].id}.get(stage, r.owner_id)
+    db.flush()
+    if with_images:                          # four weeks of activity around real mBRSET test-split patients
+        from .demo_data import populate
+        n = populate(db, U, t1, exclude=list(picks.values()) if picks else ())
+        if verbose:
+            print(f"demo caseload: {n} real-image cases")
     db.commit()
     if verbose:
         print("seeded. Accounts:", ", ".join(f"{u.name} ({u.role})" for u in U.values()))

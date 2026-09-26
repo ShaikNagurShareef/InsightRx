@@ -22,6 +22,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from . import workflow as wf
 from .db import APP_ROOT, IMAGE_STORE, Base, SessionLocal, engine, get_db
+from . import activity as act
 from . import oculomics as oc
 from .llm import draft_package, evidence_brief
 from .models import (AppSetting, AuditEvent, Barrier, Case, Image, Message, ModelRun, Notification, Patient, Referral, Review,
@@ -229,8 +230,10 @@ def inbox(request: Request, filter: str = "", user: User = Depends(current_user)
     greeting = "Good morning" if hour < 12 else "Good afternoon" if hour < 18 else "Good evening"
     awaiting = sum(r.stage in ("Sent", "Needs information") and (user.role != "specialist" or r.recipient_id == user.id)
                    for r in refs)
+    seen = [c.id for c in visible_cases(db, user)]
     return templates.TemplateResponse(request, "inbox.html", ctx(
         request, user, db, tasks=tasks, refs=refs, cases=cases, filter=filter, results=results, greeting=greeting,
+        week=act.week_stats(db, user, seen), activity=act.feed(db, user, seen), spark=act.daily(db, user, seen),
         overdue=sum(wf.is_overdue(t.due_at) for t in tasks), awaiting=awaiting,
         in_review=sum(c.status == "HCP review" for c in cases), active="inbox"))
 
