@@ -97,8 +97,9 @@ def draft_package(case, patient, review, run, images, topic, question):
         if why:
             facts.append({"text": "Model explanation: " + "; ".join(why) + ". Attention maps available in the case "
                                   "workspace (model attention, not lesion segmentation).", "source": f"model_run #{run.id}"})
-        sig = [f"{v['label']} ({v['score']:.2f}, {v['inputs']}, CV AUROC {v['cv_auroc']})"
-               for v in res.get("systemic", {}).values() if v.get("status") == "Research signal"]
+        sig = [f"{v['label']} ({'exploratory, ' if v.get('status') == 'Exploratory signal' else ''}{v['score']:.2f}, "
+               f"{v['inputs']}, CV AUROC {v['cv_auroc']})"
+               for v in res.get("systemic", {}).values() if v.get("status") in ("Research signal", "Exploratory signal")]
         if sig:
             facts.append({"text": "Research association signals (not diagnoses): " + "; ".join(sig) + ".",
                           "source": f"model_run #{run.id}"})

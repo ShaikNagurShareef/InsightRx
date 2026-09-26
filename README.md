@@ -85,6 +85,29 @@ RETILINK_SMOKE=1 sbatch --export=ALL scripts/JobSubmit.sh            # 5-minute 
 GPU=0 RETILINK_EXP_NO=1 bash scripts/train_local.sh
 ```
 
+## Oculomics: the whole-body view
+
+The retina is the only place where blood vessels and nerve tissue can be seen directly, without a needle. RetiLink presents what one retinal session can say about the whole patient, and it never claims a diagnosis.
+
+- **Oculomics, "How it works" tab.** An illustrated retina: pointing at vessels, lesions, macula or optic nerve highlights the organ systems each feature informs. Next to it are the evidence ladder and the path from photo to signed answer, plus published context (Poplin 2018, Sabanayagam 2020, RETFound 2023), labelled as literature rather than RetiLink results.
+- **Oculomics, "Your panel" tab.** A population dashboard for the clinician's own patients:
+  - a body map with counts per organ;
+  - organ-by-organ stacked bars (signal, exploratory, known, unknown history, clear);
+  - a "Patients to review" queue.
+
+  It is scoped by role: referrers see their own cases, specialists see cases referred to them, and administrators see none.
+- **Case, Systemic health tab.** A per-patient whole-body map and organ list, with a matching snapshot card on the Screening tab.
+
+Every systemic condition is scored, and the reliability travels with each score:
+
+| Label | Rule | Conditions today |
+|---|---|---|
+| **Research signal** (amber) | CV AUROC ≥ 0.65 and lower CI bound ≥ 0.55 | Hypertension |
+| **Exploratory signal** (purple) | Below the gate, CI lower bound > 0.5 | Kidney, vascular disease, neuropathy, prior MI, diabetic foot, both composites |
+| **Near-chance score** (neutral) | CI includes 0.5; shown but never flagged | Obesity |
+
+Recorded history always takes precedence. A model signal only raises a flag for a condition that is not already recorded as present.
+
 ## Explainability
 
 | What | How | Where in the app |

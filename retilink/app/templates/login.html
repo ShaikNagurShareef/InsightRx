@@ -1,20 +1,29 @@
-{% extends "base.html" %}{% from "_ui.html" import icon, avatar %}
-{% block title %}RetiLink: retinal screening that reaches the specialist{% endblock %}
+{% extends "base.html" %}{% from "_ui.html" import icon, avatar %}{% from "_oculomics.html" import body_map %}
+{% block title %}RetiLink: see the whole patient through the eye{% endblock %}
 {% block bare %}
 <div class="landing">
   <section class="story" aria-labelledby="hero">
     <a class="brand" href="/login"><svg aria-hidden="true"><use href="/static/icons.svg#i-logo"/></svg>RetiLink</a>
     <div class="stack">
-      <h1 id="hero">A retinal photo in primary care should end in a specialist's signed answer.</h1>
-      <p class="lede">Most portable eye screens stop at a result nobody acts on. RetiLink turns the photo into an accountable handoff between clinicians, and tracks it until the loop is closed.</p>
+      <p class="kicker">Oculomics for primary care</p>
+      <h1 id="hero">See the whole patient through the eye.</h1>
+      <p class="lede">A retinal photo takes seconds and needs no needle. RetiLink screens it for diabetic eye disease, lays out what it can say about the heart, kidneys and nerves, and hands the case to a specialist until a signed answer comes back.</p>
     </div>
-    <ol class="loop" aria-label="How a case moves">
-      <li class="step"><span class="dot">{{ icon('eye') }}</span><div><div class="t">Screen</div><div class="d">Quality gate and referable-DR model on each eye, with attention maps.</div></div></li>
-      <li class="step"><span class="dot">{{ icon('shield') }}</span><div><div class="t">Review and sign</div><div class="d">The referring clinician accepts or overrides the model and signs their own interpretation.</div></div></li>
-      <li class="step"><span class="dot">{{ icon('send') }}</span><div><div class="t">Consult</div><div class="d">A traced package with guideline evidence goes to a specialist, who must acknowledge it.</div></div></li>
-      <li class="step"><span class="dot">{{ icon('calendar') }}</span><div><div class="t">Close the loop</div><div class="d">The coordinator schedules and removes barriers; the referrer closes on a signed response.</div></div></li>
-    </ol>
-    <p class="small" style="color:#8ea0ad">Research prototype. Synthetic patients, simulated workflow history. Models trained on mBRSET (portable camera, people with diabetes).</p>
+    <dl class="proof">
+      <div><dt>{{ '%.2f'|format(auc) if auc else 'n/a' }}</dt><dd>AUROC for referable diabetic retinopathy on held-out patients</dd></div>
+      <div><dt>6</dt><dd>organ systems in one view, each with its evidence stated</dd></div>
+      <div><dt>1</dt><dd>accountable owner at every step, until the specialist's answer is signed</dd></div>
+    </dl>
+    <div class="story-grid">
+      <div>{{ body_map(tiers, 'patient', 'Organ systems RetiLink covers, by evidence') }}</div>
+      <ol class="loop" aria-label="How a case moves">
+        <li class="step"><span class="dot">{{ icon('eye') }}</span><div><div class="t">Screen</div><div class="d">Quality gate, DR model and attention maps for each eye.</div></div></li>
+        <li class="step"><span class="dot">{{ icon('pulse') }}</span><div><div class="t">See the whole body</div><div class="d">Recorded history and research signals, organ by organ.</div></div></li>
+        <li class="step"><span class="dot">{{ icon('send') }}</span><div><div class="t">Consult</div><div class="d">A signed, traced package goes to a specialist who must accept it.</div></div></li>
+        <li class="step"><span class="dot">{{ icon('calendar') }}</span><div><div class="t">Close the loop</div><div class="d">Scheduling, barriers and a signed answer, tracked to the end.</div></div></li>
+      </ol>
+    </div>
+    <p class="small" style="color:#8ea0ad">Research prototype. Synthetic patients and simulated workflow history. Systemic outputs are research signals for clinician review, not diagnoses. Models trained on mBRSET (portable camera, people with diabetes).</p>
   </section>
 
   <section class="pick" aria-labelledby="pick">
@@ -26,7 +35,7 @@
       <strong>Three-minute walkthrough</strong>
       <ol>
         <li>Sam Rivera uploads both eyes to a case and runs the analysis.</li>
-        <li>Dr. Alex Morgan reviews the result, signs, and sends a consultation.</li>
+        <li>Dr. Alex Morgan opens the whole-body view, signs, and sends a consultation.</li>
         <li>Dr. Priya Nair accepts it and returns a signed response.</li>
         <li>Taylor Brooks schedules the visit; Dr. Morgan closes the handoff.</li>
       </ol>

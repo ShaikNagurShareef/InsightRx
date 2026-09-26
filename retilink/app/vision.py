@@ -26,6 +26,21 @@ COMPOSITE_LABELS = {"cardiovascular": "Cardiovascular composite (vascular diseas
                     "dm_complications": "Diabetes complications composite (kidney, nerve or foot)"}
 META_LABELS = {"age": "Age", "sex": "Sex", "dm_time": "Diabetes duration", "insulin": "Insulin use",
                "oraltreatment_dm": "Oral diabetes treatment", "retinal image": "Retinal images"}
+RELIABILITY_TEXT = {
+    "research": "Passes the release gate: cross-validated AUROC {auc:.2f} (95% CI {lo:.2f} to {hi:.2f})",
+    "exploratory": "Exploratory: cross-validated AUROC {auc:.2f} (95% CI {lo:.2f} to {hi:.2f}), below the release gate",
+    "near_chance": "Near chance: cross-validated AUROC {auc:.2f} (95% CI {lo:.2f} to {hi:.2f} includes 0.5)",
+}
+SIGNAL = {"research": "Research signal", "exploratory": "Exploratory signal", "near_chance": "Near-chance score"}
+NO_SIGNAL = {"research": "No research signal", "exploratory": "No exploratory signal", "near_chance": "Near-chance score"}
+
+
+def reliability(h):
+    if h["enabled"]:
+        return "research"
+    return "exploratory" if h["auroc_ci95"][0] > 0.5 else "near_chance"
+
+
 ICDR_NAMES = ["No apparent DR", "Mild NPDR", "Moderate NPDR", "Severe NPDR", "PDR"]
 
 
@@ -89,7 +104,10 @@ class VisionService:
             ck = torch.load(c, map_location="cpu", weights_only=False)
             m = RetiModel(heads=ck["heads"], grad_checkpointing=False)
             m.load_state_dict(ck["state_dict"], strict=False)
-            self.models.append(m.to(self.device).eval())
+            m = m.to(self.device).eval()
+            if self.device.startswith("cuda"):
+                m = m.to(torch.bfloat16)          # runs under bf16 autocast anyway; halves GPU memory
+            self.models.append(m)
             self.heads, self.size = ck["heads"], ck["image_size"]
             h.update(f"{c}:{ck['epoch']}:{ck['val_score']}".encode())
         sp = os.path.join(self.model_dir, "ckpt", "systemic_cv.joblib")
@@ -98,8 +116,9 @@ class VisionService:
             import joblib
             from retilink.ml.frozen import FrozenEncoder
             self.systemic = joblib.load(sp)
-            for bb in {h["backbone"] for h in self.systemic["heads"].values() if h["enabled"] and h["backbone"]}:
-                self.encoders[bb] = FrozenEncoder(bb).to(self.device)
+            for bb in {h["backbone"] for h in self.systemic["heads"].values() if h["backbone"]}:
+                enc = FrozenEncoder(bb).to(self.device)
+                self.encoders[bb] = enc.half() if self.device.startswith("cuda") else enc   # features were cached under fp16
         for name in ("image_metrics.json", "systemic_metrics.json", "systemic_cv.json"):
             p = os.path.join(self.model_dir, "metrics", name)
             if os.path.exists(p):
@@ -265,11 +284,10 @@ class VisionService:
                                            | {"ci95": [round(v, 3) for v in h["retinal_added_value"]["ci95"]]},
                     "global_importance": {META_LABELS.get(k, k): round(v, 4) for k, v in
                                           sorted(h["permutation_importance"].items(), key=lambda kv: -kv[1])}}
-            if not h["enabled"]:
-                out[t] = info | {"status": "Not evaluated",
-                                 "reason": f"5-fold CV AUROC {h['oof_auroc']:.2f} (95% CI {h['auroc_ci95'][0]:.2f}-"
-                                           f"{h['auroc_ci95'][1]:.2f}) below release gate"}
-                continue
+            # every head is scored; reliability travels with the output so weak heads cannot pass as validated
+            rel = reliability(h)
+            info |= {"reliability": rel, "reliability_text": RELIABILITY_TEXT[rel].format(
+                auc=h["oof_auroc"], lo=h["auroc_ci95"][0], hi=h["auroc_ci95"][1])}
             bb = h["backbone"]
             if bb and not usable:
                 out[t] = info | {"status": "Abstained", "reason": "no assessable image"}
@@ -283,7 +301,7 @@ class VisionService:
                 per_image = {str(im["id"]): round(self._systemic_score(h, emb_cache[bb][i], meta, explain=False)[0], 3)
                              for i, im in enumerate(usable)}
             out[t] = info | {
-                "status": "Research signal" if p >= h["threshold"] else "No research signal",
+                "status": SIGNAL[rel] if p >= h["threshold"] else NO_SIGNAL[rel],
                 "score": round(p, 3), "threshold": round(h["threshold"], 3),
                 "score_type": "Platt-calibrated association score for the self-reported mBRSET label",
                 "inputs": {"metadata": "age/sex/diabetes history only", "image": "retinal images only",
@@ -337,19 +355,20 @@ class VisionService:
                 x = eval_transform(self.size)(open_fundus(path, self.size))[None].to(self.device)
                 cams = []
                 for m in self.models:
-                    c = patch_relevance(m, list(m.backbone.encoder.layer[-5:-1]), x, lambda o: o[head][:, 0])[0]
+                    xm = x.to(next(m.parameters()).dtype)
+                    c = patch_relevance(m, list(m.backbone.encoder.layer[-5:-1]), xm, lambda o: o[head][:, 0].float())[0]
                     cams.append(c / (c.max() + 1e-8))
                 cam = np.mean(cams, 0)
             else:
                 h = (self.systemic or {}).get("heads", {}).get(head)
-                if not h or not h["enabled"] or not h["backbone"]:
+                if not h or not h["backbone"]:
                     return None
                 enc = self.encoders[h["backbone"]]
                 v = torch.tensor(systemic_image_direction(h, len(h["baseline_image"])), dtype=torch.float32,
                                  device=self.device)
                 x = enc.transform()(open_fundus(path, 224))[None].to(self.device)
                 blocks = list(enc.vit.encoder.layer[-5:-1] if enc.family == "dinov2" else enc.vit.blocks[-5:-1])
-                cam = patch_relevance(enc, blocks, x, lambda o: o.float() @ v)[0]
+                cam = patch_relevance(enc, blocks, x.to(next(enc.parameters()).dtype), lambda o: o.float() @ v)[0]
             return overlay_png(P.open(path), cam)
 
 
@@ -357,12 +376,18 @@ _service = None
 
 
 def get_service():
-    """Local models by default; RETILINK_VISION=remote uses a vision worker over HTTP (e.g. from Vercel)."""
+    """Local models by default; RETILINK_VISION=remote uses a vision worker over HTTP (e.g. from Vercel).
+    If the models cannot be loaded (missing weights, GPU out of memory) the app keeps running in SIMULATED mode."""
     global _service
     if _service is None:
         if os.environ.get("RETILINK_VISION") == "remote":
             from .remote_vision import RemoteVisionService
             _service = RemoteVisionService()
         else:
-            _service = VisionService()
+            try:
+                _service = VisionService()
+            except Exception as e:                      # noqa: BLE001 - degrade, never take the workspace down
+                import logging
+                logging.getLogger("retilink").exception("vision models failed to load: %s", e)
+                _service = VisionService(model_dir="/nonexistent")
     return _service

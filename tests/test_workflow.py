@@ -205,3 +205,16 @@ def test_explanations_unavailable_in_simulated_mode(ready_case):
     assert client_as("Dr. Riley Other").get(f"/images/{iid}/explain").status_code == 404   # tenant check first
     page = pcp.get(f"/cases/{ready_case}", params={"tab": "systemic"}).text
     assert "Not evaluated" in page and "Cardiovascular composite" in page
+
+
+def test_oculomics_views_and_role_scoping(ready_case):
+    pcp = client_as("Dr. Alex Morgan")
+    panel = pcp.get("/oculomics")
+    assert panel.status_code == 200 and "Organ by organ" in panel.text and "Whole-body" not in panel.text[:200]
+    science = pcp.get("/oculomics?view=science")
+    assert science.status_code == 200 and "Evidence, stated honestly" in science.text and "Future research" in science.text
+    assert "not a diagnosis" in pcp.get(f"/cases/{ready_case}?tab=systemic").text.replace("never a diagnosis", "not a diagnosis")
+    admin = client_as("Jordan Admin").get("/oculomics")
+    assert admin.status_code == 200 and "Patients screened" in admin.text and "RL-T1" not in admin.text   # no clinical access
+    other = client_as("Dr. Jamie Outside").get("/oculomics")
+    assert "RL-T1" not in other.text                                                                    # other tenant

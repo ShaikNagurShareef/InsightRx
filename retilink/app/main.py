@@ -22,6 +22,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from . import workflow as wf
 from .db import APP_ROOT, IMAGE_STORE, Base, SessionLocal, engine, get_db
+from . import oculomics as oc
 from .llm import draft_package, evidence_brief
 from .models import (AppSetting, AuditEvent, Barrier, Case, Image, Message, ModelRun, Notification, Patient, Referral, Review,
                      Task, Tenant, User, now)
@@ -170,7 +171,10 @@ def ctx(request, user, db, **kw):
 def login_page(request: Request, db: Session = Depends(get_db)):
     users = db.scalars(select(User).where(User.active.is_(True)).order_by(User.tenant_id, User.id)).all()
     tenants = {t.id: t.name for t in db.scalars(select(Tenant))}
-    return templates.TemplateResponse(request, "login.html", {"user": None, "users": users, "tenants": tenants})
+    svc = get_service()
+    auc = ((svc.metrics.get("image_metrics.json") or {}).get("patient_dr_referable") or {}).get("auroc")
+    return templates.TemplateResponse(request, "login.html", {"user": None, "users": users, "tenants": tenants,
+                                                              "tiers": oc.evidence_map(svc.metrics), "auc": auc})
 
 
 @app.post("/login")
@@ -619,6 +623,8 @@ def case_page(case_id: int, request: Request, tab: str = "retinal", msg: str = "
         request, user, db, case=case, imgs=imgs, superseded=superseded, run=run, run_stale=run_stale, review=review,
         reviews=reviews, refs=refs, specialists=specialists, tab=tab, msg=msg, draft=draft, token=token, idem=idem,
         topic=topic, events=events, actors=actors, conditions=SYSTEMIC_LABELS, legs=relay_legs(db, case),
+        snapshot=oc.patient_snapshot(case.patient, run.result if run and run.status == "completed" and not run_stale else None,
+                                     {**SYSTEMIC_LABELS, **COMPOSITE_LABELS}, get_service().metrics),
         patient_line=patient_line(case.patient),
         q_question=request.query_params.get("question", ""),
         q_recipient=int(request.query_params.get("recipient_id") or 0)))
@@ -922,6 +928,29 @@ async def try_run(request: Request, files: list[UploadFile] = File(...), user: U
     return templates.TemplateResponse(request, "try.html", ctx(
         request, user, db, active="try", results=results, thr=res["thresholds"], version=res.get("model_version"),
         source=res.get("source"), latency=res.get("latency_ms", 0)))
+
+
+# ------------------------------------------------------------------ oculomics (whole-body view)
+def visible_cases(db: Session, user: User):
+    q = select(Case).where(Case.tenant_id == user.tenant_id)
+    if user.role == "referring":
+        q = q.where(Case.owner_id == user.id)
+    elif user.role == "specialist":
+        q = q.where(Case.id.in_(select(Referral.case_id).where(Referral.recipient_id == user.id)))
+    elif user.role == "admin":
+        return []                       # administrators do not get clinical access
+    return db.scalars(q.order_by(Case.id.desc())).all()
+
+
+@app.get("/oculomics", response_class=HTMLResponse)
+def oculomics_page(request: Request, view: str = "panel", user: User = Depends(current_user),
+                   db: Session = Depends(get_db)):
+    svc = get_service()
+    labels = {**SYSTEMIC_LABELS, **COMPOSITE_LABELS}
+    view = "science" if view == "science" else "panel"
+    panel = oc.panel_stats(db, visible_cases(db, user), labels, svc.metrics) if view == "panel" else None
+    return templates.TemplateResponse(request, "oculomics.html", ctx(
+        request, user, db, active="oculomics", view=view, p=panel, tiers=oc.evidence_map(svc.metrics)))
 
 
 # ------------------------------------------------------------------ evidence (FR23 / FR28)

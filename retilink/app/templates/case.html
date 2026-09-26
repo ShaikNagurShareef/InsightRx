@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% from "_ui.html" import icon, status, stage, case_stage, relay, empty %}
+{% extends "base.html" %}{% from "_ui.html" import icon, status, stage, case_stage, relay, empty %}{% from "_oculomics.html" import body_map, state_tag, tier_tag %}
 {% block title %}{{ case.patient.ref }} | RetiLink{% endblock %}
 {% block crumbs %}<a href="/inbox">Inbox</a> / Case {{ case.id }}{% endblock %}
 {% block content %}
@@ -155,6 +155,10 @@
       </details>
     </section>
     {% endif %}
+    <a class="panel panel-pad snapshot" href="/cases/{{ case.id }}?tab=systemic" aria-label="Open the whole-body view">
+      <div class="row-between"><h2>Whole-body snapshot</h2><span class="xs muted">Oculomics</span></div>
+      <ul>{% for o in snapshot %}<li><span class="dotst {{ o.state }}" aria-hidden="true"></span><span class="small">{{ o.label }}</span><span class="xs muted">{{ o.state_text }}</span></li>{% endfor %}</ul>
+    </a>
     {% if user.role in ('operator', 'referring') %}
     <form method="post" action="/cases/{{ case.id }}/analyze" data-busy="Analysing on GPU">
       <button type="submit" class="btn block {{ 'lg' if not run or run_stale else 'quiet' }}" {% if not imgs %}disabled{% endif %}><span class="spin" aria-hidden="true"></span>{{ icon('eye') }}<span data-label>{{ 'Run analysis' if not run else 'Run analysis again' }}</span></button>
@@ -174,6 +178,25 @@
 <div class="contrib">{% for k, v in d.items() %}{% set w = [((v|abs) / scale * 50), 50]|min %}
 <div class="c"><span>{{ k }}</span><span class="axis"><span class="{{ 'up' if v > 0 else 'down' }}" style="width:{{ w|round(1) }}%"></span></span><span class="num" style="text-align:right">{{ '%+.3f'|format(v) }}</span></div>{% endfor %}</div>
 {%- endmacro %}
+<section class="panel oc-patient" aria-labelledby="wb-h" style="margin-bottom:var(--s5)">
+  <div class="oc-grid">
+    <div class="oc-map panel-pad">
+      <h2 id="wb-h">Whole-body view</h2>
+      <p class="xs muted" style="margin-top:4px">From one retinal session plus recorded history. Signals are for review, never a diagnosis.</p>
+      {{ body_map(snapshot, 'patient', 'Whole-body view for ' ~ case.patient.ref) }}
+      <ul class="legend"><li><span class="sw signal"></span>Signal to review</li><li><span class="sw exploratory"></span>Exploratory signal</li><li><span class="sw recorded"></span>Known condition</li><li><span class="sw clear"></span>No finding recorded</li><li><span class="sw unknown"></span>History unknown</li><li><span class="sw na"></span>Not evaluated</li></ul>
+    </div>
+    <ol class="organs panel-pad">
+    {% for o in snapshot %}
+      <li data-organ="{{ o.key }}" tabindex="0">
+        <div class="row-between"><strong>{{ o.label }}</strong>{{ state_tag(o.state, o.state_text) }}</div>
+        <p class="small" style="margin-top:2px">{{ o.note }}</p>
+        <p class="xs muted">{{ o.feature }}. {{ tier_tag(o.evidence) }} {{ o.evidence.detail }}.</p>
+      </li>
+    {% endfor %}
+    </ol>
+  </div>
+</section>
 <div class="note" style="margin-bottom:var(--s4)">{{ icon('shield') }}<span>Recorded history, research model associations and your assessment are kept apart. A model association never changes the recorded history and never writes a diagnosis. Associations were validated with 5-fold patient cross-validation on 1,291 mBRSET patients.</span></div>
 <section class="panel">
   <div class="table-wrap"><table class="table">
@@ -185,7 +208,7 @@
       <td>{% if code in COMPOSITE_LABELS %}<span class="muted small">Derived research target</span>{% else %}<span class="tag {{ 'signal' if h.value == 'present' else 'clear' if h.value == 'absent' else 'outline' }}">Reported {{ h.value or 'unknown' }}</span><div class="xs muted">{{ h.source or 'no source' }}{% if h.date %}, {{ h.date }}{% endif %}</div>{% endif %}</td>
       <td style="min-width:300px">
         {% if s %}{{ status(s.status) }}
-          {% if s.score is defined %}<div class="xs muted" style="margin-top:4px">Score {{ s.score }} against threshold {{ s.threshold }}; {{ s.inputs }}.</div>{% elif s.reason %}<div class="xs muted" style="margin-top:4px">{{ s.reason }}</div>{% endif %}
+          {% if s.score is defined %}<div class="xs muted" style="margin-top:4px">Score {{ s.score }} against threshold {{ s.threshold }}; {{ s.inputs }}.</div>{% if s.reliability_text %}<div class="xs" style="margin-top:2px;color:{{ 'var(--research)' if s.reliability != 'research' else 'var(--ink-2)' }}">{{ s.reliability_text }}.</div>{% endif %}{% elif s.reason %}<div class="xs muted" style="margin-top:4px">{{ s.reason }}</div>{% endif %}
           {% if s.status == 'No research signal' and h.value == 'present' %}<div class="xs" style="color:var(--caution);margin-top:4px">Recorded history stands. A low score does not make it absent.</div>{% endif %}
           {% if s.cv_auroc is defined %}
           <details class="small" style="margin-top:6px"><summary>How reliable, and why</summary>

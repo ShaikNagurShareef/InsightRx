@@ -101,4 +101,24 @@
     });
     if (range) range.addEventListener("input", () => frame.style.setProperty("--attn", range.value / 100));
   });
+
+  // ---- oculomics: linked highlighting between retina features, organ rows and the body map
+  const light = (organs, on, feature) => {
+    organs.forEach(o => document.querySelectorAll(`.bodymap [data-organ="${o}"], .organs [data-organ="${o}"]`)
+      .forEach(el => el.classList.toggle("hl", on)));
+    if (feature) document.querySelectorAll(".retina").forEach(r => {
+      r.classList.toggle("focus", on);
+      r.querySelectorAll(`[data-f="${feature}"]`).forEach(f => f.classList.toggle("hl", on));
+    });
+  };
+  document.querySelectorAll(".features [data-links]").forEach(li => {
+    const organs = li.dataset.links.split(" "), f = li.dataset.f;
+    ["mouseenter", "focus"].forEach(e => li.addEventListener(e, () => light(organs, true, f)));
+    ["mouseleave", "blur"].forEach(e => li.addEventListener(e, () => light(organs, false, f)));
+  });
+  document.querySelectorAll(".organs [data-organ]").forEach(li => {
+    const o = [li.dataset.organ];
+    ["mouseenter", "focus"].forEach(e => li.addEventListener(e, () => light(o, true)));
+    ["mouseleave", "blur"].forEach(e => li.addEventListener(e, () => light(o, false)));
+  });
 })();

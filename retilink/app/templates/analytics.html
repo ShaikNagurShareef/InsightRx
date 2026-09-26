@@ -86,10 +86,10 @@
         <td class="num"><strong>{{ '%.3f'|format(r.chosen_metrics.auroc) }}</strong> ({{ '%.2f'|format(r.chosen_metrics.auroc_ci95[0]) }} to {{ '%.2f'|format(r.chosen_metrics.auroc_ci95[1]) }})</td>
         <td class="num">{{ '%+.3f'|format(r.retinal_added_value.delta_auroc) }}{% if r.retinal_added_value.ci95[0] > 0 %} <span class="tag clear">significant</span>{% endif %}</td>
         <td>{{ META_LABELS.get(top[0], top[0]) }}</td>
-        <td>{% if r.enabled %}<span class="tag clear">{{ icon('check') }}Shown</span>{% else %}<span class="tag">Not evaluated</span>{% endif %}</td></tr>
+        <td>{% if r.enabled %}<span class="tag clear">{{ icon('check') }}Research signal</span>{% elif r.chosen_metrics.auroc_ci95[0] > 0.5 %}<span class="tag research">Exploratory</span>{% else %}<span class="tag">Near chance</span>{% endif %}</td></tr>
     {% endfor %}</tbody>
   </table></div>
-  <div class="panel-body xs muted">A condition appears in the workspace only if its cross-validated AUROC is at least 0.65 and the lower bound of its 95% CI is at least 0.55. "What the retina adds" is the paired bootstrap AUROC difference between the best image-based model and history alone. Labels are self-reported history, not adjudicated diagnoses.</div>
+  <div class="panel-body xs muted">Every condition is scored in the workspace with its reliability shown. It is labelled a research signal only if its cross-validated AUROC is at least 0.65 and the lower bound of its 95% CI is at least 0.55; otherwise it is exploratory, or near chance when the interval includes 0.5. "What the retina adds" is the paired bootstrap AUROC difference between the best image-based model and history alone. Labels are self-reported history, not adjudicated diagnoses.</div>
 </section>
 {% endif %}
 {% endif %}

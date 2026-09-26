@@ -19,6 +19,7 @@
     <nav class="nav" aria-label="Main">
       <a href="/inbox" {% if active == 'inbox' %}aria-current="page"{% endif %}>{{ icon('inbox') }}Inbox{% if open_tasks %}<span class="count" aria-label="{{ open_tasks }} open tasks">{{ open_tasks }}</span>{% endif %}</a>
       {% if user.role in ('operator', 'referring') %}<a href="/cases/new" {% if active == 'new' %}aria-current="page"{% endif %}>{{ icon('plus') }}New screening</a>{% endif %}
+      <a href="/oculomics" {% if active == 'oculomics' %}aria-current="page"{% endif %}>{{ icon('pulse') }}Oculomics</a>
       <a href="/try" {% if active == 'try' %}aria-current="page"{% endif %}>{{ icon('flask') }}Try an image</a>
       <a href="/evidence" {% if active == 'evidence' %}aria-current="page"{% endif %}>{{ icon('book') }}Evidence</a>
       <a href="/analytics" {% if active == 'analytics' %}aria-current="page"{% endif %}>{{ icon('chart') }}Analytics</a>

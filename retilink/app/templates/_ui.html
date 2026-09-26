@@ -13,6 +13,8 @@
 {# Model / screening states: always icon + words, colour is secondary #}
 {% macro status(s) -%}
 {%- if s in ('Referable DR signal', 'Research signal') -%}<span class="tag signal">{{ icon('alert') }}{{ s }}</span>
+{%- elif s == 'Exploratory signal' -%}<span class="tag research">{{ icon('pulse') }}{{ s }}</span>
+{%- elif s in ('No exploratory signal', 'Near-chance score') -%}<span class="tag">{{ s }}</span>
 {%- elif s in ('No model finding', 'No research signal') -%}<span class="tag clear">{{ icon('check') }}{{ s }}</span>
 {%- elif s in ('Assessment incomplete', 'Uncertain quality', 'Unable to assess', 'Abstained') -%}<span class="tag caution">{{ icon('alert') }}{{ s }}</span>
 {%- else -%}<span class="tag">{{ s }}</span>
