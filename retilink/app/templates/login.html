@@ -1,15 +1,53 @@
-{% extends "base.html" %}{% block content %}
-<div class="max-w-3xl mx-auto">
-<h1 class="text-2xl font-semibold mb-1">Sign in to the demo workspace</h1>
-<p class="text-slate-600 mb-6">Pick a synthetic account. Each role sees and can do different things (operator, referring HCP, specialist, coordinator, admin).</p>
-{% for tid, tname in tenants.items() %}
-<h2 class="font-semibold mt-4 mb-2">{{ tname }}</h2>
-<div class="grid sm:grid-cols-2 gap-3">
-{% for u in users if u.tenant_id == tid %}
-<form method="post" action="/login" class="card flex items-center justify-between">
-  <input type="hidden" name="user_id" value="{{ u.id }}">
-  <div><div class="font-semibold">{{ u.name }}</div><div class="text-sm text-slate-500">{{ u.role }}{% if u.specialty %} · {{ u.specialty }}{% endif %}</div></div>
-  <button class="btn">Sign in</button>
-</form>
-{% endfor %}</div>{% endfor %}
-</div>{% endblock %}
+{% extends "base.html" %}{% from "_ui.html" import icon, avatar %}
+{% block title %}RetiLink: retinal screening that reaches the specialist{% endblock %}
+{% block bare %}
+<div class="landing">
+  <section class="story" aria-labelledby="hero">
+    <a class="brand" href="/login"><svg aria-hidden="true"><use href="/static/icons.svg#i-logo"/></svg>RetiLink</a>
+    <div class="stack">
+      <h1 id="hero">A retinal photo in primary care should end in a specialist's signed answer.</h1>
+      <p class="lede">Most portable eye screens stop at a result nobody acts on. RetiLink turns the photo into an accountable handoff between clinicians, and tracks it until the loop is closed.</p>
+    </div>
+    <ol class="loop" aria-label="How a case moves">
+      <li class="step"><span class="dot">{{ icon('eye') }}</span><div><div class="t">Screen</div><div class="d">Quality gate and referable-DR model on each eye, with attention maps.</div></div></li>
+      <li class="step"><span class="dot">{{ icon('shield') }}</span><div><div class="t">Review and sign</div><div class="d">The referring clinician accepts or overrides the model and signs their own interpretation.</div></div></li>
+      <li class="step"><span class="dot">{{ icon('send') }}</span><div><div class="t">Consult</div><div class="d">A traced package with guideline evidence goes to a specialist, who must acknowledge it.</div></div></li>
+      <li class="step"><span class="dot">{{ icon('calendar') }}</span><div><div class="t">Close the loop</div><div class="d">The coordinator schedules and removes barriers; the referrer closes on a signed response.</div></div></li>
+    </ol>
+    <p class="small" style="color:#8ea0ad">Research prototype. Synthetic patients, simulated workflow history. Models trained on mBRSET (portable camera, people with diabetes).</p>
+  </section>
+
+  <section class="pick" aria-labelledby="pick">
+    <div>
+      <h2 id="pick" style="font-size:var(--t-lg)">Sign in as a demo clinician</h2>
+      <p class="muted" style="margin-top:6px">Each account sees its own inbox and permissions. Switch at any time from the sidebar.</p>
+    </div>
+    <div class="tour">
+      <strong>Three-minute walkthrough</strong>
+      <ol>
+        <li>Sam Rivera uploads both eyes to a case and runs the analysis.</li>
+        <li>Dr. Alex Morgan reviews the result, signs, and sends a consultation.</li>
+        <li>Dr. Priya Nair accepts it and returns a signed response.</li>
+        <li>Taylor Brooks schedules the visit; Dr. Morgan closes the handoff.</li>
+      </ol>
+    </div>
+    {% for tid, tname in tenants.items() %}
+    <div>
+      <h3 class="section-title" style="margin-top:0">{{ tname }}</h3>
+      <div class="people">
+      {% for u in users if u.tenant_id == tid %}
+        <form method="post" action="/login">
+          <input type="hidden" name="user_id" value="{{ u.id }}">
+          <button class="person {{ 'suggested' if u.name in ('Sam Rivera', 'Dr. Alex Morgan', 'Dr. Priya Nair', 'Taylor Brooks') else '' }}">
+            {{ avatar(u) }}
+            <span><span class="n">{{ u.name }}</span><br><span class="r">{{ role_label(u) }}</span></span>
+            <span class="go small">Sign in</span>
+          </button>
+        </form>
+      {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

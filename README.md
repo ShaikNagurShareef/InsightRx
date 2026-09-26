@@ -97,7 +97,7 @@ GPU=0 RETILINK_EXP_NO=1 bash scripts/train_local.sh
 
 ## App
 
-FastAPI with server-rendered Jinja/Tailwind pages and SQLAlchemy (SQLite by default; set `DATABASE_URL` to use Postgres). Vision inference runs on the local GPU.
+FastAPI with server-rendered Jinja pages, a hand-built design system (`public/static`: about 6 KB of CSS gzipped, 5 KB of JS, a self-hosted variable font, an SVG icon sprite, no frameworks) and SQLAlchemy (SQLite by default; set `DATABASE_URL` to use Postgres). Vision inference runs on the local GPU.
 
 ```bash
 python scripts/seed_demo.py --reset          # synthetic orgs, users, 5 scenario cases (local mBRSET images), simulated history
@@ -134,13 +134,25 @@ The database seeds itself with the synthetic workspace (no images) on first star
 
 Alternative, paid: `python scripts/deploy_space.py` builds a Hugging Face Docker Space from `deploy/space/` (needs HF PRO plus T4 hardware).
 
+### Test on new retinal images
+
+- **In the app: Try an image.** Upload up to 4 fundus photos to see the quality gate result, DR score against the frozen threshold, grade probabilities, edema signal and attention map. Nothing is stored. Large phone or camera photos are downscaled in the browser so they fit the upload limit.
+- **In a case: New screening.** Drop right-eye and left-eye photos, then choose *Create and analyse*. You get the full two-eye assessment, the relay and the consultation workflow.
+- **Batch, on the GPU machine:**
+  ```bash
+  python scripts/predict.py /path/to/images --out preds.csv --maps attention/ --labels labels.csv
+  ```
+  - `labels.csv` has columns `image` and `dr_referable` (0/1), or `icdr` (0–4). With it, the script prints AUROC, sensitivity and specificity at the frozen mBRSET threshold.
+  - Public test sets to try: APTOS 2019 (Kaggle), Messidor-2, IDRiD, EyePACS/DDR. Check each licence first.
+  - Expect domain shift: those sets use different cameras and populations, often without dilation, so a drop in performance or a need to recalibrate is expected and worth reporting.
+
 ### Demo script (3 minutes)
 
 | Time | Account | What to show |
 |---|---|---|
 | 0:00 | – | The problem: retinal screening results rarely reach the specialist or come back. |
-| 0:20 | Sam Rivera (operator) | Case RL-P0104. Upload, then run analysis. Only one eye is present, so the result shows **Assessment incomplete**. |
-| 0:55 | Dr. Alex Morgan (referring) | Case RL-P0102. **Referable DR signal**, its limitations, and the Systemic health tab (recorded, model and HCP columns kept separate). Sign the review. |
+| 0:20 | Sam Rivera (operator) | *New screening*: drop photos of both eyes, then *Create and analyse* (under 2 s). Then open RL-P0104: only one eye is present, so the result shows **Assessment incomplete**. |
+| 0:55 | Dr. Alex Morgan (referring) | Case RL-P0102. Show the **Referable DR signal** gauge, turn on *Model attention*, read *Why this result*, then open the Systemic health tab (recorded history, model association and clinician assessment kept separate). Sign. |
 | 1:25 | Dr. Alex Morgan | Consultation tab. Enter a question and pick Dr. Priya Nair, preview the traced package with its evidence brief, then sign and send. |
 | 1:55 | Dr. Priya Nair (specialist) | Inbox. Accept, then sign a response. |
 | 2:20 | Taylor Brooks (coordinator) | Schedule the visit and add a transport barrier; the accountable owner changes. |

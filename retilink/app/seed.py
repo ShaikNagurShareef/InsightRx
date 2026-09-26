@@ -170,6 +170,9 @@ def seed(db, with_images=False, verbose=True):
             wf.transition(db, r, s, actor, "SIMULATED")
         if r.acknowledged_at:
             r.acknowledged_at = sent + timedelta(hours=rng.uniform(1.5, 30))
+        # accountable owner as the live workflow would leave it
+        r.owner_id = {"Acknowledged": U["coord"].id, "Scheduled": spec.id, "Response received": U["pcp2"].id,
+                      "Closed": U["pcp2"].id, "Declined": U["pcp2"].id}.get(stage, r.owner_id)
     db.commit()
     if verbose:
         print("seeded. Accounts:", ", ".join(f"{u.name} ({u.role})" for u in U.values()))

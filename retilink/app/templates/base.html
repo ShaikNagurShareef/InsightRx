@@ -1,41 +1,51 @@
-<!doctype html>
+{% from "_ui.html" import icon, avatar %}<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}RetiLink{% endblock %}</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="/static/app.css">
+<meta name="description" content="RetiLink turns portable retinal screening into an accountable consultation between clinicians.">
+<link rel="preload" href="/static/fonts/PublicSans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/app.css?v={{ asset_v }}">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23E0782B'/%3E%3Ccircle cx='21.5' cy='13' r='3.4' fill='%23FCE3C4'/%3E%3C/svg%3E">
+<script src="/static/app.js?v={{ asset_v }}" defer></script>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
-<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:p-2 focus:bg-white">Skip to content</a>
-<header class="bg-white border-b border-slate-200">
-  <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-4">
-    <a href="/inbox" class="flex items-center gap-2 font-semibold text-lg text-teal-800">
-      <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M2 12h6M16 12h6" stroke="currentColor" stroke-width="2"/></svg>
-      RetiLink</a>
-    <span class="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">Research prototype · not for clinical use</span>
-    {% if user %}
-    <nav class="flex gap-3 text-sm" aria-label="Main">
-      <a class="nav" href="/inbox">Action inbox</a>
-      {% if user.role in ('operator','referring') %}<a class="nav" href="/cases/new">New case</a>{% endif %}
-      <a class="nav" href="/evidence">Evidence</a>
-      <a class="nav" href="/analytics">Analytics</a>
-      <a class="nav" href="/settings">Preferences</a>
+<body>
+<a href="#main" class="skip">Skip to content</a>
+{% if user %}
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="/inbox"><svg aria-hidden="true"><use href="/static/icons.svg#i-logo"/></svg>RetiLink</a>
+    <nav class="nav" aria-label="Main">
+      <a href="/inbox" {% if active == 'inbox' %}aria-current="page"{% endif %}>{{ icon('inbox') }}Inbox{% if open_tasks %}<span class="count" aria-label="{{ open_tasks }} open tasks">{{ open_tasks }}</span>{% endif %}</a>
+      {% if user.role in ('operator', 'referring') %}<a href="/cases/new" {% if active == 'new' %}aria-current="page"{% endif %}>{{ icon('plus') }}New screening</a>{% endif %}
+      <a href="/try" {% if active == 'try' %}aria-current="page"{% endif %}>{{ icon('flask') }}Try an image</a>
+      <a href="/evidence" {% if active == 'evidence' %}aria-current="page"{% endif %}>{{ icon('book') }}Evidence</a>
+      <a href="/analytics" {% if active == 'analytics' %}aria-current="page"{% endif %}>{{ icon('chart') }}Analytics</a>
+      <a href="/settings" {% if active == 'settings' %}aria-current="page"{% endif %}>{{ icon('sliders') }}Notifications</a>
     </nav>
-    <div class="ml-auto flex items-center gap-3 text-sm">
-      <span class="text-xs px-2 py-0.5 rounded border {{ 'bg-emerald-50 border-emerald-300 text-emerald-900' if vision_mode=='live' else 'bg-rose-50 border-rose-300 text-rose-900' }}">Vision model: {{ vision_mode|upper }}</span>
-      <a href="/notifications" class="relative" aria-label="Notifications, {{ unread }} unread">🔔{% if unread %}<span class="absolute -top-2 -right-3 text-[10px] bg-rose-600 text-white rounded-full px-1.5">{{ unread }}</span>{% endif %}</a>
-      <span><strong>{{ user.name }}</strong> <span class="text-slate-500">· {{ user.role }}{% if user.specialty %} · {{ user.specialty }}{% endif %}</span></span>
-      <a class="underline" href="/login">Switch user</a>
+    <div class="side-foot">
+      <div class="who">{{ avatar(user) }}<div><div class="name">{{ user.name }}</div><div class="role">{{ role_label(user) }}</div></div></div>
+      <a href="/login">{{ icon('switch', 'ico-sm') }}Switch account</a>
     </div>
-    {% endif %}
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="crumbs">{% block crumbs %}{% endblock %}</div>
+      <div class="right">
+        <span class="svc {{ vision_mode }}" title="{{ 'Trained models are online' if vision_mode == 'live' else 'Model worker offline: outputs are simulated and labelled as such' }}">Vision model {{ 'live' if vision_mode == 'live' else 'simulated' }}</span>
+        <a class="bell" href="/notifications" aria-label="Notifications{% if unread %}, {{ unread }} unread{% endif %}">{{ icon('bell') }}{% if unread %}<span class="dot">{{ unread }}</span>{% endif %}</a>
+      </div>
+    </header>
+    <main id="main" class="content">
+      {% if msg %}<div class="toast" role="status">{{ icon('check') }}{{ msg }}</div>{% endif %}
+      {% block content %}{% endblock %}
+    </main>
+    <p class="disclaimer">Research prototype for HackGT 13. Patients are synthetic and workflow analytics are simulated. Model outputs estimate mBRSET dataset labels for clinician review; they are not diagnoses.</p>
   </div>
-</header>
-<main id="main" class="max-w-7xl mx-auto px-4 py-6">
-{% block content %}{% endblock %}
-</main>
-<footer class="max-w-7xl mx-auto px-4 pb-8 text-xs text-slate-500">
-RetiLink · HackGT 13 · Synthetic patients and simulated workflow data. Model outputs estimate mBRSET dataset labels for clinician review and are not diagnoses.
-</footer>
+</div>
+{% else %}
+<main id="main">{% block bare %}{% endblock %}</main>
+{% endif %}
 </body>
 </html>

@@ -1,3 +1,13 @@
-{% extends "base.html" %}{% block content %}
-<h1 class="text-2xl font-semibold mb-4">Notifications</h1>
-<div class="card">{% for n in ns %}<div class="flex gap-3 py-2 border-b text-sm {{ '' if n.read else 'font-semibold' }}"><span class="text-slate-500 w-48">{{ n.created_at|dt }}</span><a class="underline" href="{{ n.link }}">{{ n.body }}</a>{% if n.digest %}<span class="pill st-na">digest</span>{% endif %}</div>{% else %}<p class="text-slate-500">No notifications.</p>{% endfor %}</div>{% endblock %}
+{% extends "base.html" %}{% from "_ui.html" import icon, empty %}
+{% block title %}Notifications | RetiLink{% endblock %}
+{% block crumbs %}Notifications{% endblock %}
+{% block content %}
+<div class="head"><div><h1>Notifications</h1><p class="sub">Links only. Open the item to see clinical details.</p></div><a class="btn quiet" href="/settings">{{ icon('sliders') }}Preferences</a></div>
+<section class="panel">
+{% if ns %}
+  <div class="table-wrap"><table class="table"><tbody>
+  {% for n in ns %}<tr><td style="width:1%">{% if not n.read %}<span class="tag info">New</span>{% endif %}</td><td><a class="primary" href="{{ n.link }}">{{ n.body }}</a>{% if n.digest %} <span class="tag outline">Digest</span>{% endif %}</td><td class="muted small" style="text-align:right;white-space:nowrap">{{ n.created_at|dt }}</td></tr>{% endfor %}
+  </tbody></table></div>
+{% else %}{{ empty('bell', 'No notifications yet.') }}{% endif %}
+</section>
+{% endblock %}

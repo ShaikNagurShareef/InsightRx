@@ -1,84 +1,133 @@
-{% extends "base.html" %}{% block title %}RL-{{ ref.id }} · RetiLink{% endblock %}{% block content %}
+{% extends "base.html" %}{% from "_ui.html" import icon, stage, relay, empty %}
+{% block title %}Consultation RL-{{ ref.id }} | RetiLink{% endblock %}
+{% block crumbs %}<a href="/inbox">Inbox</a> / Consultation RL-{{ ref.id }}{% endblock %}
+{% block content %}
 {% set p = ref.package %}
-<div class="flex flex-wrap items-center gap-3 mb-4">
-  <h1 class="text-2xl font-semibold">Consultation RL-{{ ref.id }}</h1>
-  <span class="pill st-na text-base">{{ ref.stage }}</span>
-  <span class="text-sm text-slate-600">{{ ref.sender.name }} → {{ ref.recipient.name }} ({{ ref.recipient.specialty }}) · accountable now: <strong>{{ ref.owner.name }}</strong></span>
-  {% if msg %}<span class="pill st-warn" role="status">{{ msg }}</span>{% endif %}
+{% set finished = ref.stage in ('Closed', 'Declined', 'Cancelled', 'Unreachable', 'Patient declined') %}
+<div class="head" style="margin-bottom:var(--s4)">
+  <div>
+    <p class="eyebrow">{{ SYSTEMIC_LABELS.get(ref.topic, 'Diabetic retinopathy') }} consultation for <a href="/cases/{{ ref.case_id }}">{{ ref.case.patient.ref }}</a></p>
+    <h1 class="row" style="gap:12px">RL-{{ ref.id }} {{ stage(ref.stage) }}</h1>
+    <p class="sub">From {{ ref.sender.name }} to {{ ref.recipient.name }}, {{ ref.recipient.specialty }}. Sent {{ ref.sent_at|dt }}.</p>
+  </div>
 </div>
-<ol class="flex flex-wrap gap-1 text-xs mb-5" aria-label="Referral progress">
-{% for s in ['Sent','Acknowledged','Scheduled','Visit recorded','Response received','Closed'] %}
-<li class="pill {{ 'st-neg' if s==ref.stage else 'st-na' }}">{{ s }}</li>{% endfor %}
-<li class="text-slate-500 ml-2">Sent {{ ref.sent_at|dt }} · Opened {{ ref.opened_at|dt }} · Acknowledged {{ ref.acknowledged_at|dt }}{% if ref.due_at and ref.stage=='Sent' %} · ack due {{ ref.due_at|dt }} (SIMULATED){% endif %}</li></ol>
+<div class="panel" style="padding:6px 10px;margin-bottom:var(--s5)">{{ relay(legs) }}</div>
 
-<div class="grid lg:grid-cols-5 gap-5">
-<section class="card lg:col-span-3" aria-labelledby="pkg-h">
-  <h2 id="pkg-h" class="font-semibold">Signed consultation package <span class="text-xs font-normal text-slate-500">hash {{ ref.package_hash[:16] }}…</span></h2>
-  <p class="mt-2"><strong>Question:</strong> {{ ref.question }}</p>
-  <ul class="text-sm space-y-1 my-2">{% for f in p.facts %}<li>• {{ f.text }} <span class="text-xs text-slate-400">[{{ f.source }}]</span></li>{% endfor %}</ul>
-  {% if p.gaps %}<p class="text-sm font-semibold">Gaps</p><ul class="text-sm text-amber-800">{% for g in p.gaps %}<li>• {{ g }}</li>{% endfor %}</ul>{% endif %}
-  {% if p.unavailable %}<p class="text-sm"><strong>Marked unavailable by sender:</strong> {{ p.unavailable }}</p>{% endif %}
-  {% if p.sender_note %}<p class="text-sm"><strong>Note:</strong> {{ p.sender_note }}</p>{% endif %}
-  <div class="grid grid-cols-4 gap-2 my-3">{% for im in imgs %}<a href="/images/{{ im.id }}" target="_blank"><img src="/images/{{ im.id }}" alt="Shared fundus image {{ im.laterality }}" class="rounded bg-black aspect-square object-contain"><span class="text-xs">{{ im.laterality }}</span></a>{% endfor %}</div>
-  <details><summary class="text-sm font-semibold cursor-pointer">Evidence brief & limitations</summary>
-    <p class="text-sm mt-2">{{ p.evidence.answer }}</p>
-    <ol class="text-xs list-decimal ml-5">{% for r in p.evidence.references %}<li><a class="underline" href="{{ r.url }}" target="_blank" rel="noopener">{{ r.title }}</a> ({{ r.publisher }})</li>{% endfor %}</ol>
-    <ul class="text-xs text-slate-600 mt-2">{% for l in p.limitations %}<li>• {{ l }}</li>{% endfor %}</ul></details>
-  <p class="text-sm mt-3"><a class="underline" href="/cases/{{ ref.case_id }}">Open case workspace</a></p>
-</section>
-
-<section class="lg:col-span-2 space-y-4">
-  <div class="card"><h2 class="font-semibold mb-2">Conversation</h2>
-  {% for m in msgs %}<div class="border-b py-2 text-sm"><div class="text-xs text-slate-500">{{ m.author.name }} · {{ m.created_at|dt }} · {{ m.kind|replace('_',' ') }}</div>
-    <p>{{ m.body }}</p>{% if m.recommendation %}<p><span class="pill tag-hcp">Recommendation: {{ m.recommendation }}</span></p>{% endif %}
-    {% if m.signature %}<p class="text-xs text-emerald-700">✔ Signed · {{ m.signature[:16] }}… (immutable)</p>{% endif %}</div>
-  {% else %}<p class="text-sm text-slate-500">No messages yet.</p>{% endfor %}</div>
-
-  <div class="card space-y-3"><h2 class="font-semibold">Actions</h2>
-  {% if user.id == ref.recipient_id %}
-    {% if ref.stage in ('Sent','Needs information') %}
-    <form method="post" action="/referrals/{{ ref.id }}/action"><input type="hidden" name="action" value="acknowledge"><button class="btn">Accept case</button> <span class="text-xs text-slate-500">Delivery/opening is not acknowledgement.</span></form>
-    <form method="post" action="/referrals/{{ ref.id }}/action" class="space-y-1"><input type="hidden" name="action" value="request_info"><label class="lbl" for="ri">Request more information</label><textarea id="ri" name="body" class="inp" rows="2"></textarea><button class="btn btn-sec">Send request</button></form>
-    <form method="post" action="/referrals/{{ ref.id }}/action" class="space-y-1"><input type="hidden" name="action" value="decline"><label class="lbl" for="dr">Decline (reason required)</label><input id="dr" name="body" class="inp"><button class="btn btn-warn">Decline</button></form>
+<div class="workspace" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)">
+  <div class="stack-lg">
+    {# ---------------- the one thing this person should do next #}
+    {% set is_rec = user.id == ref.recipient_id %}{% set is_send = user.id == ref.sender_id %}{% set is_coord = user.role == 'coordinator' %}
+    {% if not finished %}
+    <section class="next-action" aria-labelledby="na-h">
+      <h2 id="na-h">{{ icon('clock') }}{% if user.id == ref.owner_id %}Your next action{% else %}Next action is with {{ ref.owner.name }}{% endif %}</h2>
+      <div class="stack" style="margin-top:var(--s3)">
+      {% if is_rec and ref.stage in ('Sent', 'Needs information') %}
+        <p class="small">Opening a consultation is not the same as accepting it. Accept it, ask for what is missing, or decline with a reason.</p>
+        <form method="post" action="/referrals/{{ ref.id }}/action"><input type="hidden" name="action" value="acknowledge"><button class="btn">{{ icon('check') }}Accept consultation</button></form>
+        <details><summary class="small">Ask for more information</summary><form method="post" action="/referrals/{{ ref.id }}/action" class="stack" style="margin-top:8px"><input type="hidden" name="action" value="request_info"><textarea name="body" rows="2" required aria-label="What information you need"></textarea><div><button class="btn quiet sm">Send request</button></div></form></details>
+        <details><summary class="small">Decline</summary><form method="post" action="/referrals/{{ ref.id }}/action" class="stack" style="margin-top:8px"><input type="hidden" name="action" value="decline"><input name="body" required placeholder="Reason" aria-label="Reason for declining"><div><button class="btn danger sm">Decline consultation</button></div></form></details>
+      {% elif is_rec and ref.stage in ('Acknowledged', 'Scheduled', 'Visit recorded') %}
+        <form method="post" action="/referrals/{{ ref.id }}/action" class="stack" data-busy="Signing">
+          <input type="hidden" name="action" value="respond">
+          <div class="field"><label for="resp">Your response to {{ ref.sender.name }}</label><textarea id="resp" name="body" rows="4" required></textarea></div>
+          <div class="field"><label for="rec">Recommended next step</label><select id="rec" name="recommendation" required><option value="">Choose</option><option>Specialist follow-up visit</option><option>Treatment evaluation at specialist clinic</option><option>Return to primary care with re-screen per local policy</option><option>Further tests requested (see response)</option><option>Refer to another specialty</option></select></div>
+          <label class="check"><input type="checkbox" name="attest" required><span>I sign this response. It cannot be edited afterwards.</span></label>
+          <div><button type="submit" class="btn"><span class="spin" aria-hidden="true"></span>{{ icon('shield') }}<span data-label>Sign and return response</span></button></div>
+        </form>
+      {% elif is_send and ref.stage == 'Needs information' %}
+        <form method="post" action="/referrals/{{ ref.id }}/action" class="stack"><input type="hidden" name="action" value="provide_info"><div class="field"><label for="pi">Information for {{ ref.recipient.name }}</label><textarea id="pi" name="body" rows="3" required></textarea></div><div><button class="btn">{{ icon('send') }}Send information</button></div></form>
+      {% elif is_send and ref.stage == 'Response received' %}
+        <p class="small">{{ ref.recipient.name }} has signed a response. Acknowledging it closes the handoff.</p>
+        <form method="post" action="/referrals/{{ ref.id }}/action"><input type="hidden" name="action" value="close"><button class="btn">{{ icon('check') }}Acknowledge response and close</button></form>
+      {% elif (is_coord or is_rec) and ref.stage in ('Acknowledged', 'Scheduled') %}
+        <form method="post" action="/referrals/{{ ref.id }}/action" class="stack">
+          <input type="hidden" name="action" value="schedule"><input type="hidden" name="body" value="rescheduled">
+          <div class="grid-2"><div class="field"><label for="d">Date</label><input id="d" type="date" name="date" required></div><div class="field"><label for="t">Time</label><input id="t" type="time" name="time"></div></div>
+          <div class="grid-2"><div class="field"><label for="tz">Time zone</label><input id="tz" name="tz" value="America/New_York"></div><div class="field"><label for="fac">Clinic</label><input id="fac" name="facility" placeholder="Eye clinic"></div></div>
+          <div class="field"><label for="conf">Confirmed by</label><input id="conf" name="confirmation" placeholder="Phone call with the patient"></div>
+          <div><button class="btn">{{ icon('calendar') }}{{ 'Reschedule' if ref.stage == 'Scheduled' else 'Book appointment' }}</button></div>
+        </form>
+        {% if ref.stage == 'Scheduled' %}
+        <div class="row">
+          <form method="post" action="/referrals/{{ ref.id }}/action"><input type="hidden" name="action" value="visit"><button class="btn quiet">Visit happened</button></form>
+          <form method="post" action="/referrals/{{ ref.id }}/action" class="row"><input type="hidden" name="action" value="missed"><input name="body" placeholder="Reason" aria-label="Why the appointment was missed" style="width:180px"><button class="btn quiet">Missed or cancelled</button></form>
+        </div>{% endif %}
+      {% else %}
+        <p class="small">You are following this consultation. {{ ref.owner.name }} is responsible for the next step.</p>
+      {% endif %}
+      </div>
+    </section>
+    {% else %}
+    <div class="note {{ '' if ref.stage == 'Closed' else 'warn' }}">{{ icon('check' if ref.stage == 'Closed' else 'alert') }}<span>{% if ref.stage == 'Closed' %}Handoff complete: the specialist signed a response and the referring clinician acknowledged it.{% else %}Closed as {{ ref.stage|lower }}. This does not count as completed care.{% endif %}{% if ref.stage == 'Declined' and is_send %} <a href="/cases/{{ ref.case_id }}?tab=consult&topic={{ ref.topic }}&question={{ ref.question|urlencode }}">Send to another specialist</a>.{% endif %}</span></div>
     {% endif %}
-    {% if ref.stage in ('Acknowledged','Scheduled','Visit recorded') %}
-    <form method="post" action="/referrals/{{ ref.id }}/action" class="space-y-1"><input type="hidden" name="action" value="respond">
-      <label class="lbl" for="resp">Signed specialist response</label><textarea id="resp" name="body" class="inp" rows="4" required></textarea>
-      <label class="lbl" for="rec">Recommended next action</label><select id="rec" name="recommendation" class="inp" required><option value="">- choose -</option><option>Specialist follow-up visit</option><option>Treatment evaluation at specialist clinic</option><option>Return to primary care with re-screen per local policy</option><option>Further tests requested (see response)</option><option>Refer to another specialty</option></select>
-      <label class="text-sm block"><input type="checkbox" name="attest" required> I sign this response; it cannot be edited afterwards.</label>
-      <button class="btn">Sign and return response</button></form>{% endif %}
-  {% endif %}
-  {% if user.id == ref.sender_id %}
-    {% if ref.stage == 'Needs information' %}<form method="post" action="/referrals/{{ ref.id }}/action" class="space-y-1"><input type="hidden" name="action" value="provide_info"><label class="lbl" for="pi">Provide requested information</label><textarea id="pi" name="body" class="inp" rows="2" required></textarea><button class="btn">Send information</button></form>{% endif %}
-    {% if ref.stage == 'Response received' %}<form method="post" action="/referrals/{{ ref.id }}/action"><input type="hidden" name="action" value="close"><button class="btn">Acknowledge response and close handoff</button></form>{% endif %}
-    {% if ref.stage == 'Declined' %}<a class="btn" href="/cases/{{ ref.case_id }}?tab=consult&topic={{ ref.topic }}&question={{ ref.question|urlencode }}">Send to another specialist</a>{% endif %}
-    {% if 'Cancelled' in allowed %}<form method="post" action="/referrals/{{ ref.id }}/action" class="flex gap-1"><input type="hidden" name="action" value="cancel"><input name="body" class="inp" placeholder="Reason"><button class="btn btn-sec">Cancel</button></form>{% endif %}
-  {% endif %}
-  {% if user.role == 'coordinator' or user.id == ref.recipient_id %}
-    {% if ref.stage in ('Acknowledged','Scheduled') %}
-    <form method="post" action="/referrals/{{ ref.id }}/action" class="grid grid-cols-2 gap-1"><input type="hidden" name="action" value="schedule">
-      <label class="text-xs">Date<input type="date" name="date" class="inp" required></label><label class="text-xs">Time<input type="time" name="time" class="inp"></label>
-      <label class="text-xs">Timezone<input name="tz" class="inp" value="America/New_York"></label><label class="text-xs">Facility<input name="facility" class="inp"></label>
-      <label class="text-xs col-span-2">Confirmation source<input name="confirmation" class="inp" placeholder="phone call with patient"></label>
-      <input type="hidden" name="body" value="rescheduled"><button class="btn col-span-2">{{ 'Reschedule' if ref.stage=='Scheduled' else 'Record appointment' }}</button></form>{% endif %}
-    {% if ref.stage == 'Scheduled' %}
-    <form method="post" action="/referrals/{{ ref.id }}/action" class="inline"><input type="hidden" name="action" value="visit"><button class="btn btn-sec">Visit recorded</button></form>
-    <form method="post" action="/referrals/{{ ref.id }}/action" class="flex gap-1 mt-1"><input type="hidden" name="action" value="missed"><input name="body" class="inp" placeholder="missed / cancelled reason"><button class="btn btn-sec">Missed</button></form>{% endif %}
-  {% endif %}
-  {% if (user.role == 'coordinator' or user.id == ref.sender_id) and ref.stage in ('Acknowledged','Scheduled') %}
-    <form method="post" action="/referrals/{{ ref.id }}/action" class="flex gap-1"><select name="action" class="inp"><option value="unreachable">Patient unreachable</option><option value="patient_declined">Patient declined</option></select><input name="body" class="inp" placeholder="note"><button class="btn btn-sec">Record disposition</button></form>{% endif %}
-  {% if ref.stage not in ('Closed','Declined','Cancelled','Unreachable','Patient declined') and (user.role=='coordinator' or user.id==ref.sender_id) %}
-    <form method="post" action="/referrals/{{ ref.id }}/action" class="flex gap-1"><input type="hidden" name="action" value="reassign_owner"><select name="owner_id" class="inp">{% for c in coords %}<option value="{{ c.id }}">{{ c.name }} (coordinator)</option>{% endfor %}<option value="{{ ref.recipient_id }}">{{ ref.recipient.name }} (specialist)</option><option value="{{ ref.sender_id }}">{{ ref.sender.name }} (referrer)</option></select><button class="btn btn-sec">Reassign owner</button></form>{% endif %}
+
+    <section class="panel" aria-labelledby="pkg-h">
+      <div class="panel-head"><h2 id="pkg-h">Signed package</h2><span class="hint">Fingerprint {{ ref.package_hash[:12] }}</span></div>
+      <div class="panel-body stack package">
+        <p><strong>{{ ref.question }}</strong></p>
+        <ul style="padding-left:18px;margin:0">{% for f in p.facts %}<li>{{ f.text }} <span class="src">({{ f.source }})</span></li>{% endfor %}</ul>
+        {% if p.gaps %}<div class="note warn">{{ icon('alert') }}<span>{% for g in p.gaps %}{{ g }}{{ ' ' if not loop.last }}{% endfor %}</span></div>{% endif %}
+        {% if p.unavailable %}<p class="small"><strong>Marked unavailable:</strong> {{ p.unavailable }}</p>{% endif %}
+        {% if p.sender_note %}<p class="small"><strong>Note from {{ ref.sender.name }}:</strong> {{ p.sender_note }}</p>{% endif %}
+        {% if imgs %}<div class="thumbs">{% for im in imgs %}<a href="/images/{{ im.id }}" target="_blank" rel="noopener" style="display:block"><img src="/images/{{ im.id }}?w=240" alt="Shared photo, {{ 'right eye' if im.laterality == 'OD' else 'left eye' if im.laterality == 'OS' else 'eye not confirmed' }}" width="96" height="96" loading="lazy" style="width:96px;height:96px;border-radius:8px;background:#05080b;object-fit:cover"></a>{% endfor %}</div>{% endif %}
+        <details class="small"><summary>Evidence and limitations</summary>
+          <p style="margin-top:8px">{{ p.evidence.answer }}</p>
+          <ol class="xs muted" style="padding-left:18px">{% for r in p.evidence.references %}<li><a href="{{ r.url }}" target="_blank" rel="noopener">{{ r.title }}</a>, {{ r.publisher }}</li>{% endfor %}</ol>
+          <ul class="xs muted" style="padding-left:18px">{% for l in p.limitations %}<li>{{ l }}</li>{% endfor %}</ul>
+        </details>
+      </div>
+    </section>
   </div>
 
-  {% if user.role in ('coordinator','referring') or user.id == ref.recipient_id %}
-  <div class="card"><h2 class="font-semibold mb-1">Access barriers</h2><p class="text-xs text-slate-500 mb-2">Voluntary; tracked for support, never lowers medical priority.</p>
-    {% for b in barriers %}<div class="flex items-center gap-2 text-sm py-1"><span class="pill {{ 'st-neg' if b.resolved else 'st-warn' }}">{{ b.category }}</span>{{ b.note }}{% if not b.resolved %}<form method="post" action="/barriers/{{ b.id }}/resolve" class="ml-auto"><button class="btn btn-sec !py-0 text-xs">Resolved</button></form>{% endif %}</div>{% endfor %}
-    {% if user.role in ('coordinator','referring') %}<form method="post" action="/referrals/{{ ref.id }}/barriers" class="flex gap-1 mt-2"><select name="category" class="inp !w-36">{% for c in ['transport','language','affordability','contact','preference','other'] %}<option>{{ c }}</option>{% endfor %}</select><input name="note" class="inp" placeholder="note"><button class="btn btn-sec">Add</button></form>{% endif %}
-  </div>{% endif %}
+  <div class="stack-lg">
+    <section class="panel panel-pad" aria-labelledby="tl-h">
+      <h2 id="tl-h" style="margin-bottom:var(--s4)">Handoff</h2>
+      {% set order = ['Sent', 'Acknowledged', 'Scheduled', 'Visit recorded', 'Response received', 'Closed'] %}
+      {% set cur = order.index(ref.stage) if ref.stage in order else -1 %}
+      <ol class="timeline">
+        {% for s in order %}{% set i = loop.index0 %}
+        <li><span class="pip {{ 'done' if i < cur or (i == cur and s == 'Closed') else 'now' if i == cur else '' }}"></span>
+          <div class="what">{{ s }}</div>
+          <div class="when">{% if s == 'Sent' %}{{ ref.sent_at|dt }}{% if ref.opened_at %}; opened {{ ref.opened_at|dt }}{% endif %}{% elif s == 'Acknowledged' and ref.acknowledged_at %}{{ ref.acknowledged_at|dt }}{% elif s == 'Scheduled' and ref.appointment.get('date') %}{{ ref.appointment.date }} {{ ref.appointment.time }} {{ ref.appointment.timezone }}, {{ ref.appointment.facility }}{% elif s == 'Sent' %}{% elif i > cur %}Pending{% endif %}</div></li>
+        {% endfor %}
+      </ol>
+      {% if ref.stage == 'Sent' and ref.due_at %}<p class="xs muted">Acceptance expected by {{ ref.due_at|dt }} (simulated demo rule).</p>{% endif %}
+    </section>
 
-  <div class="card"><h2 class="font-semibold mb-1">Tasks</h2>{% for t in tasks %}<div class="text-sm py-0.5"><span class="pill {{ 'st-neg' if t.status=='done' else 'st-na' if t.status=='cancelled' else 'st-pos' if is_overdue(t.due_at) else 'st-warn' }}">{{ t.status }}</span> {{ t.title }} · {{ t.assignee.name }}</div>{% endfor %}
-  {% if ref.appointment.get('date') %}<p class="text-sm mt-2">Appointment: {{ ref.appointment.date }} {{ ref.appointment.time }} {{ ref.appointment.timezone }} @ {{ ref.appointment.facility }} ({{ ref.appointment.confirmation }})</p>{% endif %}
-  {% if ref.appointment.get('history') %}<p class="text-xs text-slate-500">History: {% for h in ref.appointment.history %}{{ h.date }} ({{ h.reason }}); {% endfor %}</p>{% endif %}</div>
-</section></div>
+    <section class="panel" aria-labelledby="cv-h">
+      <div class="panel-head"><h2 id="cv-h">Conversation</h2></div>
+      <div class="panel-body stack">
+      {% for m in msgs %}
+        <div class="msg {{ m.kind }}">
+          <div class="meta">{{ m.author.name }}, {{ m.created_at|dt }}, {{ m.kind|replace('_', ' ') }}</div>
+          <p class="small" style="margin-top:2px">{{ m.body }}</p>
+          {% if m.recommendation %}<p style="margin-top:6px"><span class="tag hcp">Recommends: {{ m.recommendation }}</span></p>{% endif %}
+          {% if m.signature %}<p class="xs" style="color:var(--clear);margin-top:4px">{{ icon('shield', 'ico-sm') }} Signed, cannot be edited</p>{% endif %}
+        </div>
+      {% else %}<p class="small muted">No messages yet.</p>{% endfor %}
+      </div>
+    </section>
+
+    {% if user.role in ('coordinator', 'referring') or user.id == ref.recipient_id %}
+    <section class="panel" aria-labelledby="br-h">
+      <div class="panel-head"><h2 id="br-h">Access barriers</h2><span class="hint">Tracked for support; never lowers priority</span></div>
+      <div class="panel-body stack">
+        {% for b in barriers %}<div class="row-between"><span class="row"><span class="tag {{ 'clear' if b.resolved else 'caution' }}">{{ b.category|capitalize }}{{ ', resolved' if b.resolved }}</span><span class="small">{{ b.note }}</span></span>{% if not b.resolved %}<form method="post" action="/barriers/{{ b.id }}/resolve"><button class="btn quiet sm">Mark resolved</button></form>{% endif %}</div>{% else %}<p class="small muted">No barriers recorded.</p>{% endfor %}
+        {% if user.role in ('coordinator', 'referring') and not finished %}
+        <form method="post" action="/referrals/{{ ref.id }}/barriers" class="row"><select name="category" aria-label="Barrier type" style="width:auto">{% for c in ['transport', 'language', 'affordability', 'contact', 'preference', 'other'] %}<option>{{ c }}</option>{% endfor %}</select><input name="note" placeholder="Details" aria-label="Barrier details" style="flex:1;min-width:140px"><button class="btn quiet sm">Add</button></form>{% endif %}
+      </div>
+    </section>
+    {% endif %}
+
+    {% if not finished and (is_coord or is_send) %}
+    <details class="panel panel-pad"><summary class="small"><strong>Other outcomes and ownership</strong></summary>
+      <div class="stack" style="margin-top:var(--s3)">
+        {% if ref.stage in ('Acknowledged', 'Scheduled') %}<form method="post" action="/referrals/{{ ref.id }}/action" class="row"><select name="action" aria-label="Outcome" style="width:auto"><option value="unreachable">Patient unreachable</option><option value="patient_declined">Patient declined</option></select><input name="body" placeholder="Note" aria-label="Note" style="flex:1"><button class="btn quiet sm">Record outcome</button></form>{% endif %}
+        <form method="post" action="/referrals/{{ ref.id }}/action" class="row"><input type="hidden" name="action" value="reassign_owner"><select name="owner_id" aria-label="New owner" style="flex:1">{% for c in coords %}<option value="{{ c.id }}">{{ c.name }}, coordinator</option>{% endfor %}<option value="{{ ref.recipient_id }}">{{ ref.recipient.name }}, specialist</option><option value="{{ ref.sender_id }}">{{ ref.sender.name }}, referrer</option></select><button class="btn quiet sm">Reassign</button></form>
+        {% if is_send and 'Cancelled' in allowed %}<form method="post" action="/referrals/{{ ref.id }}/action" class="row"><input type="hidden" name="action" value="cancel"><input name="body" placeholder="Reason" aria-label="Reason for cancelling" style="flex:1"><button class="btn danger sm">Cancel consultation</button></form>{% endif %}
+      </div>
+    </details>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}

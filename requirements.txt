@@ -9,3 +9,4 @@ pillow==12.3.0
 numpy==2.2.6
 httpx==0.28.1
 google-genai==2.25.0
+tzdata==2025.2

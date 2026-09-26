@@ -7,6 +7,7 @@ import secrets
 import uuid
 from collections import Counter
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.exception_handlers import http_exception_handler
@@ -42,22 +43,61 @@ if os.environ.get("RETILINK_AUTOSEED", "1") == "1":         # fresh database -> 
 app = FastAPI(title="RetiLink")
 app.add_middleware(SessionMiddleware, secret_key=os.environ.get("RETILINK_SECRET", secrets.token_hex(16)),
                    same_site="lax")
-app.mount("/static", StaticFiles(directory=os.path.join(HERE, "static")), name="static")
-templates = Jinja2Templates(directory=os.path.join(HERE, "templates"))
-templates.env.globals.update(ICDR_NAMES=ICDR_NAMES, SYSTEMIC_LABELS=SYSTEMIC_LABELS, COMPOSITE_LABELS=COMPOSITE_LABELS,
-                             META_LABELS=META_LABELS, is_overdue=wf.is_overdue)
+# static assets live in public/static so Vercel serves them from its CDN; locally FastAPI serves the same files
+STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(HERE)), "public", "static")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+ASSET_V = hashlib.sha1(b"".join(open(os.path.join(STATIC_DIR, f), "rb").read()
+                                for f in ("app.css", "app.js", "icons.svg"))).hexdigest()[:8]
+TZ = ZoneInfo(os.environ.get("RETILINK_TZ", "America/New_York"))
+ROLE_LABELS = {"operator": "Screening operator", "referring": "Referring clinician", "specialist": "Specialist",
+               "coordinator": "Care coordinator", "admin": "Administrator"}
+
+
+def role_label(u):
+    base = ROLE_LABELS.get(u.role, u.role)
+    return f"{base}, {u.specialty}" if u.specialty and u.specialty.lower() not in base.lower() else base
+
+
+def _aware(d):
+    from datetime import timezone
+    return d.replace(tzinfo=timezone.utc) if d.tzinfo is None else d
 
 
 def fmt_dt(d):
     if not d:
-        return "-"
-    if d.tzinfo is None:
-        from datetime import timezone
-        d = d.replace(tzinfo=timezone.utc)
-    return d.astimezone().strftime("%d %b %Y %H:%M %Z")
+        return "Not yet"
+    return _aware(d).astimezone(TZ).strftime("%b %-d, %-I:%M %p %Z")
 
 
+def fmt_due(d):
+    delta = _aware(d) - now()
+    hrs = delta.total_seconds() / 3600
+    if hrs < 0:
+        return "Overdue"
+    return f"Due in {int(hrs)} h" if hrs < 48 else f"Due {fmt_dt(d)}"
+
+
+templates = Jinja2Templates(directory=os.path.join(HERE, "templates"))
+templates.env.globals.update(ICDR_NAMES=ICDR_NAMES, SYSTEMIC_LABELS=SYSTEMIC_LABELS, COMPOSITE_LABELS=COMPOSITE_LABELS,
+                             META_LABELS=META_LABELS, is_overdue=wf.is_overdue, asset_v=ASSET_V, role_label=role_label)
 templates.env.filters["dt"] = fmt_dt
+templates.env.filters["due"] = fmt_due
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    resp = await call_next(request)
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
+    resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    resp.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    resp.headers.setdefault("Content-Security-Policy",
+                            "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; "
+                            "script-src 'self'; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; "
+                            "base-uri 'self'; form-action 'self'; object-src 'none'")
+    if request.url.path.startswith("/static/"):
+        resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return resp
 
 
 class LoginRequired(Exception):
@@ -119,7 +159,10 @@ def referral_for(db: Session, user: User, rid: int) -> Referral:
 
 def ctx(request, user, db, **kw):
     unread = db.query(Notification).filter(Notification.user_id == user.id, Notification.read.is_(False)).count()
-    return {"user": user, "unread": unread, "vision_mode": get_service().mode, **kw}
+    open_tasks = db.query(Task).filter(Task.assignee_id == user.id, Task.status == "open").count()
+    base = {"user": user, "unread": unread, "open_tasks": open_tasks, "vision_mode": get_service().mode,
+            "msg": request.query_params.get("msg", ""), "active": ""}
+    return {**base, **kw}
 
 
 # ------------------------------------------------------------------ login
@@ -173,9 +216,19 @@ def inbox(request: Request, filter: str = "", user: User = Depends(current_user)
         cases = []
     if filter == "incomplete":
         cases = [c for c in cases if c.status in ("Draft", "Images ready", "Unable to assess")]
-    case_tasks = Counter(t.case_id for t in tasks)
-    return templates.TemplateResponse(request, "inbox.html", ctx(request, user, db, tasks=tasks, refs=refs, cases=cases,
-                                                                   case_tasks=case_tasks, filter=filter))
+    results = {}
+    if cases:
+        for r in db.scalars(select(ModelRun).where(ModelRun.case_id.in_([c.id for c in cases]), ModelRun.status == "completed")
+                            .order_by(ModelRun.id)):
+            results[r.case_id] = (r.result or {}).get("overall")
+    hour = datetime.now(TZ).hour
+    greeting = "Good morning" if hour < 12 else "Good afternoon" if hour < 18 else "Good evening"
+    awaiting = sum(r.stage in ("Sent", "Needs information") and (user.role != "specialist" or r.recipient_id == user.id)
+                   for r in refs)
+    return templates.TemplateResponse(request, "inbox.html", ctx(
+        request, user, db, tasks=tasks, refs=refs, cases=cases, filter=filter, results=results, greeting=greeting,
+        overdue=sum(wf.is_overdue(t.due_at) for t in tasks), awaiting=awaiting,
+        in_review=sum(c.status == "HCP review" for c in cases), active="inbox"))
 
 
 # ------------------------------------------------------------------ case creation (FR01, FR02)
@@ -185,7 +238,8 @@ def new_case_page(request: Request, user: User = Depends(current_user), db: Sess
     hcps = db.scalars(select(User).where(User.tenant_id == user.tenant_id, User.role == "referring")).all()
     patients = db.scalars(select(Patient).where(Patient.tenant_id == user.tenant_id)).all()
     return templates.TemplateResponse(request, "case_new.html", ctx(request, user, db, hcps=hcps, patients=patients,
-                                                                      conditions=SYSTEMIC_LABELS))
+                                                                      conditions=SYSTEMIC_LABELS, active="new",
+                                                                      today=datetime.now(TZ).date().isoformat()))
 
 
 @app.post("/cases")
@@ -218,8 +272,32 @@ async def create_case(request: Request, user: User = Depends(current_user), db: 
     db.flush()
     wf.audit(db, user.tenant_id, case.id, user.id, "case_created",
              f"patient {patient.ref}" + (f"; WARNING duplicate encounter of case #{dup.id} (not merged)" if dup else ""), 1)
+    # photos attached in the same step (validated before anything is stored)
+    blobs = []
+    for eye in ("OD", "OS"):
+        for uf in f.getlist(f"files_{eye}"):
+            if hasattr(uf, "read") and getattr(uf, "filename", ""):
+                data = await uf.read()
+                if data:
+                    blobs.append((eye, data, _validate_upload(data)))
+    if len(blobs) > MAX_IMAGES:
+        wf.error(413, "too_many_images", f"At most {MAX_IMAGES} images per case.")
+    seen = set()
+    for eye, data, img in blobs:
+        sha, path = _store(case, data, img)
+        if sha in seen:
+            continue
+        seen.add(sha)
+        db.add(Image(tenant_id=case.tenant_id, case_id=case.id, sha256=sha, path=path, laterality=eye,
+                     view="macula-centred", source=case.device, width=img.size[0], height=img.size[1],
+                     uploaded_by=user.id, data=None if path else data))
+    if seen:
+        case.status = "Images ready"
+        wf.bump_version(db, case, user, f"{len(seen)} image(s) uploaded at intake")
+        db.flush()
+        run_analysis(db, case, user)
     db.commit()
-    return RedirectResponse(f"/cases/{case.id}", 303)
+    return RedirectResponse(f"/cases/{case.id}" + ("?msg=Case+created+and+analysed" if seen else "?msg=Case+created"), 303)
 
 
 @app.post("/cases/{case_id}/intake")
@@ -348,12 +426,39 @@ async def recapture(image_id: int, file: UploadFile = File(...), user: User = De
     return RedirectResponse(f"/cases/{case.id}", 303)
 
 
+THUMB_WIDTHS = (160, 240, 900)
+
+
+def thumbnail(src: bytes, w: int) -> bytes:
+    from .vision import _to_rgb
+    img = PILImage.open(io.BytesIO(src))
+    img.draft("RGB", (w * 2, w * 2))
+    img = _to_rgb(img)
+    img.thumbnail((w, w), PILImage.LANCZOS)
+    out = io.BytesIO()
+    img.save(out, "JPEG", quality=82, optimize=True, progressive=True)
+    return out.getvalue()
+
+
 @app.get("/images/{image_id}")
-def image_file(image_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+def image_file(image_id: int, request: Request, w: int = 0, user: User = Depends(current_user),
+               db: Session = Depends(get_db)):
     im = db.get(Image, image_id)
     if not im:
         wf.error(404, "not_found", "Image not found.")
     case_for(db, user, im.case_id)
+    if w:
+        w = min(THUMB_WIDTHS, key=lambda x: abs(x - w))
+        etag = f'"{im.sha256[:16]}-{w}"'
+        headers = {"Cache-Control": "private, max-age=86400", "ETag": etag}
+        if request.headers.get("if-none-match") == etag:
+            return Response(status_code=304, headers=headers)
+        path = os.path.join(APP_ROOT, "thumbs", f"{im.sha256}_{w}.jpg")
+        if not os.path.exists(path):
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "wb") as fh:
+                fh.write(thumbnail(image_bytes(im), w))
+        return FileResponse(path, media_type="image/jpeg", headers=headers)
     if im.path:
         return FileResponse(im.path, headers={"Cache-Control": "private, max-age=300"})
     mt = "image/png" if im.data[:4] == b"\x89PNG" else "image/jpeg"
@@ -396,15 +501,8 @@ def patient_meta(p: Patient):
             "insulin": yn.get(p.insulin), "oraltreatment_dm": yn.get(p.oral_treatment)}
 
 
-@app.post("/cases/{case_id}/analyze")
-def analyze(case_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    case = case_for(db, user, case_id)
-    require(user, "operator", "referring")
+def run_analysis(db: Session, case: Case, user: User) -> ModelRun:
     imgs = wf.active_images(db, case)
-    if not imgs:
-        wf.error(409, "no_images", "Upload at least one image before analysis.")
-    if not case.patient.ref:
-        wf.error(409, "missing_identity", "Resolve patient identity before analysis.")
     svc = get_service()
     try:
         res = svc.analyze([{"id": i.id, "path": i.path, "laterality": i.laterality,
@@ -415,8 +513,7 @@ def analyze(case_id: int, user: User = Depends(current_user), db: Session = Depe
         res, status = {"error": type(e).__name__, "overall": "Model unavailable - manual review"}, "failed"
     run = ModelRun(tenant_id=case.tenant_id, case_id=case.id, case_version=case.version, image_ids=[i.id for i in imgs],
                    model_version=res.get("model_version", svc.version), threshold_version=res.get("threshold_version", "-"),
-                   source=res.get("source", svc.mode),
-                   status=status, result=res, latency_ms=res.get("latency_ms", 0))
+                   source=res.get("source", svc.mode), status=status, result=res, latency_ms=res.get("latency_ms", 0))
     db.add(run)
     db.flush()
     case.status = "Unable to assess" if res.get("overall") == "Unable to assess" else "HCP review"
@@ -425,6 +522,18 @@ def analyze(case_id: int, user: User = Depends(current_user), db: Session = Depe
     wf.add_task(db, case, "review", f"Review screening result for {case.patient.ref}", case.owner_id,
                 due=wf.DEMO_DUE["review"])
     wf.notify(db, case.owner, f"Screening result ready to review ({case.patient.ref})", f"/cases/{case.id}")
+    return run
+
+
+@app.post("/cases/{case_id}/analyze")
+def analyze(case_id: int, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    case = case_for(db, user, case_id)
+    require(user, "operator", "referring")
+    if not wf.active_images(db, case):
+        wf.error(409, "no_images", "Upload at least one image before analysis.")
+    if not case.patient.ref:
+        wf.error(409, "missing_identity", "Resolve patient identity before analysis.")
+    run_analysis(db, case, user)
     db.commit()
     return RedirectResponse(f"/cases/{case_id}?tab=retinal", 303)
 
@@ -434,6 +543,50 @@ def latest_run(db, case):
 
 
 # ------------------------------------------------------------------ case page
+def relay_legs(db: Session, case: Case, ref: Referral | None = None):
+    """Who has held / holds / will hold this case, for the relay strip."""
+    if ref is None:
+        ref = db.scalar(select(Referral).where(Referral.case_id == case.id, Referral.stage != "Cancelled")
+                        .order_by(Referral.id.desc()))
+    creator = db.get(User, case.created_by)
+    has_imgs = bool(wf.active_images(db, case))
+    signed = wf.current_review(db, case) is not None
+    closed = bool(ref and ref.stage == "Closed")
+    legs = []
+    if creator.id != case.owner_id:
+        legs.append({"name": creator.name, "label": "Captured the photos",
+                     "state": "done" if has_imgs or signed or ref else "now"})
+    ref_open = ref and ref.stage not in wf.TERMINAL
+    owner_now = (not ref and has_imgs) or (ref_open and ref.owner_id == case.owner_id)
+    legs.append({"name": case.owner.name, "label": "Referring clinician",
+                 "state": "done" if closed or (signed and not owner_now) else "now" if owner_now else ""})
+    if ref:
+        legs.append({"name": ref.recipient.name, "label": ref.recipient.specialty or "Specialist",
+                     "state": "done" if ref.stage in ("Response received", "Closed") else
+                     "now" if ref_open and ref.owner_id == ref.recipient_id else ""})
+        coord = db.scalar(select(User).where(User.tenant_id == case.tenant_id, User.role == "coordinator"))
+        if coord:
+            legs.append({"name": coord.name, "label": "Care coordinator",
+                         "state": "now" if ref_open and ref.owner_id == coord.id else
+                         "done" if ref.appointment.get("date") or closed else ""})
+    else:
+        legs.append({"name": "Specialist", "label": "Chosen when a consultation is sent", "state": ""})
+    return legs
+
+
+def patient_line(p: Patient):
+    bits = []
+    if p.age:
+        bits.append(f"{int(p.age)} years")
+    if p.sex:
+        bits.append(p.sex)
+    if p.dm_time is not None:
+        bits.append(f"diabetes for {p.dm_time:g} years")
+    if p.insulin == "yes":
+        bits.append("on insulin")
+    return (", ".join(bits).capitalize() + ". ") if bits else ""
+
+
 @app.get("/cases/{case_id}", response_class=HTMLResponse)
 def case_page(case_id: int, request: Request, tab: str = "retinal", msg: str = "", topic: str = "retinal",
               user: User = Depends(current_user), db: Session = Depends(get_db)):
@@ -456,12 +609,17 @@ def case_page(case_id: int, request: Request, tab: str = "retinal", msg: str = "
         draft = draft_package(case, case.patient, review, run if run and not run_stale else None, imgs, topic, question)
         token = approval_token(case, review, recipient_id, topic, question)
         idem = uuid.uuid4().hex
+    if run and run.status == "completed":
+        per = (run.result or {}).get("images", {})
+        score = lambda i: (per.get(str(i.id)) or {}).get("p_dr", -1) if (per.get(str(i.id)) or {}).get("quality") != "unassessable" else -2
+        imgs = sorted(imgs, key=lambda i: (i.laterality, -score(i)))
     events = db.scalars(select(AuditEvent).where(AuditEvent.case_id == case.id).order_by(AuditEvent.id)).all()
     actors = {u.id: u for u in db.scalars(select(User).where(User.tenant_id == user.tenant_id))}
     return templates.TemplateResponse(request, "case.html", ctx(
         request, user, db, case=case, imgs=imgs, superseded=superseded, run=run, run_stale=run_stale, review=review,
         reviews=reviews, refs=refs, specialists=specialists, tab=tab, msg=msg, draft=draft, token=token, idem=idem,
-        topic=topic, events=events, actors=actors, conditions=SYSTEMIC_LABELS,
+        topic=topic, events=events, actors=actors, conditions=SYSTEMIC_LABELS, legs=relay_legs(db, case),
+        patient_line=patient_line(case.patient),
         q_question=request.query_params.get("question", ""),
         q_recipient=int(request.query_params.get("recipient_id") or 0)))
 
@@ -579,7 +737,8 @@ def referral_page(rid: int, request: Request, msg: str = "", user: User = Depend
     imgs = db.scalars(select(Image).where(Image.id.in_(ref.package.get("image_ids", [])))).all()
     return templates.TemplateResponse(request, "referral.html", ctx(
         request, user, db, ref=ref, msgs=msgs, barriers=barriers, tasks=tasks, coords=coords, specialists=specialists,
-        imgs=imgs, msg=msg, allowed=sorted(wf.REFERRAL_TRANSITIONS.get(ref.stage, set()))))
+        imgs=imgs, msg=msg, allowed=sorted(wf.REFERRAL_TRANSITIONS.get(ref.stage, set())),
+        legs=relay_legs(db, ref.case, ref)))
 
 
 @app.post("/referrals/{rid}/action")
@@ -724,18 +883,59 @@ def task_done(tid: int, user: User = Depends(current_user), db: Session = Depend
     return RedirectResponse("/inbox", 303)
 
 
+# ------------------------------------------------------------------ try an image (no case, nothing stored)
+@app.get("/try", response_class=HTMLResponse)
+def try_page(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    return templates.TemplateResponse(request, "try.html", ctx(request, user, db, active="try", results=None))
+
+
+@app.post("/try", response_class=HTMLResponse)
+async def try_run(request: Request, files: list[UploadFile] = File(...), user: User = Depends(current_user),
+                  db: Session = Depends(get_db)):
+    import base64
+    if len(files) > 4:
+        wf.error(413, "too_many_images", "Try up to 4 photos at a time.")
+    blobs = []
+    for i, uf in enumerate(files):
+        data = await uf.read()
+        _validate_upload(data)
+        blobs.append((i + 1, uf.filename or f"photo {i + 1}", data))
+    svc = get_service()
+    res = svc.analyze([{"id": i, "laterality": "unknown", "bytes": d} for i, _, d in blobs], {})
+    uri = lambda b, mt: f"data:{mt};base64," + base64.b64encode(b).decode()
+    results = []
+    for i, name, data in blobs:
+        r = dict(res["images"].get(str(i)) or res["images"].get(i) or {})
+        q = r.get("quality", "unsupported")
+        attn = None
+        if res.get("source") == "live" and q in ("assessable", "uncertain", "unassessable"):
+            png = svc.explain(data, "quality_poor" if q == "unassessable" else "dr_referable")
+            if png:
+                attn = uri(thumbnail(png, 900), "image/jpeg")
+        verdict = ("Unable to assess" if q in ("unassessable", "unsupported") else
+                   "Referable DR signal" if r.get("dr_positive") else
+                   "Uncertain quality" if q == "uncertain" else "No model finding")
+        results.append({**r, "name": name, "quality": q, "src": uri(thumbnail(data, 900), "image/jpeg"),
+                        "attn": attn, "verdict": verdict})
+    wf.audit(db, user.tenant_id, None, user.id, "try_image", f"{len(blobs)} photo(s), nothing stored")
+    db.commit()
+    return templates.TemplateResponse(request, "try.html", ctx(
+        request, user, db, active="try", results=results, thr=res["thresholds"], version=res.get("model_version"),
+        source=res.get("source"), latency=res.get("latency_ms", 0)))
+
+
 # ------------------------------------------------------------------ evidence (FR23 / FR28)
 @app.get("/evidence", response_class=HTMLResponse)
 def evidence_page(request: Request, q: str = "", user: User = Depends(current_user), db: Session = Depends(get_db)):
     brief = evidence_brief(q) if q else None
-    return templates.TemplateResponse(request, "evidence.html", ctx(request, user, db, q=q, brief=brief))
+    return templates.TemplateResponse(request, "evidence.html", ctx(request, user, db, q=q, brief=brief, active="evidence"))
 
 
 # ------------------------------------------------------------------ notifications / preferences (FR27)
 @app.get("/notifications", response_class=HTMLResponse)
 def notifications(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
     ns = db.scalars(select(Notification).where(Notification.user_id == user.id).order_by(Notification.id.desc())).all()
-    page = templates.TemplateResponse(request, "notifications.html", ctx(request, user, db, ns=ns))
+    page = templates.TemplateResponse(request, "notifications.html", ctx(request, user, db, ns=ns, active=""))
     for n in ns:
         n.read = True
     db.commit()
@@ -744,7 +944,7 @@ def notifications(request: Request, user: User = Depends(current_user), db: Sess
 
 @app.get("/settings", response_class=HTMLResponse)
 def settings_page(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    return templates.TemplateResponse(request, "settings.html", ctx(request, user, db))
+    return templates.TemplateResponse(request, "settings.html", ctx(request, user, db, active="settings"))
 
 
 @app.post("/settings")
@@ -777,7 +977,7 @@ def analytics(request: Request, view: str = "workflow", user: User = Depends(cur
     runs = db.scalars(select(ModelRun).where(ModelRun.tenant_id == user.tenant_id)).all()
     svc = get_service()
     return templates.TemplateResponse(request, "analytics.html", ctx(
-        request, user, db, view=view, funnel=[(s, reached[s]) for s in wf.FUNNEL], n_sent=len(refs),
+        request, user, db, view=view, active="analytics", funnel=[(s, reached[s]) for s in wf.FUNNEL], n_sent=len(refs),
         ack_median=(sorted(lat)[len(lat) // 2] if lat else None), n_ack=len(lat), closed=closed, alt=alt,
         pending=len(refs) - closed - sum(alt.values()), overdue=sum(wf.is_overdue(t.due_at) for t in open_tasks),
         n_open=len(open_tasks), runs=runs, metrics=svc.metrics, calib=svc.calib, model_version=svc.version))

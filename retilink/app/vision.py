@@ -33,6 +33,16 @@ def sigmoid(z):
     return 1 / (1 + np.exp(-z))
 
 
+def _to_rgb(img):
+    """Flatten palette/alpha/greyscale images onto black (fundus background) as RGB."""
+    if img.mode in ("RGBA", "LA", "P"):
+        img = img.convert("RGBA")
+        bg = PILImage.new("RGB", img.size, (0, 0, 0))
+        bg.paste(img, mask=img.split()[-1])
+        return bg
+    return img.convert("RGB")
+
+
 def suitability(path):
     """Cheap fundus-compatibility check (FR06). Not claimed to catch every out-of-distribution input."""
     img = PILImage.open(path).convert("RGB")

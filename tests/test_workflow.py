@@ -51,7 +51,7 @@ def new_case(op, ref="RL-T1"):
     r = op.post("/cases", data={"patient_ref": ref, "encounter_date": "2026-09-26", "device": "portable camera",
                                 "owner_id": uid("Dr. Alex Morgan")})
     assert r.status_code == 303
-    return int(r.headers["location"].rsplit("/", 1)[1])
+    return int(r.headers["location"].split("?")[0].rsplit("/", 1)[1])
 
 
 def upload(c, cid, eye, data, name="a.jpg"):

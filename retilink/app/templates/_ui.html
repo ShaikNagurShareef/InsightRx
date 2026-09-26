@@ -1,0 +1,50 @@
+{% macro icon(name, cls="") -%}
+<svg class="ico {{ cls }}" aria-hidden="true"><use href="/static/icons.svg#i-{{ name }}"/></svg>
+{%- endmacro %}
+
+{% macro initials(name) -%}
+{%- set parts = name.replace('Dr. ', '').split() -%}{{ parts[0][0] }}{{ parts[-1][0] if parts|length > 1 else '' }}
+{%- endmacro %}
+
+{% macro avatar(user, cls="") -%}
+<span class="avatar {{ cls }}" aria-hidden="true">{{ initials(user.name) }}</span>
+{%- endmacro %}
+
+{# Model / screening states: always icon + words, colour is secondary #}
+{% macro status(s) -%}
+{%- if s in ('Referable DR signal', 'Research signal') -%}<span class="tag signal">{{ icon('alert') }}{{ s }}</span>
+{%- elif s in ('No model finding', 'No research signal') -%}<span class="tag clear">{{ icon('check') }}{{ s }}</span>
+{%- elif s in ('Assessment incomplete', 'Uncertain quality', 'Unable to assess', 'Abstained') -%}<span class="tag caution">{{ icon('alert') }}{{ s }}</span>
+{%- else -%}<span class="tag">{{ s }}</span>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro stage(s) -%}
+{%- if s == 'Closed' -%}<span class="tag clear">{{ icon('check') }}Closed</span>
+{%- elif s in ('Sent', 'Needs information') -%}<span class="tag caution">{{ icon('clock') }}{{ s }}</span>
+{%- elif s in ('Declined', 'Cancelled', 'Unreachable', 'Patient declined') -%}<span class="tag">{{ icon('x') }}{{ s }}</span>
+{%- else -%}<span class="tag info">{{ s }}</span>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro case_stage(s) -%}
+{%- if s in ('Signed',) -%}<span class="tag clear">{{ icon('check') }}Signed</span>
+{%- elif s in ('HCP review',) -%}<span class="tag info">{{ icon('eye') }}Awaiting review</span>
+{%- elif s in ('Unable to assess',) -%}<span class="tag caution">{{ icon('alert') }}Unable to assess</span>
+{%- elif s in ('Images ready',) -%}<span class="tag outline">{{ icon('image') }}Ready to analyse</span>
+{%- else -%}<span class="tag outline">{{ s }}</span>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro relay(legs) -%}
+<ol class="relay" aria-label="Who holds this case">
+{% for l in legs %}<li class="leg {{ l.state }}"{% if l.state == 'now' %} aria-current="step"{% endif %}>
+  <span class="avatar" aria-hidden="true">{{ initials(l.name) }}</span>
+  <span><span class="n">{{ l.name }}</span><br><span class="r">{{ l.label }}{% if l.state == 'now' %}, has the next action{% endif %}</span></span>
+</li>{% endfor %}
+</ol>
+{%- endmacro %}
+
+{% macro empty(icon_name, text, action=None, href=None) -%}
+<div class="empty">{{ icon(icon_name) }}<p>{{ text }}</p>{% if action %}<p><a class="btn quiet sm" href="{{ href }}">{{ action }}</a></p>{% endif %}</div>
+{%- endmacro %}

@@ -1,4 +1,12 @@
-{% extends "base.html" %}{% block content %}
-<div class="card max-w-xl border-rose-300" role="alert"><h1 class="text-lg font-semibold text-rose-800">Action not completed ({{ status }})</h1>
-<p class="mt-2">{{ message }}</p><p class="mt-4"><a class="btn btn-sec" href="javascript:history.back()">Go back</a></p></div>
-{% endblock %}
+{% extends "base.html" %}{% from "_ui.html" import icon %}
+{% block title %}Action not completed | RetiLink{% endblock %}
+{% macro box() %}
+<div class="panel panel-pad" role="alert" style="max-width:560px;margin:var(--s7) auto">
+  <div class="row" style="color:var(--signal)">{{ icon('alert') }}<h1 style="font-size:var(--t-lg)">Action not completed</h1></div>
+  <p style="margin-top:var(--s3)">{{ message }}</p>
+  <p class="xs muted" style="margin-top:var(--s2)">Error {{ status }}</p>
+  <p style="margin-top:var(--s4)" class="row"><a class="btn quiet" href="/inbox" data-back>{{ icon('back') }}Go back</a><a class="btn quiet" href="/inbox">Inbox</a></p>
+</div>
+{% endmacro %}
+{% block content %}{{ box() }}{% endblock %}
+{% block bare %}{{ box() }}{% endblock %}

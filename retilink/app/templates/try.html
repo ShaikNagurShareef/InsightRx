@@ -1,0 +1,71 @@
+{% extends "base.html" %}{% from "_ui.html" import icon, status %}
+{% block title %}Try an image | RetiLink{% endblock %}
+{% block crumbs %}Try an image{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>Try an image</h1><p class="sub">Run the screening models on any fundus photograph. Nothing is saved, and no case or patient is created.</p></div>
+</div>
+<div class="workspace" style="grid-template-columns:minmax(0,1fr) 340px">
+  <div class="stack-lg">
+  {% if results %}
+    {% for r in results %}
+    <section class="panel" aria-labelledby="r{{ loop.index }}">
+      <div class="panel-head"><h2 id="r{{ loop.index }}">{{ r.name }}</h2>{{ status(r.verdict) }}</div>
+      <div class="panel-body">
+        <div class="grid-2" style="align-items:start">
+          <div data-eye>
+            <div class="fundus"><img class="base" src="{{ r.src }}" alt="Uploaded photo {{ r.name }}" width="600" height="600"><img class="overlay" alt="" data-src="{{ r.attn or '' }}"><div class="corner"><span class="tag {{ 'clear' if r.quality == 'assessable' else 'caution' if r.quality == 'uncertain' else 'signal' }}">Quality: {{ r.quality }}</span></div></div>
+            <div class="viewbar">
+              <button type="button" class="btn quiet sm" data-attn-toggle aria-pressed="false" {% if not r.attn %}hidden{% endif %}>{{ icon('layers') }}Model attention</button>
+              <label class="row" style="gap:6px">Opacity <input type="range" min="20" max="100" value="85" data-attn-range disabled aria-label="Attention overlay opacity"></label>
+            </div>
+          </div>
+          <div class="stack">
+            {% if r.reasons %}<div class="note signal">{{ icon('alert') }}<span>Not treated as a fundus photograph: {{ r.reasons|join('; ') }}. No screening score is given.</span></div>
+            {% else %}
+            <dl class="facts">
+              <dt>Photo quality</dt><dd>{{ r.quality|capitalize }}, P(unusable) {{ '%.2f'|format(r.p_quality_poor) }} (gate {{ '%.2f'|format(thr.quality_poor) }})</dd>
+              {% if r.quality != 'unassessable' %}
+              <dt>Referable DR score</dt><dd>{{ '%.2f'|format(r.p_dr) }} against threshold {{ '%.2f'|format(thr.dr_referable) }}</dd>
+              <dt>Grade estimate</dt><dd>{{ ICDR_NAMES[r.icdr_grade] }} (ICDR {{ r.icdr_grade }})</dd>
+              <dt>Macular edema</dt><dd>{{ 'Research signal' if r.edema_flag else 'No research signal' }}, score {{ '%.2f'|format(r.p_edema) }}</dd>
+              {% endif %}
+            </dl>
+            {% if r.quality != 'unassessable' %}
+            {% set pct = (r.p_dr * 100)|round|int %}{% set tp = (thr.dr_referable * 100)|round|int %}
+            <div class="gauge {{ 'signal' if r.p_dr >= thr.dr_referable else 'clear' }}" role="img" aria-label="Score {{ '%.2f'|format(r.p_dr) }} against threshold {{ '%.2f'|format(thr.dr_referable) }}"><div class="track"><div class="fill" style="width:{{ pct }}%"></div><div class="thr" style="left:{{ tp }}%"></div></div><div class="lbl"><span>Score</span><span>Threshold</span></div></div>
+            <div class="probs" aria-label="Grade probabilities">{% for pr in r.icdr_probs %}<div class="p"><span>{{ ICDR_NAMES[loop.index0] }}</span><span class="bar"><span style="width:{{ (pr * 100)|round|int }}%"></span></span><span class="num">{{ '%.0f'|format(pr * 100) }}%</span></div>{% endfor %}</div>
+            {% else %}<div class="note warn">{{ icon('alert') }}<span>The quality gate rejected this photo, so no reassurance is given. Try a sharper, well-centred capture.</span></div>{% endif %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+    {% endfor %}
+    <p class="xs muted">Model {{ version }}, {{ 'live' if source == 'live' else 'simulated' }}, {{ latency }} ms. One photo on its own cannot give a two-eye assessment; use a case for that.</p>
+  {% else %}
+    <section class="panel panel-pad stack">
+      <h2>What to expect</h2>
+      <p class="small">The models were trained on mBRSET: a handheld smartphone fundus camera, dilated pupils, adults with diabetes in Brazil. Other cameras and populations are a domain shift, so treat scores on them as exploratory.</p>
+      <ul class="small" style="padding-left:18px;margin:0">
+        <li>Colour fundus photographs work best: macula- or disc-centred, the whole round field of view visible.</li>
+        <li>Public datasets for testing include APTOS 2019, Messidor-2, IDRiD and EyePACS; check each licence first.</li>
+        <li>Phone photos of a face or eye are rejected by the suitability check, by design.</li>
+      </ul>
+    </section>
+  {% endif %}
+  </div>
+  <aside style="position:sticky;top:76px">
+    <form method="post" action="/try" enctype="multipart/form-data" class="panel panel-pad stack" data-busy="Analysing">
+      <div class="drop" data-drop>
+        {{ icon('upload') }}<div class="big">Drop fundus photos</div>
+        <p class="xs muted">JPEG or PNG, up to 4 at a time. Large photos are resized in your browser.</p>
+        <label class="btn quiet sm" style="margin-top:8px">Choose files<input class="sr-only" type="file" name="files" accept="image/jpeg,image/png" multiple required></label>
+        <p class="xs muted" data-drop-note aria-live="polite"></p><div class="previews"></div>
+      </div>
+      <button type="submit" class="btn lg block"><span class="spin" aria-hidden="true"></span>{{ icon('eye') }}<span data-label>Analyse</span></button>
+      <p class="xs muted">Use only images you are allowed to share. They are processed in memory and discarded.</p>
+    </form>
+  </aside>
+</div>
+{% endblock %}
