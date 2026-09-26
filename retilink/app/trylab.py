@@ -47,11 +47,16 @@ def as_patient(d: dict):
     return SimpleNamespace(conditions=conds, dm_time=d["dm_time"], insulin=d["insulin"])
 
 
+EYES = ("OD", "OS", "unknown")
+
+
 def store(db: Session, user, blobs) -> str:
+    """blobs: [(idx, name, data, eye)]. The eye is kept in the name column as 'EYE::name' (no schema change)."""
     purge(db)
     token = secrets.token_urlsafe(16)
-    for i, name, data in blobs:
-        db.add(TryImage(token=token, tenant_id=user.tenant_id, user_id=user.id, idx=i, name=name[:200], data=data))
+    for i, name, data, eye in blobs:
+        db.add(TryImage(token=token, tenant_id=user.tenant_id, user_id=user.id, idx=i,
+                        name=f"{eye}::{name}"[:200], data=data))
     db.commit()
     return token
 
@@ -59,8 +64,40 @@ def store(db: Session, user, blobs) -> str:
 def load(db: Session, user, token: str):
     rows = (db.query(TryImage).filter(TryImage.token == token, TryImage.user_id == user.id,
                                       TryImage.created_at >= now() - KEEP).order_by(TryImage.idx).all())
-    return [(r.idx, r.name, r.data) for r in rows]
+    out = []
+    for r in rows:
+        eye, _, name = r.name.partition("::") if "::" in r.name else ("unknown", "", r.name)
+        out.append((r.idx, name, r.data, eye if eye in EYES else "unknown"))
+    return out
 
 
 def purge(db: Session):
     db.query(TryImage).filter(TryImage.created_at < now() - KEEP).delete()
+
+
+EVIDENCE_TOPICS = {  # finding -> curated reference topics
+    "dr": (["dr", "referral", "referable"], "Referable diabetic retinopathy"),
+    "edema": (["macular", "edema"], "Macular edema"),
+    "heart": (["hypertension", "cardiovascular"], "Heart and blood vessels"),
+    "kidneys": (["nephropathy", "kidney"], "Kidneys"),
+    "nerves": (["diabetic_foot", "foot", "neuropathy"], "Nerves and feet"),
+}
+
+
+def evidence_for(overall, any_edema, snapshot):
+    """Guideline passages relevant to what this screening found (curated set only)."""
+    from .evidence import retrieve
+    wanted = []
+    if overall == "Referable DR signal":
+        wanted.append("dr")
+    if any_edema:
+        wanted.append("edema")
+    wanted += [o["key"] for o in snapshot if o["key"] in EVIDENCE_TOPICS and o["state"] in ("signal", "recorded", "exploratory")]
+    cards, seen = [], set()
+    for k in wanted:
+        topics, label = EVIDENCE_TOPICS[k]
+        for ref in retrieve(" ".join(topics), topics, k=1):
+            if ref["id"] not in seen:
+                seen.add(ref["id"])
+                cards.append({"finding": label, **ref})
+    return cards

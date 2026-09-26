@@ -1,10 +1,10 @@
 {% extends "base.html" %}{% from "_ui.html" import icon %}
-{% block title %}Analytics | RetiLink{% endblock %}
-{% block crumbs %}Analytics{% endblock %}
+{% block title %}Model performance | RetiLink{% endblock %}
+{% block crumbs %}Model performance{% endblock %}
 {% block content %}
 <div class="head">
-  <div><h1>Analytics</h1><p class="sub">{{ 'How consultations move between clinicians.' if view == 'workflow' else 'Measured performance of the models behind every screening result.' }}</p></div>
-  <nav class="seg" aria-label="Analytics view"><a href="/analytics?view=workflow" {% if view == 'workflow' %}aria-current="page"{% endif %}>Engagement</a><a href="/analytics?view=model" {% if view == 'model' %}aria-current="page"{% endif %}>Model performance</a></nav>
+  <div><h1>{{ 'How reliable the models are' if view == 'model' else 'How consultations move' }}</h1><p class="sub">{{ 'How consultations move between clinicians.' if view == 'workflow' else 'Measured performance of the models behind every screening result.' }}</p></div>
+  <nav class="seg" aria-label="View"><a href="/performance?view=model" {% if view == 'model' %}aria-current="page"{% endif %}>Models</a><a href="/performance?view=workflow" {% if view == 'workflow' %}aria-current="page"{% endif %}>Consult engagement</a></nav>
 </div>
 
 {% if view == 'workflow' %}

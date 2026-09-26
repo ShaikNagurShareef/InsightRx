@@ -214,7 +214,7 @@ def login(request: Request, user_id: int = Form(...), db: Session = Depends(get_
     request.session["uid"] = u.id
     wf.audit(db, u.tenant_id, None, u.id, "login")
     db.commit()
-    return RedirectResponse("/inbox", 303)
+    return RedirectResponse(home_for(u), 303)
 
 
 @app.get("/logout")
@@ -223,13 +223,23 @@ def logout(request: Request):
     return RedirectResponse("/login", 303)
 
 
+def home_for(u: User) -> str:
+    return {"operator": "/screen", "referring": "/screen", "admin": "/performance"}.get(u.role, "/consults")
+
+
 @app.get("/")
-def root():
-    return RedirectResponse("/inbox", 303)
+def root(request: Request, db: Session = Depends(get_db)):
+    u = db.get(User, request.session.get("uid") or 0)
+    return RedirectResponse(home_for(u) if u else "/login", 303)
+
+
+@app.get("/inbox")
+def inbox_redirect(request: Request):
+    return RedirectResponse("/consults" + (f"?{request.url.query}" if request.url.query else ""), 303)
 
 
 # ------------------------------------------------------------------ inbox (FR20)
-@app.get("/inbox", response_class=HTMLResponse)
+@app.get("/consults", response_class=HTMLResponse)
 def inbox(request: Request, filter: str = "", user: User = Depends(current_user), db: Session = Depends(get_db)):
     tasks = db.scalars(select(Task).where(Task.tenant_id == user.tenant_id, Task.assignee_id == user.id,
                                           Task.status == "open").order_by(Task.due_at.is_(None), Task.due_at)).all()
@@ -263,11 +273,16 @@ def inbox(request: Request, filter: str = "", user: User = Depends(current_user)
         request, user, db, tasks=tasks, refs=refs, cases=cases, filter=filter, results=results, greeting=greeting,
         week=act.week_stats(db, user, seen), activity=act.feed(db, user, seen), spark=act.daily(db, user, seen),
         overdue=sum(wf.is_overdue(t.due_at) for t in tasks), awaiting=awaiting,
-        in_review=sum(c.status == "HCP review" for c in cases), active="inbox"))
+        in_review=sum(c.status == "HCP review" for c in cases), active="consults"))
 
 
 # ------------------------------------------------------------------ case creation (FR01, FR02)
-@app.get("/cases/new", response_class=HTMLResponse)
+@app.get("/cases/new")
+def new_case_redirect():
+    return RedirectResponse("/screen", 303)
+
+
+@app.get("/cases/new/form", response_class=HTMLResponse)
 def new_case_page(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
     require(user, "operator", "referring")
     hcps = db.scalars(select(User).where(User.tenant_id == user.tenant_id, User.role == "referring")).all()
@@ -931,38 +946,46 @@ def task_done(tid: int, user: User = Depends(current_user), db: Session = Depend
 
 
 # ------------------------------------------------------------------ try an image (no case, nothing stored)
-@app.get("/try", response_class=HTMLResponse)
-def try_page(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    return templates.TemplateResponse(request, "try.html", ctx(request, user, db, active="try", results=None, token="",
-                                                                 details=trylab.parse_details({})))
+@app.get("/try")
+def try_redirect():
+    return RedirectResponse("/screen", 303)
 
 
-@app.post("/try", response_class=HTMLResponse)
-async def try_run(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
-    """Analyse new photos, or re-run stored ones (token) with changed patient details."""
+@app.get("/screen", response_class=HTMLResponse)
+def screen_page(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    return templates.TemplateResponse(request, "screen.html", ctx(request, user, db, active="screen", results=None,
+                                                                    token="", details=trylab.parse_details({})))
+
+
+@app.post("/screen", response_class=HTMLResponse)
+async def screen_run(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Analyse newly uploaded photos (by eye), or re-run held ones (token) with changed patient details."""
     import base64
     form = await request.form()
-    files = [f for f in form.getlist("files") if hasattr(f, "read") and getattr(f, "filename", "")]
-    if len(files) > 4:
-        wf.error(413, "too_many_images", "Try up to 4 photos at a time.")
-    if files:
+    uploads = [(eye, f) for eye, key in (("OD", "files_OD"), ("OS", "files_OS"), ("unknown", "files"))
+               for f in form.getlist(key) if hasattr(f, "read") and getattr(f, "filename", "")]
+    if len(uploads) > MAX_IMAGES:
+        wf.error(413, "too_many_images", f"Up to {MAX_IMAGES} photos per screening.")
+    if uploads:
         blobs = []
-        for i, uf in enumerate(files):
+        for i, (eye, uf) in enumerate(uploads):
             data = await uf.read()
             _validate_upload(data)
-            blobs.append((i + 1, uf.filename or f"photo {i + 1}", data))
+            blobs.append((i + 1, uf.filename or f"photo {i + 1}", data, eye))
         token = trylab.store(db, user, blobs)
     else:
         token = form.get("token", "")
+        if not token:
+            wf.error(422, "no_photos", "Add at least one retinal photo to screen.")
         blobs = trylab.load(db, user, token)
         if not blobs:
             wf.error(410, "photos_expired", "Those photos are no longer held (kept for 1 hour). Upload them again.")
     details = trylab.parse_details(form)
     svc = get_service()
-    res = svc.analyze([{"id": i, "laterality": "unknown", "bytes": d} for i, _, d in blobs], trylab.model_inputs(details))
+    res = svc.analyze([{"id": i, "laterality": eye, "bytes": d} for i, _, d, eye in blobs], trylab.model_inputs(details))
     uri = lambda b, mt: f"data:{mt};base64," + base64.b64encode(b).decode()
     results = []
-    for i, name, data in blobs:
+    for i, name, data, eye in blobs:
         r = dict(res["images"].get(str(i)) or res["images"].get(i) or {})
         q = r.get("quality", "unsupported")
         attn = None
@@ -973,21 +996,88 @@ async def try_run(request: Request, user: User = Depends(current_user), db: Sess
         verdict = ("Unable to assess" if q in ("unassessable", "unsupported") else
                    "Referable DR signal" if r.get("dr_positive") else
                    "Uncertain quality" if q == "uncertain" else "No model finding")
-        results.append({**r, "name": name, "quality": q, "src": uri(thumbnail(data, 900), "image/jpeg"),
+        results.append({**r, "name": name, "eye": eye, "quality": q, "src": uri(thumbnail(data, 900), "image/jpeg"),
                         "attn": attn, "verdict": verdict})
+    overall = res.get("overall")
+    if all(eye == "unknown" for *_, eye in blobs):      # no eye labels: summarise from the photos themselves
+        per = [r for r in results if r.get("quality") in ("assessable", "uncertain")]
+        overall = ("Referable DR signal" if any(r.get("dr_positive") for r in per) else
+                   "No model finding" if per else "Unable to assess")
     labels = {**SYSTEMIC_LABELS, **COMPOSITE_LABELS}
-    # photos here carry no eye label, so the eye summary comes from the photos themselves
-    per = [r for r in results if r.get("quality") in ("assessable", "uncertain")]
-    overall = ("Referable DR signal" if any(r.get("dr_positive") for r in per) else
-               "No model finding" if per else "Unable to assess")
     snapshot = oc.patient_snapshot(trylab.as_patient(details), {**res, "overall": overall}, labels, svc.metrics)
-    wf.audit(db, user.tenant_id, None, user.id, "try_image", f"{len(blobs)} photo(s), held 1 hour for re-runs")
+    evidence = trylab.evidence_for(overall, any(r.get("edema_flag") for r in results), snapshot)
+    wf.audit(db, user.tenant_id, None, user.id, "screen", f"{len(blobs)} photo(s), held 1 hour")
     db.commit()
-    return templates.TemplateResponse(request, "try.html", ctx(
-        request, user, db, active="try", results=results, thr=res["thresholds"], version=res.get("model_version"),
-        source=res.get("source"), latency=res.get("latency_ms", 0), token=token, details=details,
-        systemic=res.get("systemic", {}), snapshot=snapshot,
+    eyes_known = any(eye != "unknown" for *_, eye in blobs)
+    return templates.TemplateResponse(request, "screen.html", ctx(
+        request, user, db, active="screen", results=results, res=res, overall=overall, eyes_known=eyes_known,
+        thr=res["thresholds"], version=res.get("model_version"), source=res.get("source"),
+        latency=res.get("latency_ms", 0), token=token, details=details, systemic=res.get("systemic", {}),
+        snapshot=snapshot, evidence=evidence, patient_ref=form.get("patient_ref", ""),
         n_inputs=sum(v is not None and v != "unknown" for k, v in details.items() if k != "conditions")))
+
+
+@app.post("/screen/save")
+async def screen_save(request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Turn a screening into a case (patient, photos by eye, analysis) and continue to review and consultation."""
+    require(user, "operator", "referring")
+    form = await request.form()
+    blobs = trylab.load(db, user, form.get("token", ""))
+    if not blobs:
+        wf.error(410, "photos_expired", "Those photos are no longer held (kept for 1 hour). Screen them again.")
+    d = trylab.parse_details(form)
+    owner = user if user.role == "referring" else db.scalar(
+        select(User).where(User.tenant_id == user.tenant_id, User.role == "referring", User.active.is_(True)))
+    ref = (form.get("patient_ref") or "").strip()[:40] or f"RL-P{secrets.randbelow(9000) + 1000}"
+    conds = {c: {"value": v, "source": f"entered by {user.name}" if v != "unknown" else "not recorded",
+                 "date": now().date().isoformat() if v != "unknown" else "", "verification": "reported"}
+             for c, v in d["conditions"].items()}
+    patient = Patient(tenant_id=user.tenant_id, ref=ref, age=d["age"], sex=d["sex"], dm_time=d["dm_time"],
+                      insulin=d["insulin"], oral_treatment=d["oral_treatment"], conditions=conds)
+    db.add(patient)
+    db.flush()
+    case = Case(tenant_id=user.tenant_id, patient_id=patient.id, owner_id=owner.id, created_by=user.id,
+                encounter_date=datetime.now(TZ).date().isoformat(), device="Portable smartphone fundus camera",
+                symptoms=form.get("symptoms", ""))
+    db.add(case)
+    db.flush()
+    wf.audit(db, user.tenant_id, case.id, user.id, "case_created", f"patient {ref} (from Screen)", 1)
+    for i, name, data, eye in blobs:
+        img = _validate_upload(data)
+        sha, path = _store(case, data, img)
+        db.add(Image(tenant_id=case.tenant_id, case_id=case.id, sha256=sha, path=path, laterality=eye,
+                     view="macula-centred", source=case.device, width=img.size[0], height=img.size[1],
+                     uploaded_by=user.id, data=None if path else data))
+    case.status = "Images ready"
+    wf.bump_version(db, case, user, f"{len(blobs)} image(s) from Screen")
+    db.flush()
+    run_analysis(db, case, user)
+    db.commit()
+    nxt = "review" if user.role == "referring" else "retinal"
+    return RedirectResponse(f"/cases/{case.id}?tab={nxt}&msg=Saved+as+{ref}." +
+                            ("+Sign+your+interpretation+to+send+a+consultation." if nxt == "review" else ""), 303)
+
+
+# ------------------------------------------------------------------ patients (case list + whole-body panel)
+@app.get("/patients", response_class=HTMLResponse)
+def patients_page(request: Request, q: str = "", user: User = Depends(current_user), db: Session = Depends(get_db)):
+    svc = get_service()
+    labels = {**SYSTEMIC_LABELS, **COMPOSITE_LABELS}
+    cases = visible_cases(db, user)
+    if q:
+        cases = [c for c in cases if q.lower() in c.patient.ref.lower()]
+    latest = {}
+    if cases:
+        for r in db.scalars(select(ModelRun).where(ModelRun.case_id.in_([c.id for c in cases]), ModelRun.status == "completed")
+                            .order_by(ModelRun.id)):
+            latest[r.case_id] = r.result or {}
+    open_refs = Counter(r.case_id for r in db.scalars(select(Referral).where(
+        Referral.tenant_id == user.tenant_id, Referral.stage.not_in(list(wf.TERMINAL)))))
+    rows = [{"case": c, "res": latest.get(c.id), "refs": open_refs.get(c.id, 0),
+             "snap": oc.patient_snapshot(c.patient, latest.get(c.id), labels, svc.metrics)} for c in cases]
+    panel = oc.panel_stats(db, cases, labels, svc.metrics)
+    return templates.TemplateResponse(request, "patients.html", ctx(request, user, db, active="patients", rows=rows,
+                                                                      p=panel, q=q))
 
 
 # ------------------------------------------------------------------ oculomics (whole-body view)
@@ -1047,8 +1137,13 @@ def save_settings(mode: str = Form("immediate"), quiet_start: str = Form(""), qu
 
 
 # ------------------------------------------------------------------ analytics (FR38, FR46)
-@app.get("/analytics", response_class=HTMLResponse)
-def analytics(request: Request, view: str = "workflow", user: User = Depends(current_user), db: Session = Depends(get_db)):
+@app.get("/analytics")
+def analytics_redirect(request: Request):
+    return RedirectResponse("/performance" + (f"?{request.url.query}" if request.url.query else ""), 303)
+
+
+@app.get("/performance", response_class=HTMLResponse)
+def analytics(request: Request, view: str = "model", user: User = Depends(current_user), db: Session = Depends(get_db)):
     refs = db.scalars(select(Referral).where(Referral.tenant_id == user.tenant_id)).all()
     reached = Counter()
     order = {s: i for i, s in enumerate(wf.FUNNEL)}
@@ -1066,7 +1161,7 @@ def analytics(request: Request, view: str = "workflow", user: User = Depends(cur
     runs = db.scalars(select(ModelRun).where(ModelRun.tenant_id == user.tenant_id)).all()
     svc = get_service()
     return templates.TemplateResponse(request, "analytics.html", ctx(
-        request, user, db, view=view, active="analytics", funnel=[(s, reached[s]) for s in wf.FUNNEL], n_sent=len(refs),
+        request, user, db, view=view, active="performance", funnel=[(s, reached[s]) for s in wf.FUNNEL], n_sent=len(refs),
         ack_median=(sorted(lat)[len(lat) // 2] if lat else None), n_ack=len(lat), closed=closed, alt=alt,
         pending=len(refs) - closed - sum(alt.values()), overdue=sum(wf.is_overdue(t.due_at) for t in open_tasks),
         n_open=len(open_tasks), runs=runs, metrics=svc.metrics, calib=svc.calib, model_version=svc.version))

@@ -1,6 +1,6 @@
 {% extends "base.html" %}{% from "_ui.html" import icon, stage, relay, empty %}
 {% block title %}Consultation RL-{{ ref.id }} | RetiLink{% endblock %}
-{% block crumbs %}<a href="/inbox">Inbox</a> / Consultation RL-{{ ref.id }}{% endblock %}
+{% block crumbs %}<a href="/consults">Consults</a> / Consultation RL-{{ ref.id }}{% endblock %}
 {% block content %}
 {% set p = ref.package %}
 {% set finished = ref.stage in ('Closed', 'Declined', 'Cancelled', 'Unreachable', 'Patient declined') %}

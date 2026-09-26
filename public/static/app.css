@@ -457,6 +457,26 @@ legend { font-size: var(--t-sm); font-weight: 600; color: var(--ink-2); margin-b
 @media (max-width: 1180px) { .oc-hero-in { grid-template-columns: 1fr 1fr; } .oc-hero-in .oc-col:last-child { grid-column: span 2; } .flow { grid-template-columns: repeat(3, minmax(0, 1fr)); } .flow li::after { display: none; } }
 @media (max-width: 860px) { .oc-grid, .oc-hero-in { grid-template-columns: minmax(0, 1fr); } .oc-hero-in .oc-col:last-child { grid-column: auto; } .oc-patient .oc-map { border-right: 0; border-bottom: 1px solid var(--line-2); } .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
+/* screen */
+.summary { padding: var(--s5); }
+.summary-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--s5); }
+.summary-grid > div + div { border-left: 1px solid rgba(22, 35, 46, .1); padding-left: var(--s5); }
+.chips { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 5px; font-size: var(--t-sm); }
+.chips li { display: flex; align-items: center; gap: 8px; }
+.actionbar { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4); flex-wrap: wrap; }
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: var(--s4); }
+.photo .fundus { border-radius: var(--r-sm); }
+.photo .corner { flex-wrap: wrap; }
+.evi { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s4); }
+.evi article { border-left: 3px solid var(--blue); padding: 2px 0 2px 12px; display: grid; gap: 4px; }
+.drop.compact { padding: var(--s3); }
+.drop.compact .previews img { width: 56px; height: 56px; }
+.drop.compact .previews figure { width: 56px; }
+.organdots { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: var(--t-xs); color: var(--ink-2); }
+.organdots .od { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.side-foot a[aria-current="page"] { background: rgba(255, 255, 255, .1); color: #fff; }
+@media (max-width: 860px) { .summary-grid { grid-template-columns: 1fr; } .summary-grid > div + div { border-left: 0; padding-left: 0; } }
+
 /* clinical inputs */
 .inputs { border: 1px solid var(--line); border-radius: var(--r); padding: var(--s3) var(--s4) var(--s4); }
 .inputs legend { padding: 0 6px; }

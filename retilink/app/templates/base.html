@@ -15,17 +15,16 @@
 {% if user %}
 <div class="shell">
   <aside class="side">
-    <a class="brand" href="/inbox"><svg aria-hidden="true"><use href="/static/icons.svg#i-logo"/></svg>RetiLink</a>
+    <a class="brand" href="/"><svg aria-hidden="true"><use href="/static/icons.svg#i-logo"/></svg>RetiLink</a>
     <nav class="nav" aria-label="Main">
-      <a href="/inbox" {% if active == 'inbox' %}aria-current="page"{% endif %}>{{ icon('inbox') }}Inbox{% if open_tasks %}<span class="count" aria-label="{{ open_tasks }} open tasks">{{ open_tasks }}</span>{% endif %}</a>
-      {% if user.role in ('operator', 'referring') %}<a href="/cases/new" {% if active == 'new' %}aria-current="page"{% endif %}>{{ icon('plus') }}New screening</a>{% endif %}
-      <a href="/oculomics" {% if active == 'oculomics' %}aria-current="page"{% endif %}>{{ icon('pulse') }}Oculomics</a>
-      <a href="/try" {% if active == 'try' %}aria-current="page"{% endif %}>{{ icon('flask') }}Try an image</a>
-      <a href="/evidence" {% if active == 'evidence' %}aria-current="page"{% endif %}>{{ icon('book') }}Evidence</a>
-      <a href="/analytics" {% if active == 'analytics' %}aria-current="page"{% endif %}>{{ icon('chart') }}Analytics</a>
-      <a href="/settings" {% if active == 'settings' %}aria-current="page"{% endif %}>{{ icon('sliders') }}Notifications</a>
+      <a href="/screen" {% if active == 'screen' %}aria-current="page"{% endif %}>{{ icon('eye') }}Screen</a>
+      <a href="/patients" {% if active == 'patients' %}aria-current="page"{% endif %}>{{ icon('user') }}Patients</a>
+      <a href="/consults" {% if active == 'consults' %}aria-current="page"{% endif %}>{{ icon('send') }}Consults{% if open_tasks %}<span class="count" aria-label="{{ open_tasks }} actions waiting">{{ open_tasks }}</span>{% endif %}</a>
     </nav>
     <div class="side-foot">
+      <a href="/performance" {% if active == 'performance' %}aria-current="page"{% endif %}>{{ icon('chart', 'ico-sm') }}Model performance</a>
+      <a href="/oculomics?view=science" {% if active == 'oculomics' %}aria-current="page"{% endif %}>{{ icon('pulse', 'ico-sm') }}How oculomics works</a>
+      <a href="/settings">{{ icon('sliders', 'ico-sm') }}Notification settings</a>
       <div class="who">{{ avatar(user) }}<div><div class="name">{{ user.name }}</div><div class="role">{{ role_label(user) }}</div></div></div>
       <a href="/login">{{ icon('switch', 'ico-sm') }}Switch account</a>
     </div>

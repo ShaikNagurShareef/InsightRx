@@ -221,10 +221,10 @@ def test_oculomics_views_and_role_scoping(ready_case):
 
 
 def test_inbox_shows_role_stats_and_activity(ready_case):
-    page = client_as("Dr. Alex Morgan").get("/inbox").text
+    page = client_as("Dr. Alex Morgan").get("/consults").text
     assert "Results reviewed" in page and "Recent activity" in page and "Your last 14 days" in page
     assert "signed an interpretation for RL-T1" in page or "opened a screening for RL-T1" in page
-    spec = client_as("Dr. Priya Nair").get("/inbox").text
+    spec = client_as("Dr. Priya Nair").get("/consults").text
     assert "Median time to accept" in spec and "RL-T2" not in spec          # specialists only see referred cases
 
 
@@ -239,17 +239,17 @@ def test_access_gate(monkeypatch):
     assert c.get("/login").status_code == 200
 
 
-def test_try_with_details_and_rerun_without_reupload():
+def test_screen_with_details_and_rerun_without_reupload():
     pcp = client_as("Dr. Alex Morgan")
-    r = pcp.post("/try", data={"age": "63", "sex": "male", "dm_time": "17", "insulin": "yes", "oral_treatment": "no",
-                               "cond_systemic_hypertension": "present"},
-                 files=[("files", ("a.jpg", fundus_bytes(3), "image/jpeg"))])
+    r = pcp.post("/screen", data={"age": "63", "sex": "male", "dm_time": "17", "insulin": "yes", "oral_treatment": "no",
+                                  "cond_systemic_hypertension": "present"},
+                 files=[("files_OD", ("a.jpg", fundus_bytes(3), "image/jpeg")), ("files_OS", ("b.jpg", fundus_bytes(4), "image/jpeg"))])
     assert r.status_code == 200 and "Whole-body view" in r.text and "Every systemic condition" in r.text
     assert "5 of 5 patient details entered" in r.text and "Known condition" in r.text
     token = re.search(r'name="token" value="([^"]+)"', r.text).group(1)
-    again = pcp.post("/try", data={"token": token, "age": "40"})                  # change a detail, no upload
+    again = pcp.post("/screen", data={"token": token, "age": "40"})                  # change a detail, no upload
     assert again.status_code == 200 and "1 of 5 patient details entered" in again.text
-    assert client_as("Sam Rivera").post("/try", data={"token": token}).status_code == 410   # tokens are per user
+    assert client_as("Sam Rivera").post("/screen", data={"token": token}).status_code == 410   # tokens are per user
 
 
 def test_case_inputs_edit_and_rerun(ready_case):
@@ -261,3 +261,25 @@ def test_case_inputs_edit_and_rerun(ready_case):
     assert "re-run" in r.headers["location"]
     page = pcp.get(f"/cases/{ready_case}?tab=systemic").text
     assert "Age 58" in page and "5 of 5 entered" in page
+
+
+def test_screen_save_creates_case_and_patients_lists_it():
+    pcp = client_as("Dr. Alex Morgan")
+    r = pcp.post("/screen", data={"age": "70", "sex": "female"}, files=[("files_OD", ("a.jpg", fundus_bytes(6), "image/jpeg"))])
+    token = re.search(r'name="token" value="([^"]+)"', r.text).group(1)
+    assert "Save &amp; consult a specialist" in r.text
+    saved = pcp.post("/screen/save", data={"token": token, "patient_ref": "RL-SAVE1", "age": "70", "sex": "female"})
+    assert saved.status_code == 303 and "tab=review" in saved.headers["location"]
+    cid = int(saved.headers["location"].split("?")[0].rsplit("/", 1)[1])
+    assert "Age 70" in pcp.get(f"/cases/{cid}?tab=systemic").text
+    assert "RL-SAVE1" in pcp.get("/patients").text
+    assert client_as("Dr. Priya Nair").post("/screen/save", data={"token": token}).status_code == 403   # specialists cannot
+
+
+def test_home_and_old_routes_redirect():
+    c = client_as("Dr. Alex Morgan")
+    assert c.get("/").headers["location"] == "/screen"
+    assert client_as("Dr. Priya Nair").get("/").headers["location"] == "/consults"
+    for old, new in [("/inbox", "/consults"), ("/try", "/screen"), ("/cases/new", "/screen"), ("/analytics", "/performance")]:
+        assert c.get(old).headers["location"].startswith(new)
+    assert c.get("/performance").status_code == 200 and c.get("/patients").status_code == 200

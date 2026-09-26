@@ -1,6 +1,6 @@
 {% extends "base.html" %}{% from "_ui.html" import icon, status, stage, case_stage, relay, empty %}{% from "_oculomics.html" import body_map, state_tag, tier_tag, contrib_bars, patient_inputs %}
 {% block title %}{{ case.patient.ref }} | RetiLink{% endblock %}
-{% block crumbs %}<a href="/inbox">Inbox</a> / Case {{ case.id }}{% endblock %}
+{% block crumbs %}<a href="/patients">Patients</a> / Case {{ case.id }}{% endblock %}
 {% block content %}
 {% set res = run.result if run and run.status == 'completed' else None %}
 {% set live = run and run.source == 'live' and not run_stale %}

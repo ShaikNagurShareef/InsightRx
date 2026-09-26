@@ -1,6 +1,6 @@
 {% extends "base.html" %}{% from "_ui.html" import icon, status, stage, case_stage, avatar, empty %}
-{% block title %}Inbox | RetiLink{% endblock %}
-{% block crumbs %}Inbox{% endblock %}
+{% block title %}Consults | RetiLink{% endblock %}
+{% block crumbs %}Consults{% endblock %}
 {% block content %}
 <div class="head">
   <div>
@@ -8,8 +8,8 @@
     <p class="sub">{% if tasks %}{{ tasks|length }} action{{ 's' if tasks|length != 1 }} waiting for you{% if overdue %}, {{ overdue }} overdue{% endif %}.{% else %}Nothing is waiting for you right now.{% endif %}</p>
   </div>
   <div class="row">
-    {% if user.role in ('operator', 'referring') %}<a class="btn" href="/cases/new">{{ icon('plus') }}New screening</a>{% endif %}
-    <a class="btn quiet" href="/try">{{ icon('flask') }}Try an image</a>
+    {% if user.role in ('operator', 'referring') %}<a class="btn" href="/screen">{{ icon('eye') }}Screen a patient</a>{% endif %}
+    <a class="btn quiet" href="/patients">{{ icon('user') }}Patients</a>
   </div>
 </div>
 
@@ -23,7 +23,7 @@
   <div class="panel-head">
     <h2 id="next-h">Your next actions</h2>
     <nav class="seg" aria-label="Filter actions">
-      {% for k, l in [('', 'All'), ('overdue', 'Overdue'), ('awaiting', 'Awaiting response'), ('incomplete', 'Incomplete')] %}<a href="/inbox?filter={{ k }}" {% if filter == k %}aria-current="page"{% endif %}>{{ l }}</a>{% endfor %}
+      {% for k, l in [('', 'All'), ('overdue', 'Overdue'), ('awaiting', 'Awaiting response'), ('incomplete', 'Incomplete')] %}<a href="/consults?filter={{ k }}" {% if filter == k %}aria-current="page"{% endif %}>{{ l }}</a>{% endfor %}
     </nav>
   </div>
   {% if tasks %}
@@ -64,25 +64,6 @@
 </section>
 {% endif %}
 
-{% if cases %}
-<section class="panel" aria-labelledby="case-h">
-  <div class="panel-head"><h2 id="case-h">Cases</h2><span class="hint">Patients are synthetic</span></div>
-  <div class="table-wrap"><table class="table">
-    <thead><tr><th>Patient</th><th>Encounter</th><th>Screening result</th><th>Stage</th><th>Referring clinician</th></tr></thead>
-    <tbody>
-    {% for c in cases %}
-      <tr>
-        <td><a class="primary" href="/cases/{{ c.id }}">{{ c.patient.ref }}</a>{% if c.urgent_concern %} <span class="tag signal">{{ icon('alert') }}Urgent concern</span>{% endif %}<div class="xs muted">Case {{ c.id }}</div></td>
-        <td class="num">{{ c.encounter_date }}</td>
-        <td>{% if results.get(c.id) %}{{ status(results[c.id]) }}{% else %}<span class="muted small">Not analysed</span>{% endif %}</td>
-        <td>{{ case_stage(c.status) }}</td>
-        <td>{{ c.owner.name }}</td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table></div>
-</section>
-{% endif %}
 </div>
 <aside class="inbox-side stack-lg" aria-label="Your activity">
   <section class="panel panel-pad" aria-labelledby="wk-h">

@@ -1,0 +1,139 @@
+{% extends "base.html" %}{% from "_ui.html" import icon, status %}{% from "_oculomics.html" import body_map, organ_list, condition_table, patient_inputs %}
+{% block title %}Screen | RetiLink{% endblock %}
+{% block crumbs %}Screen a patient{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>{{ 'Screening result' if results else 'Screen a patient' }}</h1>
+  <p class="sub">{{ 'Retina and whole-body findings from this photo session. Save it as a case to consult a specialist.' if results else 'Add retinal photos of each eye and what you know about the patient. RetiLink checks quality, screens the retina and lays out what it can say about the rest of the body.' }}</p></div>
+</div>
+<div class="workspace" style="grid-template-columns:minmax(0,1fr) 380px">
+  <div class="stack-lg">
+  {% if results %}
+    {% set v = 'signal' if overall == 'Referable DR signal' else 'clear' if overall == 'No model finding' else 'caution' %}
+    {% set flagged = snapshot|selectattr('state', 'in', ['signal', 'exploratory', 'recorded'])|list %}
+    <section class="verdict {{ v }} summary" aria-labelledby="sum-h">
+      <div class="summary-grid">
+        <div>
+          <p class="xs muted">Retina</p>
+          <h2 id="sum-h" class="state">{{ icon('alert' if v != 'clear' else 'check') }}{{ overall }}</h2>
+          <p class="explain">
+            {% if overall == 'Referable DR signal' %}Moderate or worse diabetic retinopathy is likely in at least one photo. Referral to a retina specialist is usually indicated; you decide.
+            {% elif overall == 'No model finding' %}No photo crossed the referable threshold. This is not the same as no disease.
+            {% elif overall == 'Unable to assess' %}No photo passed the quality gate, so there is no reassurance. Recapture or examine the patient.
+            {% else %}At least one eye has no usable photo, so the assessment is incomplete.{% endif %}
+          </p>
+          {% if eyes_known %}<div class="row" style="margin-top:8px">{% for e, n in [('OD', 'Right eye'), ('OS', 'Left eye')] %}<span class="small"><strong>{{ n }}:</strong> {{ status(res.eyes[e].status) }}</span>{% endfor %}</div>{% endif %}
+        </div>
+        <div>
+          <p class="xs muted">Whole body</p>
+          <p class="state" style="font-size:var(--t-md);color:var(--ink)">{{ flagged|length }} of 5 organ systems to discuss</p>
+          <ul class="chips">{% for o in snapshot if o.key != 'eyes' and o.key != 'brain' %}<li><span class="dotst {{ o.state }}" aria-hidden="true"></span>{{ o.label }}: {{ o.state_text|lower }}</li>{% endfor %}</ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="actionbar panel">
+      {% if user.role in ('operator', 'referring') %}
+      <form method="post" action="/screen/save" class="row" style="flex:1" data-busy="Saving">
+        <input type="hidden" name="token" value="{{ token }}">
+        {% for k in ['age', 'sex', 'dm_time', 'insulin', 'oral_treatment'] %}<input type="hidden" name="{{ k }}" value="{{ details[k] if details[k] is not none else '' }}">{% endfor %}
+        {% for c, v in details.conditions.items() %}<input type="hidden" name="cond_{{ c }}" value="{{ v }}">{% endfor %}
+        <label class="sr-only" for="pref">Patient reference</label><input id="pref" name="patient_ref" value="{{ patient_ref }}" placeholder="Patient reference (optional)" style="max-width:240px">
+        <button type="submit" class="btn"><span class="spin" aria-hidden="true"></span>{{ icon('send') }}<span data-label>Save &amp; consult a specialist</span></button>
+      </form>
+      {% endif %}
+      <a class="btn quiet" href="/performance">{{ icon('chart') }}How reliable is this?</a>
+    </div>
+
+    <section class="panel" aria-labelledby="ph-h">
+      <div class="panel-head"><h2 id="ph-h">Retina, photo by photo</h2><span class="hint">Model {{ 'live' if source == 'live' else 'simulated' }}, {{ latency }} ms</span></div>
+      <div class="panel-body photo-grid">
+      {% for r in results %}
+        <article class="photo" data-eye>
+          <div class="fundus"><img class="base" src="{{ r.src }}" alt="{{ {'OD': 'Right eye', 'OS': 'Left eye'}.get(r.eye, 'Photo') }}: {{ r.name }}" width="600" height="600"><img class="overlay" alt="" data-src="{{ r.attn or '' }}">
+            <div class="corner"><span class="tag">{{ {'OD': 'Right eye', 'OS': 'Left eye'}.get(r.eye, 'Eye not set') }}</span><span class="tag {{ 'clear' if r.quality == 'assessable' else 'caution' if r.quality == 'uncertain' else 'signal' }}">{{ r.quality }}</span></div></div>
+          <div class="viewbar">
+            <button type="button" class="btn quiet sm" data-attn-toggle aria-pressed="false" {% if not r.attn %}hidden{% endif %}>{{ icon('layers') }}Where the model looked</button>
+            <input type="range" min="20" max="100" value="85" data-attn-range disabled aria-label="Attention overlay opacity">
+          </div>
+          {% if r.reasons %}<p class="xs" style="color:var(--signal)">Not a fundus photograph: {{ r.reasons|join('; ') }}.</p>
+          {% elif r.quality == 'unassessable' %}<p class="xs" style="color:var(--caution)">Rejected by the quality gate; no reassurance from this photo.</p>
+          {% else %}
+          <div class="row-between" style="margin-top:6px">{{ status(r.verdict) }}<span class="xs muted">DR score {{ '%.2f'|format(r.p_dr) }} / {{ '%.2f'|format(thr.dr_referable) }}</span></div>
+          <div class="probs" aria-label="Grade probabilities">{% for pr in r.icdr_probs %}<div class="p"><span>{{ ICDR_NAMES[loop.index0] }}</span><span class="bar"><span style="width:{{ (pr * 100)|round|int }}%"></span></span><span class="num">{{ '%.0f'|format(pr * 100) }}%</span></div>{% endfor %}</div>
+          {% if r.edema_flag %}<p class="xs" style="margin-top:4px"><span class="tag research">{{ icon('pulse') }}Macular edema signal ({{ '%.2f'|format(r.p_edema) }})</span></p>{% endif %}
+          {% endif %}
+        </article>
+      {% endfor %}
+      </div>
+    </section>
+
+    <section class="panel oc-patient" aria-labelledby="wb-h">
+      <div class="oc-grid">
+        <div class="oc-map panel-pad">
+          <h2 id="wb-h">Whole-body view</h2>
+          <p class="xs muted" style="margin-top:4px">Retina plus the history you entered. Signals are for review, never a diagnosis.</p>
+          {{ body_map(snapshot, 'patient', 'Whole-body view') }}
+          <ul class="legend"><li><span class="sw signal"></span>Signal to review</li><li><span class="sw exploratory"></span>Exploratory</li><li><span class="sw recorded"></span>Known condition</li><li><span class="sw clear"></span>No finding</li><li><span class="sw unknown"></span>History unknown</li></ul>
+        </div>
+        <div class="panel-pad">{{ organ_list(snapshot) }}</div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="sys-h">
+      <div class="panel-head"><h2 id="sys-h">Every systemic condition, and what drove it</h2><span class="hint">{{ n_inputs }} of 5 patient details entered</span></div>
+      {% if n_inputs < 5 %}<div class="panel-body" style="padding-bottom:0"><div class="note warn">{{ icon('alert') }}<span>{{ 'No patient details entered' if n_inputs == 0 else 'Some patient details are unknown' }}: models that use them fill the gaps with cohort medians. Add age, sex and diabetes history on the right and re-run.</span></div></div>{% endif %}
+      {% if systemic %}{{ condition_table(systemic) }}{% else %}<div class="empty"><p>No systemic output: no photo passed the quality gate.</p></div>{% endif %}
+      <p class="xs muted" style="padding:var(--s3) var(--s5) var(--s4)">Red bars raise a score and blue bars lower it, relative to a typical patient. Research signals passed the release gate; exploratory ones did not.</p>
+    </section>
+
+    {% if evidence %}
+    <section class="panel" aria-labelledby="ev-h">
+      <div class="panel-head"><h2 id="ev-h">What the guidelines say</h2><span class="hint">Curated references for these findings</span></div>
+      <div class="panel-body evi">
+      {% for e in evidence %}
+        <article><p class="xs muted">{{ e.finding }}</p><h3 class="small"><a href="{{ e.url }}" target="_blank" rel="noopener">{{ e.title }}</a></h3>
+          <p class="small">{{ e.passage }}</p><p class="xs muted">{{ e.publisher }}, {{ e.version }}</p></article>
+      {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  {% else %}
+    <section class="panel panel-pad stack">
+      <h2>What you get in about 10 seconds</h2>
+      <ol class="flow" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+        <li><span class="dot">{{ icon('shield') }}</span><strong>Quality check</strong><span class="xs muted">Unusable photos never give reassurance</span></li>
+        <li><span class="dot">{{ icon('eye') }}</span><strong>Retina</strong><span class="xs muted">Referable DR, grade, edema, where the model looked</span></li>
+        <li><span class="dot">{{ icon('pulse') }}</span><strong>Whole body</strong><span class="xs muted">Nine conditions, with what drove each score</span></li>
+        <li><span class="dot">{{ icon('send') }}</span><strong>Act</strong><span class="xs muted">Guideline evidence and a one-click specialist consult</span></li>
+      </ol>
+      <p class="small muted">Trained on mBRSET: handheld smartphone camera, dilated pupils, adults with diabetes. Other cameras are a domain shift; treat those scores as exploratory.</p>
+    </section>
+  {% endif %}
+  </div>
+
+  <aside style="position:sticky;top:76px">
+    <form method="post" action="/screen" enctype="multipart/form-data" class="panel panel-pad stack" data-busy="Analysing">
+      {% if token %}<input type="hidden" name="token" value="{{ token }}">
+      <div class="note">{{ icon('image') }}<span>{{ results|length }} photo{{ 's' if results|length != 1 }} held for 1 hour. Change any detail and re-run, or add new photos to replace them.</span></div>{% endif %}
+      <div class="grid-2">
+        {% for eye, name in [('OD', 'Right eye'), ('OS', 'Left eye')] %}
+        <div class="drop compact" data-drop>
+          <div class="big">{{ name }}</div>
+          <label class="btn quiet sm" style="margin-top:6px">{{ icon('upload') }}Add<input class="sr-only" type="file" name="files_{{ eye }}" accept="image/jpeg,image/png" multiple></label>
+          <p class="xs muted" data-drop-note aria-live="polite"></p><div class="previews"></div>
+        </div>
+        {% endfor %}
+      </div>
+      <details><summary class="xs muted">Not sure which eye?</summary>
+        <div class="drop compact" data-drop style="margin-top:6px"><label class="btn quiet sm">{{ icon('upload') }}Add photos<input class="sr-only" type="file" name="files" accept="image/jpeg,image/png" multiple></label><div class="previews"></div></div>
+      </details>
+      <details {% if token or not results %}open{% endif %}><summary class="small"><strong>Patient details</strong> <span class="muted">(improve the whole-body scores)</span></summary>
+        <div class="stack" style="margin-top:var(--s3)">{{ patient_inputs(details, compact=True) }}</div>
+      </details>
+      <button type="submit" class="btn lg block"><span class="spin" aria-hidden="true"></span>{{ icon('eye') }}<span data-label>{{ 'Re-run with these details' if token else 'Screen' }}</span></button>
+      <p class="xs muted">Use only photos you are allowed to share. Held for 1 hour unless you save them as a case.</p>
+    </form>
+  </aside>
+</div>
+{% endblock %}
