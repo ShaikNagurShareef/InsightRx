@@ -1,0 +1,737 @@
+{
+ "VEGFA": {
+  "target_chembl_id": "CHEMBL1783",
+  "drugs": [
+   {
+    "chembl_id": "CHEMBL1742982",
+    "name": "aflibercept",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Vascular endothelial growth factor A inhibitor",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL1201583",
+    "name": "bevacizumab",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Vascular endothelial growth factor A inhibitor",
+    "type": "antibody"
+   },
+   {
+    "chembl_id": "CHEMBL5314727",
+    "name": "bevacizumab gamma",
+    "max_phase": 4.0,
+    "action": "binding agent",
+    "mechanism": "Vascular endothelial growth factor A binding agent",
+    "type": "antibody"
+   },
+   {
+    "chembl_id": "CHEMBL3707357",
+    "name": "brolucizumab",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Vascular endothelial growth factor A inhibitor",
+    "type": "antibody"
+   },
+   {
+    "chembl_id": "CHEMBL4297750",
+    "name": "faricimab",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Vascular endothelial growth factor A inhibitor",
+    "type": "antibody"
+   },
+   {
+    "chembl_id": "CHEMBL1201421",
+    "name": "pegaptanib sodium",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Vascular endothelial growth factor A antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1201825",
+    "name": "ranibizumab",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Vascular endothelial growth factor A inhibitor",
+    "type": "antibody"
+   },
+   {
+    "chembl_id": "CHEMBL4297684",
+    "name": "abicipar pegol",
+    "max_phase": 3.0,
+    "action": "inhibitor",
+    "mechanism": "Vascular endothelial growth factor A inhibitor",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL2108313",
+    "name": "conbercept",
+    "max_phase": 3.0,
+    "action": "inhibitor",
+    "mechanism": "Vascular endothelial growth factor A inhibitor",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL4297163",
+    "name": "muparfostat",
+    "max_phase": 3.0,
+    "action": "inhibitor",
+    "mechanism": "Vascular endothelial growth factor A inhibitor",
+    "type": "unknown"
+   }
+  ]
+ },
+ "ANGPT2": {
+  "target_chembl_id": "CHEMBL3580489",
+  "drugs": [
+   {
+    "chembl_id": "CHEMBL4297750",
+    "name": "faricimab",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Angiopoietin-2 inhibitor",
+    "type": "antibody"
+   },
+   {
+    "chembl_id": "CHEMBL2108568",
+    "name": "trebananib",
+    "max_phase": 3.0,
+    "action": "inhibitor",
+    "mechanism": "Angiopoietin-2 inhibitor",
+    "type": "unknown"
+   },
+   {
+    "chembl_id": "CHEMBL4594470",
+    "name": "cvx-060",
+    "max_phase": 2.0,
+    "action": "inhibitor",
+    "mechanism": "Angiopoietin-2 inhibitor",
+    "type": "unknown"
+   },
+   {
+    "chembl_id": "CHEMBL2108678",
+    "name": "nesvacumab",
+    "max_phase": 2.0,
+    "action": "inhibitor",
+    "mechanism": "Angiopoietin-2 inhibitor",
+    "type": "antibody"
+   },
+   {
+    "chembl_id": "CHEMBL3545259",
+    "name": "vanucizumab",
+    "max_phase": 2.0,
+    "action": "inhibitor",
+    "mechanism": "Angiopoietin-2 inhibitor",
+    "type": "antibody"
+   },
+   {
+    "chembl_id": "CHEMBL4650486",
+    "name": "zansecimab",
+    "max_phase": 2.0,
+    "action": "inhibitor",
+    "mechanism": "Angiopoietin-2 inhibitor",
+    "type": "antibody"
+   },
+   {
+    "chembl_id": "CHEMBL2109586",
+    "name": "amg-780",
+    "max_phase": 1.0,
+    "action": "inhibitor",
+    "mechanism": "Angiopoietin-2 inhibitor",
+    "type": "unknown"
+   },
+   {
+    "chembl_id": "CHEMBL2109298",
+    "name": "medi-3617",
+    "max_phase": 1.0,
+    "action": "inhibitor",
+    "mechanism": "Angiopoietin-2 inhibitor",
+    "type": "unknown"
+   }
+  ]
+ },
+ "PPARA": {
+  "target_chembl_id": "CHEMBL239",
+  "drugs": [
+   {
+    "chembl_id": "CHEMBL1201745",
+    "name": "choline fenofibrate",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Peroxisome proliferator-activated receptor alpha agonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL557555",
+    "name": "ciprofibrate",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Peroxisome proliferator-activated receptor alpha agonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL565",
+    "name": "clofibrate",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Peroxisome proliferator-activated receptor alpha agonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL3707395",
+    "name": "elafibranor",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Peroxisome proliferator-activated receptor alpha agonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL672",
+    "name": "fenofibrate",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Peroxisome proliferator-activated receptor alpha agonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL981",
+    "name": "fenofibric acid",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Peroxisome proliferator-activated receptor alpha agonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL457",
+    "name": "gemfibrozil",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Peroxisome proliferator-activated receptor alpha agonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL247951",
+    "name": "pemafibrate",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Peroxisome proliferator-activated receptor alpha agonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL519504",
+    "name": "aleglitazar",
+    "max_phase": 3.0,
+    "action": "agonist",
+    "mechanism": "Peroxisome proliferator-activated receptor alpha agonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL592054",
+    "name": "imiglitazar",
+    "max_phase": 3.0,
+    "action": "agonist",
+    "mechanism": "Peroxisome proliferator-activated receptor alpha agonist",
+    "type": "small molecule"
+   }
+  ]
+ },
+ "PRKCB": {
+  "target_chembl_id": "CHEMBL3045",
+  "drugs": [
+   {
+    "chembl_id": "CHEMBL300138",
+    "name": "enzastaurin",
+    "max_phase": 3.0,
+    "action": "inhibitor",
+    "mechanism": "Protein kinase C beta inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL91829",
+    "name": "ruboxistaurin",
+    "max_phase": 3.0,
+    "action": "inhibitor",
+    "mechanism": "Protein kinase C beta inhibitor",
+    "type": "small molecule"
+   }
+  ]
+ },
+ "AGTR1": {
+  "target_chembl_id": "CHEMBL227",
+  "drugs": [
+   {
+    "chembl_id": "CHEMBL3989932",
+    "name": "angiotensin ii acetate",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Type-1 angiotensin II receptor agonist",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL2103795",
+    "name": "azilsartan kamedoxomil",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Type-1 angiotensin II receptor antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1014",
+    "name": "candesartan cilexetil",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Type-1 angiotensin II receptor antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1200987",
+    "name": "eprosartan mesylate",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Type-1 angiotensin II receptor antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1513",
+    "name": "irbesartan",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Type-1 angiotensin II receptor antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL6068339",
+    "name": "irbesartan hydrochloride",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Type-1 angiotensin II receptor antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL995",
+    "name": "losartan potassium",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Type-1 angiotensin II receptor antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1200692",
+    "name": "olmesartan medoxomil",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Type-1 angiotensin II receptor antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1200670",
+    "name": "saralasin acetate",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Type-1 angiotensin II receptor antagonist",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL539423",
+    "name": "sparsentan",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Type-1 angiotensin II receptor antagonist",
+    "type": "small molecule"
+   }
+  ]
+ },
+ "ACE": {
+  "target_chembl_id": "CHEMBL1808",
+  "drugs": [
+   {
+    "chembl_id": "CHEMBL1694",
+    "name": "benazepril hydrochloride",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Angiotensin-converting enzyme inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1560",
+    "name": "captopril",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Angiotensin-converting enzyme inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL515606",
+    "name": "cilazapril",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Angiotensin-converting enzyme inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1200659",
+    "name": "enalapril maleate",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Angiotensin-converting enzyme inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL3989406",
+    "name": "enalaprilat",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Angiotensin-converting enzyme inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL3039596",
+    "name": "fosinopril sodium",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Angiotensin-converting enzyme inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL317094",
+    "name": "imidapril",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Angiotensin-converting enzyme inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL419213",
+    "name": "lisinopril",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Angiotensin-converting enzyme inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1200534",
+    "name": "moexipril hydrochloride",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Angiotensin-converting enzyme inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL3544986",
+    "name": "perindopril arginine",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Angiotensin-converting enzyme inhibitor",
+    "type": "small molecule"
+   }
+  ]
+ },
+ "SLC5A2": {
+  "target_chembl_id": "CHEMBL3884",
+  "drugs": [
+   {
+    "chembl_id": "CHEMBL1808388",
+    "name": "bexagliflozin",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Sodium/glucose cotransporter 2 inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL4594217",
+    "name": "canagliflozin",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Sodium/glucose cotransporter 2 inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL429910",
+    "name": "dapagliflozin",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Sodium/glucose cotransporter 2 inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL2103802",
+    "name": "dapagliflozin propanediol",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Sodium/glucose cotransporter 2 inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL2107830",
+    "name": "empagliflozin",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Sodium/glucose cotransporter 2 inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1770248",
+    "name": "ertugliflozin",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Sodium/glucose cotransporter 2 inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL5315054",
+    "name": "ertugliflozin pidolate",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Sodium/glucose cotransporter 2 inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL2018096",
+    "name": "ipragliflozin",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Sodium/glucose cotransporter 2 inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL3039507",
+    "name": "sotagliflozin",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Sodium/glucose cotransporter 2 inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL2105711",
+    "name": "tofogliflozin",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Sodium/glucose cotransporter 2 inhibitor",
+    "type": "small molecule"
+   }
+  ]
+ },
+ "NR3C2": {
+  "target_chembl_id": "CHEMBL1994",
+  "drugs": [
+   {
+    "chembl_id": "CHEMBL1463345",
+    "name": "canrenone",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Mineralocorticoid receptor antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1200542",
+    "name": "desoxycorticosterone acetate",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Mineralocorticoid receptor agonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1200592",
+    "name": "desoxycorticosterone pivalate",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Mineralocorticoid receptor agonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1509",
+    "name": "drospirenone",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Mineralocorticoid receptor antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1095097",
+    "name": "eplerenone",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Mineralocorticoid receptor antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1480",
+    "name": "felodipine",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Mineralocorticoid receptor antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL2181927",
+    "name": "finerenone",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Mineralocorticoid receptor antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1201010",
+    "name": "fludrocortisone acetate",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Mineralocorticoid receptor agonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1428",
+    "name": "nimodipine",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Mineralocorticoid receptor antagonist",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL1393",
+    "name": "spironolactone",
+    "max_phase": 4.0,
+    "action": "antagonist",
+    "mechanism": "Mineralocorticoid receptor antagonist",
+    "type": "small molecule"
+   }
+  ]
+ },
+ "GLP1R": {
+  "target_chembl_id": "CHEMBL1784",
+  "drugs": [
+   {
+    "chembl_id": "CHEMBL2107841",
+    "name": "albiglutide",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Glucagon-like peptide 1 receptor agonist",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL2108027",
+    "name": "dulaglutide",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Glucagon-like peptide 1 receptor agonist",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL414357",
+    "name": "exenatide",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Glucagon-like peptide 1 receptor agonist",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL4084119",
+    "name": "liraglutide",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Glucagon-like peptide 1 receptor agonist",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL2108336",
+    "name": "lixisenatide",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Glucagon-like peptide 1 receptor agonist",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL2108724",
+    "name": "semaglutide",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Glucagon-like peptide 1 receptor agonist",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL4297839",
+    "name": "tirzepatide",
+    "max_phase": 4.0,
+    "action": "agonist",
+    "mechanism": "Glucagon-like peptide 1 receptor agonist",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL4297949",
+    "name": "avexitide",
+    "max_phase": 3.0,
+    "action": "antagonist",
+    "mechanism": "Glucagon-like peptide 1 receptor antagonist",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL4650470",
+    "name": "efpeglenatide",
+    "max_phase": 3.0,
+    "action": "agonist",
+    "mechanism": "Glucagon-like peptide 1 receptor agonist",
+    "type": "protein"
+   },
+   {
+    "chembl_id": "CHEMBL5095485",
+    "name": "retatrutide",
+    "max_phase": 3.0,
+    "action": "agonist",
+    "mechanism": "Glucagon-like peptide 1 receptor agonist",
+    "type": "protein"
+   }
+  ]
+ },
+ "AKR1B1": {
+  "target_chembl_id": "CHEMBL1900",
+  "drugs": [
+   {
+    "chembl_id": "CHEMBL56337",
+    "name": "epalrestat",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Aldose reductase inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL436",
+    "name": "tolrestat",
+    "max_phase": 4.0,
+    "action": "inhibitor",
+    "mechanism": "Aldose reductase inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL4297455",
+    "name": "caficrestat",
+    "max_phase": 3.0,
+    "action": "inhibitor",
+    "mechanism": "Aldose reductase inhibitor",
+    "type": "small molecule"
+   },
+   {
+    "chembl_id": "CHEMBL266497",
+    "name": "sorbinil",
+    "max_phase": 3.0,
+    "action": "inhibitor",
+    "mechanism": "Aldose reductase inhibitor",
+    "type": "small molecule"
+   }
+  ]
+ },
+ "CACNA2D1": {
+  "target_chembl_id": "CHEMBL1919",
+  "drugs": [
+   {
+    "chembl_id": "CHEMBL3545257",
+    "name": "mirogabalin besylate",
+    "max_phase": -1.0,
+    "action": "modulator",
+    "mechanism": "Voltage-gated calcium channel alpha2/delta subunit 1 modulator",
+    "type": "small molecule"
+   }
+  ]
+ }
+}

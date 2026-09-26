@@ -536,7 +536,7 @@ legend { font-size: var(--t-sm); font-weight: 600; color: var(--ink-2); margin-b
 
 /* ------------------------------------------------------------------ responsive */
 @media (max-width: 1180px) {
-  .workspace { grid-template-columns: minmax(0, 1fr); }
+  .workspace { grid-template-columns: minmax(0, 1fr) !important; }     /* beats per-page inline column templates */
   .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 860px) {
@@ -560,4 +560,87 @@ legend { font-size: var(--t-sm); font-weight: 600; color: var(--ink-2); margin-b
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+/* ------------------------------------------------------------------ therapeutics layer */
+:root { --mol: #0f6b6b; --mol-wash: #e4f3f2; }
+.tag.mol { background: var(--mol-wash); color: var(--mol); text-decoration: none; }
+a.tag.mol:hover { background: #cfe9e7; }
+.pills { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.pills li { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-sm); padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); }
+
+/* value chain: eye -> signal -> target -> therapy -> physician */
+.chain { list-style: none; margin: 0; padding: var(--s4) var(--s5); display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--s3);
+  background: linear-gradient(90deg, var(--fundus-wash), var(--panel) 35%, var(--panel) 65%, var(--mol-wash)); border: 1px solid var(--line); border-radius: var(--r); }
+.chain li { display: grid; grid-template-columns: 36px 1fr; column-gap: 10px; align-items: center; position: relative; font-size: var(--t-sm); }
+.chain li .dot { grid-row: span 2; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--panel); border: 1.5px solid var(--line); color: var(--ink-2); }
+.chain li:first-child .dot { background: var(--fundus); border-color: var(--fundus); color: #fff; }
+.chain li.on .dot { background: var(--mol); border-color: var(--mol); color: #fff; box-shadow: 0 0 0 4px var(--mol-wash); }
+.chain li:not(:last-child)::after { content: "\2192"; position: absolute; right: -10px; top: 8px; color: var(--ink-3); }
+
+/* medicines picker */
+.medchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.medchip { position: relative; }
+.medchip input { position: absolute; opacity: 0; inset: 0; }
+.medchip span { display: inline-block; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); font-size: var(--t-xs); background: var(--panel); cursor: pointer; transition: background .15s, border-color .15s; }
+.medchip span:hover { border-color: #b7c4ce; }
+.medchip input:checked + span { background: var(--mol-wash); border-color: var(--mol); color: var(--mol); font-weight: 600; }
+.medchip input:focus-visible + span { outline: 3px solid var(--blue); outline-offset: 2px; }
+
+/* therapy cards and interaction alerts */
+.txlist { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.tx { border: 1px solid var(--line); border-left: 3px solid var(--mol); border-radius: var(--r-sm); padding: var(--s4); background: var(--panel); }
+.tx h3 { font-size: var(--t-md); margin-top: 2px; }
+.ixlist { list-style: none; margin: var(--s3) 0 0; padding: 0; display: grid; gap: 8px; }
+.ix { padding: 10px 12px; border-radius: var(--r-sm); background: var(--neutral-wash); border-left: 3px solid var(--neutral); }
+.ix.major { background: var(--signal-wash); border-left-color: var(--signal); }
+.ix.moderate { background: var(--caution-wash); border-left-color: #b07400; }
+.tx .mi { margin-top: var(--s3); border-top: 1px dashed var(--line); padding-top: var(--s2); }
+.tx .mi summary { cursor: pointer; color: var(--blue); }
+.sponsored { border: 1px dashed var(--line); border-radius: var(--r-sm); padding: var(--s3) var(--s4); background: repeating-linear-gradient(135deg, #fafbfc, #fafbfc 8px, #f4f6f8 8px, #f4f6f8 16px); }
+
+/* trials */
+.trialgrp + .trialgrp { margin-top: var(--s4); padding-top: var(--s4); border-top: 1px solid var(--line-2); }
+.trials { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 10px; }
+.trials li { display: grid; gap: 2px; }
+.trials a { text-decoration: none; }
+.trials a:hover { text-decoration: underline; }
+
+/* target list, explorer and viewer */
+.tglist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.tglist li { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.tglist a { display: grid; text-decoration: none; min-width: 0; }
+.gene { font: 700 var(--t-md)/1.1 ui-monospace, "SF Mono", Menlo, Consolas, monospace; color: var(--mol); letter-spacing: .02em; }
+.tg-organ { margin-top: var(--s6); }
+.tg-organ > .row-between { border-bottom: 2px solid var(--ink); padding-bottom: 6px; margin-bottom: 4px; }
+.tg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s4); margin-top: var(--s4); }
+.tg-card { display: grid; gap: 6px; align-content: start; padding: var(--s4) var(--s5); border: 1px solid var(--line); border-radius: var(--r); background: var(--panel); box-shadow: var(--shadow);
+  text-decoration: none; color: var(--ink); transition: transform .15s ease, box-shadow .15s ease, border-color .15s; }
+.tg-card:hover { transform: translateY(-2px); border-color: var(--mol); box-shadow: 0 6px 20px rgba(15, 107, 107, .12); color: var(--ink); }
+.tg-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--line-2); }
+.plddt { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.tg-meta > .xs { white-space: nowrap; }
+.plddt .bar { width: 64px; height: 6px; border-radius: 3px; background: linear-gradient(90deg, #ff7d45 0 50%, #ffdb13 50% 70%, #65cbf3 70% 90%, #0053d6 90%); position: relative; overflow: hidden; }
+.plddt .bar span { position: absolute; inset: 0 auto 0 0; background: transparent; border-right: 2px solid var(--ink); }
+.mol-view { position: relative; height: 460px; background: radial-gradient(circle at 50% 45%, #fff, #f1f5f8); border-bottom: 1px solid var(--line-2); }
+.mol-canvas { position: absolute; inset: 0; }
+.mol-canvas canvas { border-radius: 0; }
+.mol-fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: var(--s5); text-align: center; color: var(--ink-3); }
+.plddt-legend, .panel.mol .legend { margin: 0; justify-content: flex-start; }
+.legend .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+button[data-spin][aria-pressed="true"] { background: var(--mol-wash); border-color: var(--mol); color: var(--mol); }
+
+/* CMS codes, med-info, letter */
+.codes { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.codes li { padding: 8px 10px; border-radius: var(--r-sm); border: 1px solid var(--line-2); }
+.codes li.yes { border-color: var(--clear); background: var(--clear-wash); }
+.codes li.no { opacity: .7; }
+.mireq.answered { border-left: 3px solid var(--clear); }
+.letter { padding: var(--s7) var(--s7); max-width: 760px; line-height: 1.6; }
+.letter ul { padding-left: 20px; }
+@media (max-width: 1180px) { .chain { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: var(--s4); } .chain li::after { display: none; } }
+@media (max-width: 860px) { .chain { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mol-view { height: 340px; } .letter { padding: var(--s5); } }
+@media print {
+  .side, .topbar, .disclaimer, .noprint, .toast { display: none !important; }
+  .shell { display: block; } .content { padding: 0; } .letter { border: 0; box-shadow: none; max-width: none; padding: 0; }
 }

@@ -27,8 +27,16 @@ def parse_details(form) -> dict:
          "insulin": form.get("insulin") if form.get("insulin") in ("yes", "no") else "unknown",
          "oral_treatment": form.get("oral_treatment") if form.get("oral_treatment") in ("yes", "no") else "unknown",
          "conditions": {c: (form.get(f"cond_{c}") if form.get(f"cond_{c}") in ("present", "absent") else "unknown")
-                        for c in CONDITIONS}}
+                        for c in CONDITIONS},
+         "medications": _meds(form)}
     return d
+
+
+def _meds(form) -> list:
+    """Current medicines: picker values plus a comma-separated 'other' field, validated to generic-name form."""
+    from .therapeutics import normalize_meds
+    picked = form.getlist("med") if hasattr(form, "getlist") else list(form.get("med") or [])
+    return normalize_meds(list(picked) + [form.get("med_other") or ""])
 
 
 def model_inputs(d: dict) -> dict:
@@ -44,7 +52,7 @@ def as_patient(d: dict):
     """A patient-like object for the whole-body snapshot."""
     conds = {c: {"value": v, "source": "entered in Try an image" if v != "unknown" else "not entered",
                  "date": "", "verification": "reported"} for c, v in d["conditions"].items()}
-    return SimpleNamespace(conditions=conds, dm_time=d["dm_time"], insulin=d["insulin"])
+    return SimpleNamespace(conditions=conds, dm_time=d["dm_time"], insulin=d["insulin"], medications=d["medications"])
 
 
 EYES = ("OD", "OS", "unknown")

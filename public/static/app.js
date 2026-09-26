@@ -45,6 +45,7 @@
 
   // ---- small behaviours kept out of inline handlers (strict CSP)
   document.querySelectorAll("[data-autosubmit]").forEach(i => i.addEventListener("change", () => i.form.requestSubmit()));
+  document.querySelectorAll("[data-print]").forEach(b => b.addEventListener("click", () => window.print()));
   document.querySelectorAll("[data-back]").forEach(a => a.addEventListener("click", e => {
     if (history.length > 1) { e.preventDefault(); history.back(); }
   }));

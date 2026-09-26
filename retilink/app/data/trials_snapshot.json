@@ -1,0 +1,670 @@
+{
+ "dr": [
+  {
+   "nct": "NCT07588100",
+   "title": "A Study to Investigate the Safety, Tolerability, and Pharmacokinetics of RO7663498 Following Intravitreal Administration in Participants With Diabetic Retinopathy",
+   "status": "RECRUITING",
+   "phase": "PHASE1",
+   "sponsor": "Hoffmann-La Roche",
+   "interventions": [
+    "RO7663498"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 3,
+   "site": "Global Research Management, Glendale, California",
+   "url": "https://clinicaltrials.gov/study/NCT07588100"
+  },
+  {
+   "nct": "NCT06629649",
+   "title": "Implementing AI-based Glaucoma Screening Within Federally Qualified Health Centers",
+   "status": "RECRUITING",
+   "phase": "NA",
+   "sponsor": "University of Alabama at Birmingham",
+   "interventions": [
+    "Glaucoma screening using an AI-algorithm and screening for diabetic retinopathy, cataract, and visual acuity impairment."
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 1,
+   "site": "Department of Ophthalmology and Visual Sciences, University of Alabama at Birmingham, Birmingham, Alabama",
+   "url": "https://clinicaltrials.gov/study/NCT06629649"
+  },
+  {
+   "nct": "NCT07270133",
+   "title": "Longitudinal Natural History Study of Retinal Function in Eyes of Patients With Diabetes",
+   "status": "RECRUITING",
+   "phase": "N/A",
+   "sponsor": "Jaeb Center for Health Research",
+   "interventions": [
+    "Visual Acuity",
+    "Reading Speed",
+    "Visual Field testing",
+    "Contrast sensitivity"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 6,
+   "site": "Southeast Retina Center, P.C., Augusta, Georgia",
+   "url": "https://clinicaltrials.gov/study/NCT07270133"
+  },
+  {
+   "nct": "NCT05079399",
+   "title": "Biomarker of Diabetic Retinopathy",
+   "status": "RECRUITING",
+   "phase": "N/A",
+   "sponsor": "Indiana University",
+   "interventions": [
+    "Blood draw"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 3,
+   "site": "Spring Mill Clinic, Carmel, Indiana",
+   "url": "https://clinicaltrials.gov/study/NCT05079399"
+  },
+  {
+   "nct": "NCT03403686",
+   "title": "Liver X Receptor (LXR) as a Novel Therapeutic Target in Diabetic Retinopathy (DR)",
+   "status": "RECRUITING",
+   "phase": "N/A",
+   "sponsor": "University of Alabama at Birmingham",
+   "interventions": [
+    "blood draw"
+   ],
+   "min_age": "21 Years",
+   "max_age": "98 Years",
+   "sex": "ALL",
+   "sites": 1,
+   "site": "University of Alabama at Birmingham, Birmingham, Alabama",
+   "url": "https://clinicaltrials.gov/study/NCT03403686"
+  },
+  {
+   "nct": "NCT06790784",
+   "title": "Faricimab + PRP vs. Vitrectomy + Endolaser for Treatment of PDR",
+   "status": "RECRUITING",
+   "phase": "PHASE3",
+   "sponsor": "Jaeb Center for Health Research",
+   "interventions": [
+    "Vitrectomy",
+    "Endolaser",
+    "Faricimab",
+    "Panretinal Photocoagulation (PRP)"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 34,
+   "site": "Retina Associates of Southern California, Huntington Beach, California",
+   "url": "https://clinicaltrials.gov/study/NCT06790784"
+  },
+  {
+   "nct": "NCT07705555",
+   "title": "A Clinical Trial of MK-8748 Compared to Aflibercept in Participants With Diabetic Macular Edema (MK-8748-004)",
+   "status": "RECRUITING",
+   "phase": "PHASE3",
+   "sponsor": "Merck Sharp & Dohme LLC",
+   "interventions": [
+    "MK-8748",
+    "Aflibercept"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 8,
+   "site": "Global Research Management ( Site 0066), Glendale, California",
+   "url": "https://clinicaltrials.gov/study/NCT07705555"
+  },
+  {
+   "nct": "NCT03403699",
+   "title": "Human iPSC for Repair of Vasodegenerative Vessels in Diabetic Retinopathy",
+   "status": "RECRUITING",
+   "phase": "N/A",
+   "sponsor": "University of Alabama at Birmingham",
+   "interventions": [
+    "Generation of inducible pluripotent stem cells"
+   ],
+   "min_age": "21 Years",
+   "max_age": "98 Years",
+   "sex": "ALL",
+   "sites": 1,
+   "site": "University of Alabama at Birmingham, Birmingham, Alabama",
+   "url": "https://clinicaltrials.gov/study/NCT03403699"
+  }
+ ],
+ "edema": [
+  {
+   "nct": "NCT07553429",
+   "title": "A Study in People With Diabetic Macular Edema to Test How Well Different Doses of BI 3812465 Are Tolerated",
+   "status": "RECRUITING",
+   "phase": "PHASE1, PHASE2",
+   "sponsor": "Boehringer Ingelheim",
+   "interventions": [
+    "Low dose BI 3812465",
+    "Medium dose BI 3812465",
+    "High dose BI 3812465"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 29,
+   "site": "Associated Retina Consultants, Ltd., Phoenix, Arizona",
+   "url": "https://clinicaltrials.gov/study/NCT07553429"
+  },
+  {
+   "nct": "NCT07425522",
+   "title": "A Study to Evaluate the Safety, Tolerability, Pharmacodynamics, and Pharmacokinetics of RO7823653 in Participants With Diabetic Macular Edema (DME)",
+   "status": "RECRUITING",
+   "phase": "PHASE1",
+   "sponsor": "Genentech, Inc.",
+   "interventions": [
+    "RO7823653",
+    "Faricimab"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 12,
+   "site": "Associated Retina Consultants - Peoria - DocTrials - PPDS, Peoria, Arizona",
+   "url": "https://clinicaltrials.gov/study/NCT07425522"
+  },
+  {
+   "nct": "NCT07705555",
+   "title": "A Clinical Trial of MK-8748 Compared to Aflibercept in Participants With Diabetic Macular Edema (MK-8748-004)",
+   "status": "RECRUITING",
+   "phase": "PHASE3",
+   "sponsor": "Merck Sharp & Dohme LLC",
+   "interventions": [
+    "MK-8748",
+    "Aflibercept"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 8,
+   "site": "Global Research Management ( Site 0066), Glendale, California",
+   "url": "https://clinicaltrials.gov/study/NCT07705555"
+  },
+  {
+   "nct": "NCT07592273",
+   "title": "Surabgene Lomparvovec Administered in the Suprachoroidal Space in Adult Participants With Diabetic Retinopathy Without Center-Involved Diabetic Macular Edema",
+   "status": "RECRUITING",
+   "phase": "PHASE2, PHASE3",
+   "sponsor": "AbbVie",
+   "interventions": [
+    "Surabgene Lomparvovec",
+    "Sham",
+    "Topical Steroid",
+    "Artificial Tears"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 34,
+   "site": "Retinal Consultants Of Arizona - Phoenix - North /ID# 283407, Phoenix, Arizona",
+   "url": "https://clinicaltrials.gov/study/NCT07592273"
+  },
+  {
+   "nct": "NCT07458061",
+   "title": "Kamuvudine-9 (K9) in Diabetic Macular Edema",
+   "status": "RECRUITING",
+   "phase": "PHASE1, PHASE2",
+   "sponsor": "Dr. Bryan Strelow",
+   "interventions": [
+    "Placebo Tablet: BID",
+    "Kamuvudine K9"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 1,
+   "site": "Vistar Eye Center, Roanoke, Virginia",
+   "url": "https://clinicaltrials.gov/study/NCT07458061"
+  },
+  {
+   "nct": "NCT06962839",
+   "title": "A Study to Test Whether BI 1815368 Helps People With an Eye Condition Called Diabetic Macular Edema",
+   "status": "RECRUITING",
+   "phase": "PHASE2",
+   "sponsor": "Boehringer Ingelheim",
+   "interventions": [
+    "BI 1815368",
+    "Placebo"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 96,
+   "site": "Arizona Retina & Vitreous Research, Central Phoenix, Phoenix, Arizona",
+   "url": "https://clinicaltrials.gov/study/NCT06962839"
+  },
+  {
+   "nct": "NCT07567833",
+   "title": "Longitudinal Study of Retinal Function in Eyes Treated for Diabetic Macular Edema With Anti-VEGF Agents",
+   "status": "RECRUITING",
+   "phase": "PHASE4",
+   "sponsor": "Jaeb Center for Health Research",
+   "interventions": [
+    "Anti-Vascular Endothelial Growth Factor"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 6,
+   "site": "Southeast Retina Center, P.C., Augusta, Georgia",
+   "url": "https://clinicaltrials.gov/study/NCT07567833"
+  },
+  {
+   "nct": "NCT07734844",
+   "title": "A Study to Evaluate the Efficacy and Safety of Tabirafusp Tedromer Compared to Aflibercept in Participants With DME - ALTO",
+   "status": "RECRUITING",
+   "phase": "PHASE3",
+   "sponsor": "Kodiak Sciences Inc",
+   "interventions": [
+    "Tabirafusp tedromer",
+    "Aflibercept (2.0 mg)"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 9,
+   "site": "Kodiak Research Center, Glendale, California",
+   "url": "https://clinicaltrials.gov/study/NCT07734844"
+  }
+ ],
+ "heart": [
+  {
+   "nct": "NCT06629649",
+   "title": "Implementing AI-based Glaucoma Screening Within Federally Qualified Health Centers",
+   "status": "RECRUITING",
+   "phase": "NA",
+   "sponsor": "University of Alabama at Birmingham",
+   "interventions": [
+    "Glaucoma screening using an AI-algorithm and screening for diabetic retinopathy, cataract, and visual acuity impairment."
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 1,
+   "site": "Department of Ophthalmology and Visual Sciences, University of Alabama at Birmingham, Birmingham, Alabama",
+   "url": "https://clinicaltrials.gov/study/NCT06629649"
+  },
+  {
+   "nct": "NCT05370014",
+   "title": "Improving the Collaborative Health of Adult Dyads",
+   "status": "RECRUITING",
+   "phase": "NA",
+   "sponsor": "University of South Carolina",
+   "interventions": [
+    "Integrating Community-based Intervention Under Nurse Guidance with Families (iCINGS FAM)"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 1,
+   "site": "University of South Carolina, Columbia, South Carolina",
+   "url": "https://clinicaltrials.gov/study/NCT05370014"
+  },
+  {
+   "nct": "NCT07064473",
+   "title": "EASi-PROTKT\u2122 - A Study to Test Vicadrostat (BI 690517) Taken Together With Empagliflozin in People With Type 2 Diabetes, High Blood Pressure, and Cardiovascular Disease",
+   "status": "RECRUITING",
+   "phase": "PHASE3",
+   "sponsor": "Boehringer Ingelheim",
+   "interventions": [
+    "Vicadrostat",
+    "Empagliflozin",
+    "Placebo matching Vicadrostat"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 1143,
+   "site": "Pinnacle Research Group, LLC, Anniston, Alabama",
+   "url": "https://clinicaltrials.gov/study/NCT07064473"
+  },
+  {
+   "nct": "NCT07565727",
+   "title": "Cardiometabolic Disease and Substrate Metabolism",
+   "status": "RECRUITING",
+   "phase": "N/A",
+   "sponsor": "University of Tennessee Graduate School of Medicine",
+   "interventions": [],
+   "min_age": "18 Years",
+   "max_age": "45 Years",
+   "sex": "FEMALE",
+   "sites": 1,
+   "site": "University of Tennessee Graduate School of Medicine, Knoxville, Tennessee",
+   "url": "https://clinicaltrials.gov/study/NCT07565727"
+  },
+  {
+   "nct": "NCT05955339",
+   "title": "Comparing Healthcare Visit Recording and Open Notes to Improve Chronic iLlness Care Experience in Older Adults",
+   "status": "RECRUITING",
+   "phase": "NA",
+   "sponsor": "Dartmouth-Hitchcock Medical Center",
+   "interventions": [
+    "NOTES",
+    "AUDIO"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 3,
+   "site": "Dartmouth Hitchcock Clinics Manchester, Manchester, New Hampshire",
+   "url": "https://clinicaltrials.gov/study/NCT05955339"
+  },
+  {
+   "nct": "NCT06966258",
+   "title": "Inspire HER: Inspiring the Heart and Emotions for Radical Health",
+   "status": "RECRUITING",
+   "phase": "NA",
+   "sponsor": "University of Alabama at Birmingham",
+   "interventions": [
+    "Inspire HER Intervention"
+   ],
+   "min_age": "30 Years",
+   "max_age": "79 Years",
+   "sex": "FEMALE",
+   "sites": 1,
+   "site": "University of Alabama at Birmingham, Birmingham, Alabama",
+   "url": "https://clinicaltrials.gov/study/NCT06966258"
+  },
+  {
+   "nct": "NCT06055036",
+   "title": "Black Impact: The Mechanisms Underlying Psychosocial Stress Reduction in a Cardiovascular Health Intervention",
+   "status": "RECRUITING",
+   "phase": "NA",
+   "sponsor": "Ohio State University",
+   "interventions": [
+    "Black Impact Intervention"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "MALE",
+   "sites": 1,
+   "site": "The Ohio State University, Columbus, Ohio",
+   "url": "https://clinicaltrials.gov/study/NCT06055036"
+  },
+  {
+   "nct": "NCT06735599",
+   "title": "Wild Blueberries for Gut, Brain, and Heart Health in Adults With High Blood Pressure",
+   "status": "RECRUITING",
+   "phase": "NA",
+   "sponsor": "Georgia State University",
+   "interventions": [
+    "Wild Blueberry",
+    "Placebo"
+   ],
+   "min_age": "45 Years",
+   "max_age": "65 Years",
+   "sex": "ALL",
+   "sites": 1,
+   "site": "Georgia State University, Atlanta, Georgia",
+   "url": "https://clinicaltrials.gov/study/NCT06735599"
+  }
+ ],
+ "kidneys": [
+  {
+   "nct": "NCT06217302",
+   "title": "Sotagliflozin to Slow Kidney Function Decline in Persons With Type 1 Diabetes and Diabetic Kidney Disease",
+   "status": "RECRUITING",
+   "phase": "PHASE3",
+   "sponsor": "Alessandro Doria",
+   "interventions": [
+    "Sotagliflozin",
+    "Placebo"
+   ],
+   "min_age": "18 Years",
+   "max_age": "75 Years",
+   "sex": "ALL",
+   "sites": 19,
+   "site": "Stanford University Medical Center, Stanford, California",
+   "url": "https://clinicaltrials.gov/study/NCT06217302"
+  },
+  {
+   "nct": "NCT05390892",
+   "title": "PREvention of CardIovascular and DiabEtic kidNey Disease in Type 2 Diabetes",
+   "status": "RECRUITING",
+   "phase": "PHASE4",
+   "sponsor": "Brigham and Women's Hospital",
+   "interventions": [
+    "SGLT2 inhibitor",
+    "GLP-1 receptor agonist"
+   ],
+   "min_age": "40 Years",
+   "max_age": "80 Years",
+   "sex": "ALL",
+   "sites": 36,
+   "site": "Longwood Research LLC, Huntsville, Alabama",
+   "url": "https://clinicaltrials.gov/study/NCT05390892"
+  },
+  {
+   "nct": "NCT07271186",
+   "title": "Study to Assess the Effects of ALN-ANG3 in Adult Participants With Diabetic Kidney Disease",
+   "status": "RECRUITING",
+   "phase": "PHASE2",
+   "sponsor": "Regeneron Pharmaceuticals",
+   "interventions": [
+    "ALN-ANG3",
+    "Evinacumab",
+    "Placebo"
+   ],
+   "min_age": "18 Years",
+   "max_age": "80 Years",
+   "sex": "ALL",
+   "sites": 58,
+   "site": "Apogee Clinical Research, LLC, Huntsville, Alabama",
+   "url": "https://clinicaltrials.gov/study/NCT07271186"
+  },
+  {
+   "nct": "NCT06752577",
+   "title": "Safety and Tolerability of Vertebral Bone Marrow-derived Mesenchymal Stem Cells (BM-MSC) in Real World Scenarios of Patients With Chronic Kidney Disease (CKD)",
+   "status": "RECRUITING",
+   "phase": "N/A",
+   "sponsor": "Mayo Clinic",
+   "interventions": [
+    "Allogeneic, vertebral bone marrow-derived mesenchymal stem cells (MSC)"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 1,
+   "site": "Mayo Clinic, Jacksonville, Florida",
+   "url": "https://clinicaltrials.gov/study/NCT06752577"
+  },
+  {
+   "nct": "NCT07022418",
+   "title": "Formoterol in Diabetes",
+   "status": "RECRUITING",
+   "phase": "PHASE2",
+   "sponsor": "Medical University of South Carolina",
+   "interventions": [
+    "Formoterol furmarate (20 \u03bcg)"
+   ],
+   "min_age": "18 Years",
+   "max_age": "75 Years",
+   "sex": "ALL",
+   "sites": 1,
+   "site": "Medical University of South Carolina, Charleston, South Carolina",
+   "url": "https://clinicaltrials.gov/study/NCT07022418"
+  },
+  {
+   "nct": "NCT06466135",
+   "title": "Study of WAL0921 in Patients With Glomerular Kidney Diseases",
+   "status": "RECRUITING",
+   "phase": "PHASE2",
+   "sponsor": "Walden Biosciences",
+   "interventions": [
+    "WAL0921",
+    "Placebo"
+   ],
+   "min_age": "18 Years",
+   "max_age": "75 Years",
+   "sex": "ALL",
+   "sites": 50,
+   "site": "Academic Medical Research Institute, Los Angeles, California",
+   "url": "https://clinicaltrials.gov/study/NCT06466135"
+  },
+  {
+   "nct": "NCT02986984",
+   "title": "Transformative Research in Diabetic Nephropathy",
+   "status": "RECRUITING",
+   "phase": "N/A",
+   "sponsor": "University of Pennsylvania",
+   "interventions": [
+    "There is no intervention"
+   ],
+   "min_age": "18 Years",
+   "max_age": "100 Years",
+   "sex": "ALL",
+   "sites": 17,
+   "site": "University of Arkansas for Medical Sciences, Little Rock, Arkansas",
+   "url": "https://clinicaltrials.gov/study/NCT02986984"
+  }
+ ],
+ "nerves": [
+  {
+   "nct": "NCT07444593",
+   "title": "Transverse Tibial Bone Transport (TTT) in the Management of Chronic Diabetic Lower Extremity Wounds",
+   "status": "RECRUITING",
+   "phase": "NA",
+   "sponsor": "Biodynamik, Inc",
+   "interventions": [
+    "Biodynamik XT3"
+   ],
+   "min_age": "22 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 1,
+   "site": "Mayo Clinic, Jacksonville, Florida",
+   "url": "https://clinicaltrials.gov/study/NCT07444593"
+  },
+  {
+   "nct": "NCT06674980",
+   "title": "Clinical Trial Assessing Human Placental Membrane Products and Standard of Care Versus Standard of Care in Nonhealing DFUs and VLUs",
+   "status": "RECRUITING",
+   "phase": "NA",
+   "sponsor": "C5 Biomedical",
+   "interventions": [
+    "Standard of Care - DFU",
+    "AM/Single - DFU",
+    "AM/Double - DFU",
+    "Standard of Care - VLU"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 1,
+   "site": "Poirot Podiatry, Metairie, Louisiana",
+   "url": "https://clinicaltrials.gov/study/NCT06674980"
+  },
+  {
+   "nct": "NCT07046767",
+   "title": "CAMP RWE Trial: Amnion Grafts for Healing Hard-to-Heal Ulcers in RW Populations",
+   "status": "RECRUITING",
+   "phase": "NA",
+   "sponsor": "Capsicure, LLC",
+   "interventions": [
+    "IP1: BioLab Membrane Wrap Lite IP2: BioLab Tri-Membrane Wrap",
+    "IP2: BioLab Tri-Membrane Wrap"
+   ],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 7,
+   "site": "FOMAT Medical Research, Oxnard, California",
+   "url": "https://clinicaltrials.gov/study/NCT07046767"
+  },
+  {
+   "nct": "NCT07298408",
+   "title": "Cannabidiol for the Treatment of Diabetic Peripheral Neuropathy: Pilot Study",
+   "status": "RECRUITING",
+   "phase": "PHASE1, PHASE2",
+   "sponsor": "Florida A&M University",
+   "interventions": [
+    "Cannabidiol (CBD) oral solution",
+    "Full-Spectrum CBD hemp extract oral solution",
+    "Placebo in MCT oil oral solution"
+   ],
+   "min_age": "40 Years",
+   "max_age": "70 Years",
+   "sex": "ALL",
+   "sites": 1,
+   "site": "the FSU TMH Family Practice Residency Program, Tallahassee, Florida",
+   "url": "https://clinicaltrials.gov/study/NCT07298408"
+  },
+  {
+   "nct": "NCT06628908",
+   "title": "Evaluation of Efficacy and Safety of Suzetrigine for Pain Associated With Diabetic Peripheral Neuropathy",
+   "status": "RECRUITING",
+   "phase": "PHASE3",
+   "sponsor": "Vertex Pharmaceuticals Incorporated",
+   "interventions": [
+    "Suzetrigine",
+    "Placebo (matched to SUZ)",
+    "Pregabalin",
+    "Placebo (matched to Pregabalin)"
+   ],
+   "min_age": "18 Years",
+   "max_age": "80 Years",
+   "sex": "ALL",
+   "sites": 76,
+   "site": "Pinnacle Research Group, LLC, Anniston, Alabama",
+   "url": "https://clinicaltrials.gov/study/NCT06628908"
+  },
+  {
+   "nct": "NCT07231419",
+   "title": "Evaluation of Efficacy and Safety of Suzetrigine (SUZ) for Pain Associated With Diabetic Peripheral Neuropathy",
+   "status": "RECRUITING",
+   "phase": "PHASE3",
+   "sponsor": "Vertex Pharmaceuticals Incorporated",
+   "interventions": [
+    "Suzetrigine",
+    "Placebo (matched to SUZ)"
+   ],
+   "min_age": "18 Years",
+   "max_age": "80 Years",
+   "sex": "ALL",
+   "sites": 75,
+   "site": "Central Research Associates, LLC, Birmingham, Alabama",
+   "url": "https://clinicaltrials.gov/study/NCT07231419"
+  },
+  {
+   "nct": "NCT06591780",
+   "title": "Innovative Multi-Variable Biofeedback for Improving Gait Performance in Individuals With Diabetic Peripheral Neuropathy",
+   "status": "RECRUITING",
+   "phase": "NA",
+   "sponsor": "Florida Institute for Human and Machine Cognition",
+   "interventions": [
+    "Clinical Evaluation",
+    "Plantar Pressure Biofeedback Gait Training",
+    "Propulsion Biofeedback Gait Training"
+   ],
+   "min_age": "45 Years",
+   "max_age": "90 Years",
+   "sex": "ALL",
+   "sites": 1,
+   "site": "Florida Institute for Human and Machine Cognition, Pensacola, Florida",
+   "url": "https://clinicaltrials.gov/study/NCT06591780"
+  },
+  {
+   "nct": "NCT03481283",
+   "title": "A Causative Role for Amylin in Diabetic Peripheral Neuropathy",
+   "status": "RECRUITING",
+   "phase": "N/A",
+   "sponsor": "Zabeen Mahuwala, MD",
+   "interventions": [],
+   "min_age": "18 Years",
+   "max_age": "",
+   "sex": "ALL",
+   "sites": 2,
+   "site": "UK Robert Straus Behavioral Science Laboratory, Lexington, Kentucky",
+   "url": "https://clinicaltrials.gov/study/NCT03481283"
+  }
+ ]
+}

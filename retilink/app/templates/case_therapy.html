@@ -1,0 +1,81 @@
+{% extends "base.html" %}{% from "_ui.html" import icon, status %}{% from "_therapy.html" import therapy_cards, alert_row, finding_chips, sponsored_block, trial_rows, value_chain %}
+{% block title %}Therapy and trials, {{ case.patient.ref }} | RetiLink{% endblock %}
+{% block crumbs %}<a href="/patients">Patients</a> / <a href="/cases/{{ case.id }}">{{ case.patient.ref }}</a> / Therapy and trials{% endblock %}
+{% block content %}
+<div class="head">
+  <div><p class="eyebrow">Therapy and trials</p><h1>{{ case.patient.ref }}</h1>
+    <p class="sub">{{ patient_line }}What this screening points to: guideline therapy options checked against current medicines, the targets behind them, and recruiting trials. For the clinician to decide; nothing here is a prescription.</p></div>
+  <div class="row">
+    {% if user.role == 'referring' %}<a class="btn quiet" href="/cases/{{ case.id }}/consult">{{ icon('send') }}Consult a specialist</a>{% endif %}
+    <a class="btn quiet" href="/cases/{{ case.id }}?tab=systemic">{{ icon('sliders') }}Edit medicines</a>
+  </div>
+</div>
+{{ value_chain('therapy') }}
+
+<div class="workspace" style="grid-template-columns:minmax(0,1fr) 360px;margin-top:var(--s5)">
+  <div class="stack-lg">
+    <section class="panel" aria-labelledby="f-h">
+      <div class="panel-head"><h2 id="f-h">What the eye found</h2>{% if res %}{{ status(res.overall) }}{% else %}<span class="tag caution">{{ icon('alert') }}No current analysis</span>{% endif %}</div>
+      <div class="panel-body stack">
+        {{ finding_chips(fnd) }}
+        {% if not res %}<p class="small" style="color:var(--caution)">The case changed or has not been analysed, so only recorded history drives this page. <a href="/cases/{{ case.id }}">Run the analysis</a> for retinal findings.</p>{% endif %}
+      </div>
+    </section>
+
+    {% if current_alerts %}
+    <section class="panel" aria-labelledby="a-h">
+      <div class="panel-head"><h2 id="a-h">Check current medicines first</h2><span class="hint">{{ current_alerts|length }} alert{{ 's' if current_alerts|length != 1 }}</span></div>
+      <div class="panel-body"><ul class="ixlist">{% for a in current_alerts %}{{ alert_row(a) }}{% endfor %}</ul></div>
+    </section>
+    {% endif %}
+
+    <section class="panel" aria-labelledby="t-h">
+      <div class="panel-head"><h2 id="t-h">Therapy options to consider</h2><span class="hint">Ranked by guideline strength, never by sponsorship</span></div>
+      <div class="panel-body stack">
+        <p class="xs muted">Current medicines: {% if meds %}{{ meds|join(', ') }}{% else %}none recorded, so interactions cannot be checked. <a href="/cases/{{ case.id }}?tab=systemic">Add them</a>.{% endif %}</p>
+        {{ therapy_cards(options, case, user) }}
+        {{ sponsored_block(sponsored) }}
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="tr-h">
+      <div class="panel-head"><h2 id="tr-h">Recruiting trials near the clinic</h2><span class="hint">ClinicalTrials.gov</span></div>
+      <div class="panel-body stack">
+        <p class="xs muted">Searched by finding only; nothing about this patient is sent. Age and sex are pre-checked here, and the site confirms full eligibility. More per finding on each <a href="#tg-h">target page</a>.</p>
+        {{ trial_rows(trials) }}
+      </div>
+    </section>
+  </div>
+
+  <aside class="stack-lg" style="position:sticky;top:76px">
+    <section class="panel" aria-labelledby="tg-h">
+      <div class="panel-head"><h2 id="tg-h">Targets behind these findings</h2></div>
+      <div class="panel-body">
+        <ul class="tglist">{% for t in targets %}
+          <li><a href="/therapeutics/targets/{{ t.gene }}"><span class="gene">{{ t.gene }}</span><span class="xs muted">{{ t.name }}</span></a>
+            <span class="xs">{{ t.drugs|selectattr('phase', 'equalto', 'Approved')|list|length }} approved</span></li>
+        {% endfor %}</ul>
+        <p class="xs muted" style="margin-top:8px">3D structures from AlphaFold and the PDB, with the drugs that act on each target.</p>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="g-h">
+      <div class="panel-head"><h2 id="g-h">CMS quality and billing</h2></div>
+      <div class="panel-body stack">
+        <p class="small"><span class="tag {{ 'clear' if gap == 'closed' else 'caution' if gap == 'pending' else '' }}">{{ icon('check' if gap == 'closed' else 'clock') }}Diabetic eye exam gap: {{ gap }}</span></p>
+        <p class="small">{{ gap_text }}</p>
+        <ul class="codes">{% for c in cms.codes %}<li class="{{ c.applies }}"><strong>CPT {{ c.code }}</strong> <span class="xs muted">{{ c.name }}</span><br><span class="xs">{{ c.fit }}</span></li>{% endfor %}</ul>
+        <p class="xs muted">Measures: {% for m in cms.measures %}{{ m.id }}{{ '; ' if not loop.last }}{% endfor %}. Verify codes and payment with your MAC. <a href="/quality">Clinic view</a></p>
+      </div>
+    </section>
+
+    {% if user.role == 'referring' %}
+    <section class="panel panel-pad stack">
+      <h2 style="font-size:var(--t-base)">Referring outside your network?</h2>
+      <p class="small">Find a specialist in the CMS NPI Registry and print a referral letter.</p>
+      <a class="btn quiet sm" href="/cases/{{ case.id }}/refer-out?topic={{ 'nephropathy' if fnd|selectattr('key', 'equalto', 'kidneys')|list and not fnd|selectattr('key', 'equalto', 'dr')|list else 'retinal' }}">{{ icon('search') }}Search the NPI Registry</a>
+    </section>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

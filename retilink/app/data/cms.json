@@ -1,0 +1,28 @@
+{
+ "_about": "CMS quality and reimbursement reference for diabetic retinal screening. Summaries for orientation only; verify codes, rules and payment with your Medicare Administrative Contractor (MAC).",
+ "measures": [
+  {"id": "CMS131 / MIPS Quality #117", "name": "Diabetes: Eye Exam", "owner": "CMS (eCQM)",
+   "what": "Patients 18 to 75 with diabetes who had a retinal or dilated eye exam by an eye care professional in the measurement period, or a negative exam in the prior year.",
+   "how": "A screening read and signed by an eye care professional counts toward closing the gap. A signed specialist response in RetiLink is the evidence to record.",
+   "url": "https://ecqi.healthit.gov/ecqm/ec/2026/cms0131v14"},
+  {"id": "HEDIS EED", "name": "Eye Exam for Patients With Diabetes", "owner": "NCQA (used in Medicare Advantage Star Ratings)",
+   "what": "Retinal eye exam for members with diabetes; retinal imaging read by an eye care professional or a qualifying AI system counts.",
+   "how": "Closing EED gaps moves Star Ratings, which drive Medicare Advantage bonus payments to health plans.",
+   "url": "https://www.ncqa.org/hedis/measures/eye-exam-for-patients-with-diabetes/"}
+ ],
+ "codes": [
+  {"code": "92227", "name": "Retinal imaging, remote clinical staff review and report",
+   "fit": "Store-and-forward capture with review by clinical staff (no physician interpretation).", "applies": "possible"},
+  {"code": "92228", "name": "Retinal imaging, remote physician or QHP interpretation and report",
+   "fit": "RetiLink's workflow: photos captured at point of care, interpreted and signed by a physician.", "applies": "yes"},
+  {"code": "92229", "name": "Retinal imaging, point-of-care automated analysis and report",
+   "fit": "Autonomous AI with an FDA-cleared device. RetiLink is not FDA-cleared, so this does not apply today.", "applies": "no"}
+ ],
+ "icd10": [
+  {"code": "E11.9", "when": "Type 2 diabetes without complications (no retinopathy on the signed read)"},
+  {"code": "E11.319", "when": "Type 2 diabetes with unspecified diabetic retinopathy without macular edema"},
+  {"code": "E11.311", "when": "Type 2 diabetes with unspecified diabetic retinopathy with macular edema"}
+ ],
+ "fee_schedule_url": "https://www.cms.gov/medicare/physician-fee-schedule/search",
+ "nppes_url": "https://npiregistry.cms.hhs.gov/"
+}

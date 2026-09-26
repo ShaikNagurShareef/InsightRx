@@ -16,9 +16,9 @@
 <div class="panel" style="padding:6px 10px;margin-bottom:var(--s5)">{{ relay(legs) }}</div>
 
 <nav class="tabs" aria-label="Case sections">
-{% for k, l in [('retinal', 'Screening'), ('systemic', 'Systemic health'), ('review', 'Review and sign'), ('consult', 'Consultation'), ('referrals', 'Consultations sent'), ('timeline', 'Audit trail')] %}
+{% for k, l in [('retinal', 'Screening'), ('systemic', 'Systemic health'), ('therapy', 'Therapy and trials'), ('review', 'Review and sign'), ('consult', 'Consultation'), ('referrals', 'Consultations sent'), ('timeline', 'Audit trail')] %}
   {% if not (user.role == 'specialist' and k in ('review', 'consult')) %}
-  <a href="{{ '/cases/%d/consult'|format(case.id) if k == 'consult' else '/cases/%d?tab=%s'|format(case.id, k) }}" {% if tab == k %}aria-current="page"{% endif %}>{{ l }}{% if k == 'referrals' and refs %}<span class="badge">{{ refs|length }}</span>{% endif %}</a>
+  <a href="{{ '/cases/%d/consult'|format(case.id) if k == 'consult' else '/cases/%d/therapy'|format(case.id) if k == 'therapy' else '/cases/%d?tab=%s'|format(case.id, k) }}" {% if tab == k %}aria-current="page"{% endif %}>{{ l }}{% if k == 'referrals' and refs %}<span class="badge">{{ refs|length }}</span>{% endif %}</a>
   {% endif %}
 {% endfor %}
 </nav>
@@ -185,6 +185,7 @@
       <span class="tag {{ 'missing' if inputs.dm_time is none }}">Diabetes {{ ('%g years'|format(inputs.dm_time)) if inputs.dm_time is not none else 'unknown' }}</span>
       <span class="tag {{ 'missing' if inputs.insulin == 'unknown' }}">Insulin {{ inputs.insulin }}</span>
       <span class="tag {{ 'missing' if inputs.oral_treatment == 'unknown' }}">Oral medication {{ inputs.oral_treatment }}</span>
+      <span class="tag {{ 'missing' if not inputs.medications }}">{{ 'Medicines: ' ~ inputs.medications|join(', ') if inputs.medications else 'Medicines not recorded' }}</span>
     </div>
     {% if missing %}<p class="small" style="color:var(--caution)">{{ missing|join(', ') }} {{ 'is' if missing|length == 1 else 'are' }} unknown, so models that use them fill in cohort medians. Add them and re-run for a patient-specific score.</p>{% endif %}
     {% if user.role in ('operator', 'referring') %}

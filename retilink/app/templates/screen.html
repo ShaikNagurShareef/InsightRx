@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% from "_ui.html" import icon, status %}{% from "_oculomics.html" import body_map, organ_list, condition_table, patient_inputs %}
+{% extends "base.html" %}{% from "_ui.html" import icon, status %}{% from "_oculomics.html" import body_map, organ_list, condition_table, patient_inputs %}{% from "_therapy.html" import therapy_cards, alert_row, sponsored_block %}
 {% block title %}Screen | RetiLink{% endblock %}
 {% block crumbs %}Screen a patient{% endblock %}
 {% block content %}
@@ -43,6 +43,7 @@
         <input type="hidden" name="token" value="{{ token }}">
         {% for k in ['age', 'sex', 'dm_time', 'insulin', 'oral_treatment'] %}<input type="hidden" name="{{ k }}" value="{{ details[k] if details[k] is not none else '' }}">{% endfor %}
         {% for c, v in details.conditions.items() %}<input type="hidden" name="cond_{{ c }}" value="{{ v }}">{% endfor %}
+        {% for m in details.medications %}<input type="hidden" name="med" value="{{ m }}">{% endfor %}
         <label class="sr-only" for="pref">Patient reference</label><input id="pref" name="patient_ref" value="{{ patient_ref }}" placeholder="Patient reference (optional)" style="max-width:240px">
         <button type="submit" class="btn"><span class="spin" aria-hidden="true"></span>{{ icon('send') }}<span data-label>{{ 'Save patient & consult a specialist' if user.role == 'referring' else 'Save patient for clinician review' }}</span></button>
       </form>
@@ -90,6 +91,17 @@
       {% if n_inputs < 5 %}<div class="panel-body" style="padding-bottom:0"><div class="note warn">{{ icon('alert') }}<span>{{ 'No patient details entered' if n_inputs == 0 else 'Some patient details are unknown' }}: models that use them fill the gaps with cohort medians. Add age, sex and diabetes history on the right and re-run.</span></div></div>{% endif %}
       {% if systemic %}{{ condition_table(systemic) }}{% else %}<div class="empty"><p>No systemic output: no photo passed the quality gate.</p></div>{% endif %}
       <p class="xs muted" style="padding:var(--s3) var(--s5) var(--s4)">Red bars raise a score and blue bars lower it, relative to a typical patient. Research signals passed the release gate; exploratory ones did not.</p>
+    </section>
+
+    <section class="panel" aria-labelledby="tx-h">
+      <div class="panel-head"><h2 id="tx-h">Treatment considerations</h2><span class="hint">Guideline options, checked against current medicines</span></div>
+      <div class="panel-body stack">
+        {% if current_alerts %}<ul class="ixlist">{% for a in current_alerts %}{{ alert_row(a) }}{% endfor %}</ul>{% endif %}
+        {% if not details.medications %}<p class="xs muted">No current medicines entered, so interactions are not checked. Add them under Patient details and re-run.</p>{% endif %}
+        {{ therapy_cards(options, limit=4) }}
+        {% if options|length > 4 %}<p class="xs muted">{{ options|length - 4 }} more option{{ 's' if options|length - 4 != 1 }}, the targets behind them and matching trials appear on the patient's Therapy and trials page once saved.</p>{% endif %}
+        {{ sponsored_block(sponsored) }}
+      </div>
     </section>
 
     {% if evidence %}

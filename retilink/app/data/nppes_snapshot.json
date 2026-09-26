@@ -1,0 +1,266 @@
+{
+ "Ophthalmology": [
+  {
+   "npi": "1750491783",
+   "name": "Thomas Aaberg, MD",
+   "taxonomy": "Ophthalmology",
+   "address": "1365 Clifton Rd Ne # B, Atlanta, GA 30322",
+   "phone": "404-778-4456",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1750491783"
+  },
+  {
+   "npi": "1588775548",
+   "name": "Maria Aaron, MD",
+   "taxonomy": "Ophthalmology",
+   "address": "1365 Clifton Rd Ne # B, Atlanta, GA 30322",
+   "phone": "404-778-2020",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1588775548"
+  },
+  {
+   "npi": "1134951460",
+   "name": "Hasan Al Sayed, MD",
+   "taxonomy": "Ophthalmology, Cornea and External Diseases Specialist",
+   "address": "5671 Peachtree Dunwoody Rd, Atlanta, GA 30342",
+   "phone": "678-843-7001",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1134951460"
+  },
+  {
+   "npi": "1902301781",
+   "name": "Julio Albarracin",
+   "taxonomy": "Ophthalmology",
+   "address": "11442 N Central Expy, Dallas, TX 75243",
+   "phone": "214-220-3937",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1902301781"
+  },
+  {
+   "npi": "1679061261",
+   "name": "Sameerah Ali, MD",
+   "taxonomy": "Ophthalmology",
+   "address": "800 Mount Vernon Hwy Ne Ste 130, Atlanta, GA 30328",
+   "phone": "404-256-1125",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1679061261"
+  },
+  {
+   "npi": "1679969935",
+   "name": "John Allen",
+   "taxonomy": "Ophthalmology",
+   "address": "1000 Corporate Center Dr Ste 100, Morrow, GA 30260",
+   "phone": "770-968-8888",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1679969935"
+  },
+  {
+   "npi": "1275097750",
+   "name": "Claudia Amaral Marrero",
+   "taxonomy": "Ophthalmology",
+   "address": "49 Jesse Hill Jr Dr Se, Atlanta, GA 30303",
+   "phone": "404-778-7777",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1275097750"
+  },
+  {
+   "npi": "1295845154",
+   "name": "Jayakrishna Ambati, MD",
+   "taxonomy": "Ophthalmology",
+   "address": "1300 Jefferson Park Ave, Charlottesville, VA 22903",
+   "phone": "434-924-5485",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1295845154"
+  }
+ ],
+ "Nephrology": [
+  {
+   "npi": "1164591780",
+   "name": "Emaad Abdel-Rahman",
+   "taxonomy": "Internal Medicine, Nephrology",
+   "address": "1300 Jefferson Park Ave, Charlottesville, VA 22903",
+   "phone": "434-924-1984",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1164591780"
+  },
+  {
+   "npi": "1457317307",
+   "name": "Bob Agbogu, MD",
+   "taxonomy": "Internal Medicine, Nephrology",
+   "address": "1136 Cleveland Ave, East Point, GA 30344",
+   "phone": "404-669-9669",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1457317307"
+  },
+  {
+   "npi": "1730355850",
+   "name": "Muhammad Ali, M.D.",
+   "taxonomy": "Internal Medicine, Nephrology",
+   "address": "58 Big A Rd, Toccoa, GA 30577",
+   "phone": "706-886-6819",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1730355850"
+  },
+  {
+   "npi": "1750493250",
+   "name": "Prince Amaechi, M.D.",
+   "taxonomy": "Internal Medicine, Nephrology",
+   "address": "322 N Pine St, Spartanburg, SC 29302",
+   "phone": "864-582-5099",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1750493250"
+  },
+  {
+   "npi": "1619317146",
+   "name": "Pooja Amarapurkar",
+   "taxonomy": "Internal Medicine, Nephrology",
+   "address": "80 Jesse Hill Jr Dr Se, Atlanta, GA 30303",
+   "phone": "714-200-7560",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1619317146"
+  },
+  {
+   "npi": "1285240309",
+   "name": "Arfa Amjad",
+   "taxonomy": "Internal Medicine, Nephrology",
+   "address": "937 S Main St, Farmville, VA 23901",
+   "phone": "434-414-3990",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1285240309"
+  },
+  {
+   "npi": "1992897698",
+   "name": "Choncharoen Amphan, MD",
+   "taxonomy": "Internal Medicine",
+   "address": "101 E Wood St, Spartanburg, SC 29303",
+   "phone": "864-560-6654",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1992897698"
+  },
+  {
+   "npi": "1265699797",
+   "name": "Ibironke Apata, MD",
+   "taxonomy": "Internal Medicine, Nephrology",
+   "address": "1639 Pierce Drive Suite 338, Atlanta, GA 30322",
+   "phone": "404-727-2525",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1265699797"
+  }
+ ],
+ "Cardiovascular Disease": [
+  {
+   "npi": "1245549112",
+   "name": "Raza Abbas, M.D.",
+   "taxonomy": "Internal Medicine, Interventional Cardiology",
+   "address": "743 Spring St Ne, Gainesville, GA 30501",
+   "phone": "770-534-2020",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1245549112"
+  },
+  {
+   "npi": "1184849168",
+   "name": "Antonio Abbate, M.D.",
+   "taxonomy": "Internal Medicine, Cardiovascular Disease",
+   "address": "1215 Lee St, Charlottesville, VA 22908",
+   "phone": "434-243-1000",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1184849168"
+  },
+  {
+   "npi": "1861443657",
+   "name": "Elia Abboud, MD",
+   "taxonomy": "Internal Medicine, Cardiovascular Disease",
+   "address": "200 S Enota Dr Ne Ste 100, Gainesville, GA 30501",
+   "phone": "770-534-2020",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1861443657"
+  },
+  {
+   "npi": "1518283282",
+   "name": "Mahmoud Abdou, MD",
+   "taxonomy": "Internal Medicine, Advanced Heart Failure and Transplant Cardiology",
+   "address": "1365 Clifton Rd Ne Bldg A2Nd, Atlanta, GA 30322",
+   "phone": "404-778-5299",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1518283282"
+  },
+  {
+   "npi": "1487114633",
+   "name": "Mohamed Abdul Qader, M.D.",
+   "taxonomy": "Internal Medicine, Cardiovascular Disease",
+   "address": "836 Prudential Dr Ste 1700, Jacksonville, FL 32207",
+   "phone": "904-398-0125",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1487114633"
+  },
+  {
+   "npi": "1083891196",
+   "name": "Roy Abrahamian, MD",
+   "taxonomy": "Internal Medicine, Cardiovascular Disease",
+   "address": "309 Highland Pkwy Ste 200, East Ellijay, GA 30540",
+   "phone": "706-636-6500",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1083891196"
+  },
+  {
+   "npi": "1881696284",
+   "name": "Kenneth Adams, M.D.",
+   "taxonomy": "Internal Medicine, Cardiovascular Disease",
+   "address": "14534 Old Saint Augustine Rd Ste 3420, Jacksonville, FL 32258",
+   "phone": "904-493-8001",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1881696284"
+  },
+  {
+   "npi": "1740431295",
+   "name": "Santhi Adigopula, MD",
+   "taxonomy": "Internal Medicine, Cardiovascular Disease",
+   "address": "200 S Enota Dr Ne Ste 100, Gainesville, GA 30501",
+   "phone": "770-534-2020",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1740431295"
+  }
+ ],
+ "Neurology": [
+  {
+   "npi": "1922381250",
+   "name": "Peter Abdelmalik, M.D.",
+   "taxonomy": "Psychiatry & Neurology, Neurology",
+   "address": "8900 N Kendall Dr, Miami, FL 33176",
+   "phone": "786-596-3876",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1922381250"
+  },
+  {
+   "npi": "1487018701",
+   "name": "Talal Aboud, M.D.",
+   "taxonomy": "Psychiatry & Neurology, Neurology",
+   "address": "1515 River Pl Ste 340, Braselton, GA 30517",
+   "phone": "770-219-6520",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1487018701"
+  },
+  {
+   "npi": "1841949120",
+   "name": "Jasmine Abram, MD",
+   "taxonomy": "Psychiatry & Neurology, Neurology",
+   "address": "49 Jesse Hill Jr Dr Se, Atlanta, GA 30303",
+   "phone": "404-778-7777",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1841949120"
+  },
+  {
+   "npi": "1013491091",
+   "name": "Christi Acker, DPT, PT",
+   "taxonomy": "Physical Therapist, Neurology",
+   "address": "12 Executive Park Dr Ne, Atlanta, GA 30329",
+   "phone": "404-778-7777",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1013491091"
+  },
+  {
+   "npi": "1013250679",
+   "name": "Matthew Agan, M.D.",
+   "taxonomy": "Psychiatry & Neurology, Neurology",
+   "address": "780 Canton Rd Ne Ste 400, Marietta, GA 30060",
+   "phone": "770-488-3602",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1013250679"
+  },
+  {
+   "npi": "1639431059",
+   "name": "Olanrewaju Agbe-Davies, MD",
+   "taxonomy": "Psychiatry & Neurology, Vascular Neurology",
+   "address": "1315 Jesse Jewell Pkwy Ne Ste 300, Gainesville, GA 30501",
+   "phone": "770-219-6520",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1639431059"
+  },
+  {
+   "npi": "1558504423",
+   "name": "Amin Aghaebrahim, M.D.",
+   "taxonomy": "Psychiatry & Neurology, Vascular Neurology",
+   "address": "836 Prudential Dr Ste 1400, Jacksonville, FL 32207",
+   "phone": "904-388-6518",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1558504423"
+  },
+  {
+   "npi": "1215371935",
+   "name": "Makeda Agonafer, M.D.",
+   "taxonomy": "Psychiatry & Neurology, Neurology",
+   "address": "400 S 43Rd St, Renton, WA 98055",
+   "phone": "425-690-3585",
+   "url": "https://npiregistry.cms.hhs.gov/provider-view/1215371935"
+  }
+ ]
+}

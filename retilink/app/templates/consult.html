@@ -75,6 +75,11 @@
         <button type="submit" class="btn lg block"><span class="spin" aria-hidden="true"></span>{{ icon('send') }}<span data-label>Sign &amp; send consultation</span></button>
       </div>
     </section>
+    <section class="panel panel-pad stack">
+      <h2 style="font-size:var(--t-base)">Specialist not in RetiLink?</h2>
+      <p class="small">Search the CMS NPI Registry for a {{ topic_info.label|lower }} specialist near you and print a referral letter.</p>
+      <a class="btn quiet sm" href="/cases/{{ case.id }}/refer-out?topic={{ topic }}">{{ icon('search') }}Find in the NPI Registry</a>
+    </section>
     {% if sent %}
     <section class="panel panel-pad"><h2 style="font-size:var(--t-base)">Already sent for this patient</h2>
       <ul class="small" style="padding-left:18px;margin:8px 0 0">{% for r in sent %}<li><a href="/referrals/{{ r.id }}">RL-{{ r.id }}</a> to {{ r.recipient.name }} {{ stage(r.stage) }}</li>{% endfor %}</ul>

@@ -28,3 +28,18 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def ensure_columns():
+    """Additive, idempotent schema upgrades for databases created before a column existed (e.g. Neon in production)."""
+    from sqlalchemy import inspect, text
+    added = {"patients": {"medications": "JSON"}}
+    insp = inspect(engine)
+    with engine.begin() as conn:
+        for table, cols in added.items():
+            if not insp.has_table(table):
+                continue
+            have = {c["name"] for c in insp.get_columns(table)}
+            for col, typ in cols.items():
+                if col not in have:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {typ}"))

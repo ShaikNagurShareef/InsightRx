@@ -1,4 +1,4 @@
-{% from "_ui.html" import icon, status %}
+{% from "_ui.html" import icon, status %}{% from "_therapy.html" import med_picker %}
 
 {# Whole-body map: organ markers coloured by state (always paired with the text list), dashed "window" lines from the eye. #}
 {% macro body_map(organs, mode="patient", label="Whole-body view") -%}
@@ -100,6 +100,7 @@
   </div>
   <p class="xs muted" style="margin-top:6px">History is shown beside the model output and takes precedence over it; it is not a model input.</p>
 </fieldset>
+{{ med_picker(d.medications or [], COMMON_MEDS) }}
 {%- endmacro %}
 
 {% macro organ_list(snapshot) -%}

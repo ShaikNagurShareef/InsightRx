@@ -21,10 +21,11 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
 from . import workflow as wf
-from .db import APP_ROOT, IMAGE_STORE, Base, SessionLocal, engine, get_db
+from .db import APP_ROOT, IMAGE_STORE, Base, SessionLocal, engine, ensure_columns, get_db
 from . import activity as act
 from . import consult
 from . import oculomics as oc
+from . import therapeutics as tx
 from . import trylab
 from .llm import draft_package, evidence_brief
 from .models import (AppSetting, AuditEvent, Barrier, Case, Image, Message, ModelRun, Notification, Patient, Referral, Review,
@@ -37,6 +38,7 @@ MAX_IMAGES = 8
 CLINICAL_ROLES = {"referring"}
 
 Base.metadata.create_all(engine)
+ensure_columns()
 if os.environ.get("RETILINK_AUTOSEED", "1") == "1":         # fresh database -> synthetic demo workspace, no images
     from .seed import seed
     with SessionLocal() as _db:
@@ -64,10 +66,10 @@ app.add_middleware(SessionMiddleware, secret_key=os.environ.get("RETILINK_SECRET
 STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(HERE)), "public", "static")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 ASSET_V = hashlib.sha1(b"".join(open(os.path.join(STATIC_DIR, f), "rb").read()
-                                for f in ("app.css", "app.js", "icons.svg"))).hexdigest()[:8]
+                                for f in ("app.css", "app.js", "icons.svg", "molview.js"))).hexdigest()[:8]
 TZ = ZoneInfo(os.environ.get("RETILINK_TZ", "America/New_York"))
 ROLE_LABELS = {"operator": "Screening operator", "referring": "Referring clinician", "specialist": "Specialist",
-               "coordinator": "Care coordinator", "admin": "Administrator"}
+               "coordinator": "Care coordinator", "admin": "Administrator", "medinfo": "Medical information desk"}
 
 
 def role_label(u):
@@ -96,7 +98,8 @@ def fmt_due(d):
 
 templates = Jinja2Templates(directory=os.path.join(HERE, "templates"))
 templates.env.globals.update(ICDR_NAMES=ICDR_NAMES, SYSTEMIC_LABELS=SYSTEMIC_LABELS, COMPOSITE_LABELS=COMPOSITE_LABELS,
-                             META_LABELS=META_LABELS, is_overdue=wf.is_overdue, asset_v=ASSET_V, role_label=role_label)
+                             META_LABELS=META_LABELS, is_overdue=wf.is_overdue, asset_v=ASSET_V, role_label=role_label,
+                             COMMON_MEDS=tx.common_meds())
 templates.env.filters["dt"] = fmt_dt
 templates.env.filters["due"] = fmt_due
 
@@ -225,7 +228,7 @@ def logout(request: Request):
 
 
 def home_for(u: User) -> str:
-    return {"operator": "/screen", "referring": "/screen", "admin": "/performance"}.get(u.role, "/consults")
+    return {"operator": "/screen", "referring": "/screen", "admin": "/performance", "medinfo": "/medinfo"}.get(u.role, "/consults")
 
 
 @app.get("/")
@@ -312,7 +315,8 @@ async def create_case(request: Request, user: User = Depends(current_user), db: 
                      "date": f.get("encounter_date"), "verification": "reported"} for c in SYSTEMIC_LABELS}
         patient = Patient(tenant_id=user.tenant_id, ref=f["patient_ref"].strip(), age=num("age"),
                           sex=f.get("sex") or None, dm_time=num("dm_time"), insulin=f.get("insulin", "unknown"),
-                          oral_treatment=f.get("oral_treatment", "unknown"), conditions=conds)
+                          oral_treatment=f.get("oral_treatment", "unknown"), conditions=conds,
+                          medications=trylab.parse_details(f)["medications"])
         db.add(patient)
         db.flush()
     dup = db.scalar(select(Case).where(Case.patient_id == patient.id, Case.encounter_date == f["encounter_date"]))
@@ -363,6 +367,7 @@ async def edit_intake(case_id: int, request: Request, user: User = Depends(curre
     if "age" in f:                                   # model inputs (unknown stays unknown)
         d = trylab.parse_details(f)
         p.age, p.sex, p.dm_time, p.insulin, p.oral_treatment = d["age"], d["sex"], d["dm_time"], d["insulin"], d["oral_treatment"]
+        p.medications = d["medications"]
     for c in SYSTEMIC_LABELS:
         v = f.get(f"cond_{c}")
         if v and v != (p.conditions or {}).get(c, {}).get("value"):
@@ -679,7 +684,8 @@ def case_page(case_id: int, request: Request, tab: str = "retinal", msg: str = "
         topic=topic, events=events, actors=actors, conditions=SYSTEMIC_LABELS, legs=relay_legs(db, case),
         inputs={"age": case.patient.age, "sex": case.patient.sex, "dm_time": case.patient.dm_time,
                 "insulin": case.patient.insulin, "oral_treatment": case.patient.oral_treatment,
-                "conditions": {c: ((case.patient.conditions or {}).get(c) or {}).get("value", "unknown") for c in SYSTEMIC_LABELS}},
+                "conditions": {c: ((case.patient.conditions or {}).get(c) or {}).get("value", "unknown") for c in SYSTEMIC_LABELS},
+                "medications": case.patient.medications or []},
         snapshot=oc.patient_snapshot(case.patient, run.result if run and run.status == "completed" and not run_stale else None,
                                      {**SYSTEMIC_LABELS, **COMPOSITE_LABELS}, get_service().metrics),
         patient_line=patient_line(case.patient),
@@ -1082,6 +1088,8 @@ async def screen_run(request: Request, user: User = Depends(current_user), db: S
     labels = {**SYSTEMIC_LABELS, **COMPOSITE_LABELS}
     snapshot = oc.patient_snapshot(trylab.as_patient(details), {**res, "overall": overall}, labels, svc.metrics)
     evidence = trylab.evidence_for(overall, any(r.get("edema_flag") for r in results), snapshot)
+    fnd = tx.findings({**res, "overall": overall}, snapshot)
+    meds = details["medications"]
     wf.audit(db, user.tenant_id, None, user.id, "screen", f"{len(blobs)} photo(s), held 1 hour")
     db.commit()
     eyes_known = any(eye != "unknown" for *_, eye in blobs)
@@ -1090,7 +1098,9 @@ async def screen_run(request: Request, user: User = Depends(current_user), db: S
         thr=res["thresholds"], version=res.get("model_version"), source=res.get("source"),
         latency=res.get("latency_ms", 0), token=token, details=details, systemic=res.get("systemic", {}),
         snapshot=snapshot, evidence=evidence, patient_ref=form.get("patient_ref", ""),
-        n_inputs=sum(v is not None and v != "unknown" for k, v in details.items() if k != "conditions")))
+        options=tx.options_for(fnd, meds), sponsored=tx.sponsored_for(fnd),
+        current_alerts=tx.merge_alerts(tx.check_interactions(meds, (), [f["key"] for f in fnd])),
+        n_inputs=sum(v is not None and v != "unknown" for k, v in details.items() if k not in ("conditions", "medications"))))
 
 
 @app.post("/screen/save")
@@ -1109,7 +1119,8 @@ async def screen_save(request: Request, user: User = Depends(current_user), db: 
                  "date": now().date().isoformat() if v != "unknown" else "", "verification": "reported"}
              for c, v in d["conditions"].items()}
     patient = Patient(tenant_id=user.tenant_id, ref=ref, age=d["age"], sex=d["sex"], dm_time=d["dm_time"],
-                      insulin=d["insulin"], oral_treatment=d["oral_treatment"], conditions=conds)
+                      insulin=d["insulin"], oral_treatment=d["oral_treatment"], conditions=conds,
+                      medications=d["medications"])
     db.add(patient)
     db.flush()
     case = Case(tenant_id=user.tenant_id, patient_id=patient.id, owner_id=owner.id, created_by=user.id,
@@ -1283,3 +1294,14 @@ def api_result(case_id: int, user: User = Depends(current_user), db: Session = D
     run = latest_run(db, case)
     return {"case_version": case.version, "run": run.result if run else None,
             "stale": bool(run and run.case_version != case.version)}
+
+
+# ------------------------------------------------------------------ therapeutics layer (routes_therapy.py)
+from .routes_therapy import router as therapy_router  # noqa: E402
+from .seed import backfill_medications, ensure_desk  # noqa: E402
+
+app.include_router(therapy_router)
+with SessionLocal() as _db:                     # additive demo upgrades for workspaces seeded before this layer
+    if _db.query(Tenant).count():
+        backfill_medications(_db)
+        ensure_desk(_db)

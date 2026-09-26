@@ -16,7 +16,7 @@ from datetime import timedelta
 
 from . import workflow as wf
 from .db import APP_ROOT, IMAGE_STORE
-from .models import Case, Image, Message, Patient, Referral, Review, Tenant, User, now
+from .models import Case, Image, MedInfoRequest, Message, Patient, Referral, Review, Tenant, User, now
 
 SPLIT = "/data/users3/nshaik3/Projects/Oculomics/OculoMoE/cache/mbrset/splits_protocol_P1.json"
 
@@ -65,6 +65,78 @@ def add_image(db, case, path, eye, user):
                  data=data if IMAGE_STORE == "db" else None))
 
 
+SCENARIO_MEDS = {   # synthetic medication lists chosen to exercise the interaction checks
+    "RL-P0101": ["metformin", "atorvastatin"],
+    "RL-P0102": ["metformin", "insulin", "semaglutide", "lisinopril", "losartan"],
+    "RL-P0103": ["metformin", "pioglitazone"],
+    "RL-P0104": ["insulin", "pregabalin", "lisinopril"],
+    "RL-P0105": ["metformin", "amlodipine", "hydrochlorothiazide"],
+}
+
+
+def demo_medications(p) -> list:
+    """Plausible synthetic medicines consistent with the recorded treatment and history (deterministic per patient)."""
+    if p.ref in SCENARIO_MEDS:
+        return SCENARIO_MEDS[p.ref]
+    rng = random.Random(p.ref)
+    conds = {k: (v or {}).get("value") for k, v in (p.conditions or {}).items()}
+    meds = []
+    if p.oral_treatment == "yes":
+        meds.append("metformin")
+        meds += rng.sample(["glipizide", "sitagliptin", "empagliflozin", "pioglitazone", "semaglutide"], rng.choice([0, 1, 1]))
+    if p.insulin == "yes":
+        meds.append("insulin")
+    if conds.get("systemic_hypertension") == "present":
+        meds.append(rng.choice(["lisinopril", "losartan", "amlodipine", "lisinopril"]))
+    if conds.get("neuropathy") == "present" and rng.random() < .5:
+        meds.append("pregabalin")
+    if rng.random() < .5:
+        meds.append("atorvastatin")
+    return meds
+
+
+def backfill_medications(db):
+    """Give synthetic patients seeded before medications existed a medication list (idempotent)."""
+    todo = db.query(Patient).filter(Patient.synthetic.is_(True), Patient.medications.is_(None)).all()
+    for p in todo:
+        p.medications = demo_medications(p)
+    if todo:
+        db.commit()
+    return len(todo)
+
+
+def ensure_desk(db):
+    """The demo's fictional manufacturer medical-information desk, with two example requests (idempotent)."""
+    if db.query(User).filter(User.role == "medinfo").count():
+        return False
+    t = Tenant(name="Demo Pharma Medical Information (fictional)")
+    db.add(t)
+    db.flush()
+    desk = User(tenant_id=t.id, name="Morgan Lee, PharmD", role="medinfo", specialty="Medical information",
+                prefs={"mode": "immediate"})
+    db.add(desk)
+    db.flush()
+    pcp = db.query(User).filter(User.role == "referring").order_by(User.id).first()
+    if pcp:
+        db.add(MedInfoRequest(
+            tenant_id=pcp.tenant_id, requester_id=pcp.id, desk_tenant_id=t.id, drug="semaglutide", therapy_class="glp1ra",
+            question="Patient with a referable DR signal: what does the label say about starting semaglutide, and how soon should retinal follow-up happen?",
+            context="Adult in their 60s with diabetes; screening findings: referable diabetic retinopathy.",
+            status="Answered", answered_by=desk.id, answered_at=now() - timedelta(days=2),
+            answer="The label warns of diabetic retinopathy complications, seen in SUSTAIN-6 mostly in patients with existing "
+                   "retinopathy and rapid glucose lowering. Patients with a history of DR should be monitored for progression. "
+                   "Timing of retinal follow-up is a clinical decision; no fixed interval is specified in the label.",
+            answer_source="Semaglutide injection prescribing information, Warnings and Precautions: diabetic retinopathy complications",
+            created_at=now() - timedelta(days=3)))
+        db.add(MedInfoRequest(
+            tenant_id=pcp.tenant_id, requester_id=pcp.id, desk_tenant_id=t.id, drug="finerenone", therapy_class="finerenone",
+            question="Kidney signal on retinal screening, already on lisinopril. What potassium monitoring does the label require when adding finerenone?",
+            context="Adult in their 50s with diabetes; screening findings: diabetic kidney disease risk.",
+            created_at=now() - timedelta(hours=5)))
+    db.commit()
+    return True
+
+
 def seed(db, with_images=False, verbose=True):
     """Populate an empty database. Returns False if it was already seeded."""
     if db.query(Tenant).count():
@@ -101,7 +173,8 @@ def seed(db, with_images=False, verbose=True):
     ]
     picks, table = pick_patients() if with_images else (None, None)
     for i, (key, ref, age, sex, dm, ins, oral, conds, eyes) in enumerate(scenarios):
-        p = Patient(tenant_id=t1.id, ref=ref, age=age, sex=sex, dm_time=dm, insulin=ins, oral_treatment=oral, conditions=conds)
+        p = Patient(tenant_id=t1.id, ref=ref, age=age, sex=sex, dm_time=dm, insulin=ins, oral_treatment=oral, conditions=conds,
+                    medications=SCENARIO_MEDS[ref])
         db.add(p)
         db.flush()
         c = Case(tenant_id=t1.id, patient_id=p.id, owner_id=U["pcp"].id, created_by=U["op"].id,
@@ -129,6 +202,8 @@ def seed(db, with_images=False, verbose=True):
         if verbose:
             print(f"demo caseload: {n} real-image cases")
     db.commit()
+    backfill_medications(db)
+    ensure_desk(db)
     if verbose:
         print("seeded. Accounts:", ", ".join(f"{u.name} ({u.role})" for u in U.values()))
     return True

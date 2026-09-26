@@ -22,7 +22,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"))
     name: Mapped[str] = mapped_column(String(120))
-    role: Mapped[str] = mapped_column(String(20))          # operator | referring | specialist | coordinator | admin
+    role: Mapped[str] = mapped_column(String(20))          # operator | referring | specialist | coordinator | admin | medinfo
     specialty: Mapped[str] = mapped_column(String(60), default="")
     active: Mapped[bool] = mapped_column(Boolean, default=True)
     prefs: Mapped[dict] = mapped_column(JSON, default=dict)  # {'mode': 'immediate'|'digest', 'quiet_start': 22, 'quiet_end': 7}
@@ -40,6 +40,7 @@ class Patient(Base):
     oral_treatment: Mapped[str] = mapped_column(String(10), default="unknown")
     # {condition_code: {'value': 'present'|'absent'|'unknown', 'source': str, 'date': str, 'verification': str}}
     conditions: Mapped[dict] = mapped_column(JSON, default=dict)
+    medications: Mapped[list | None] = mapped_column(JSON, nullable=True)      # current medicines, generic names
     synthetic: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
@@ -228,3 +229,24 @@ class TryImage(Base):
     name: Mapped[str] = mapped_column(String(200))
     data: Mapped[bytes] = mapped_column(LargeBinary)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class MedInfoRequest(Base):
+    """Clinician question to a manufacturer's medical-information desk. Carries a de-identified context only (age band
+    and finding labels): no patient reference, case link, images or free-text history ever reach the desk."""
+    __tablename__ = "medinfo_requests"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"))          # requesting organisation
+    requester_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    desk_tenant_id: Mapped[int] = mapped_column(ForeignKey("tenants.id"))     # the manufacturer's desk
+    drug: Mapped[str] = mapped_column(String(60))
+    therapy_class: Mapped[str] = mapped_column(String(60), default="")
+    question: Mapped[str] = mapped_column(Text)
+    context: Mapped[str] = mapped_column(String(400), default="")
+    status: Mapped[str] = mapped_column(String(20), default="Submitted")     # Submitted | Answered
+    answer: Mapped[str] = mapped_column(Text, default="")
+    answer_source: Mapped[str] = mapped_column(String(200), default="")
+    answered_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    requester: Mapped["User"] = relationship(foreign_keys=[requester_id])
