@@ -1,0 +1,164 @@
+1
+00:00:00,350 --> 00:00:09,275
+We are team Coding Claws at HackGT 13: Nagur Shareef Shaik, Sahith Reddy Thummala, Pranav Nagothu and Geethanjali Nagaboina.
+
+2
+00:00:09,405 --> 00:00:23,005
+This is Insight Rx, a new HCP engagement channel triggered by a clinical signal: one no-needle eye photo tells the clinician what to treat, which protein and drug to target, and who to engage next.
+
+3
+00:00:23,558 --> 00:00:27,733
+I'm Nagur Shareef, and I research oculomics at Georgia State.
+
+4
+00:00:27,863 --> 00:00:36,813
+What still amazes me is that the retina is the one place in the body where we can look straight at blood vessels and nerves, with no needle and no scan.
+
+5
+00:00:36,943 --> 00:00:44,918
+Yet in most clinics that photo ends as a line in a chart. I built Insight Rx so it starts a treatment plan instead.
+
+6
+00:00:45,476 --> 00:00:50,901
+Diabetic retinopathy is the leading cause of blindness in working-age adults.
+
+7
+00:00:51,031 --> 00:00:57,181
+One in four people with diabetes already has it, yet about a third skip their yearly eye exam.
+
+8
+00:00:57,311 --> 00:01:01,886
+And the retina's tiny vessels mirror the heart, the kidneys and the nerves.
+
+9
+00:01:02,445 --> 00:01:13,095
+Everything here runs on real patients: retinal photos taken with a handheld smartphone camera in Itabuna, Brazil, from the mBRSET dataset.
+
+10
+00:01:13,225 --> 00:01:18,700
+A primary-care clinician adds both eyes, the patient's age and current medicines.
+
+11
+00:01:18,830 --> 00:01:28,930
+A quality gate checks every photo, then our fine-tuned DINOv2 model finds referable diabetic retinopathy in both eyes, and shows where it looked.
+
+12
+00:01:29,060 --> 00:01:34,110
+On held-out patients it reaches an AUROC of 0.98.
+
+13
+00:01:34,662 --> 00:01:40,012
+Insight Rx turns that finding into guideline therapy options for this patient,
+
+14
+00:01:40,142 --> 00:01:49,042
+and it catches two eye-specific safety risks in the current medicines: semaglutide with retinopathy, and pioglitazone with macular edema.
+
+15
+00:01:49,595 --> 00:01:54,220
+Now the part no screening tool does: personalised target discovery.
+
+16
+00:01:54,350 --> 00:02:04,100
+The patient's phenotype ranks the protein targets behind their disease, by evidence strength, guideline support, and how well we understand the drug-binding site.
+
+17
+00:02:04,230 --> 00:02:06,480
+Every rank explains itself.
+
+18
+00:02:07,036 --> 00:02:13,411
+The top target for this patient is VEGF-A, the protein that makes retinal vessels leak.
+
+19
+00:02:13,541 --> 00:02:20,691
+Here is its real structure from the Protein Data Bank, bound by the antibody lineage behind ranibizumab.
+
+20
+00:02:20,821 --> 00:02:25,271
+Switch to DeepMind's AlphaFold prediction, coloured by confidence.
+
+21
+00:02:25,401 --> 00:02:36,726
+We compute the 21 residues that touch the drug. AlphaFold's confidence there is 95 out of 100: reliable for structure-based design, while floppy regions are flagged.
+
+22
+00:02:36,856 --> 00:02:40,806
+Approved and pipeline drugs on the target come from ChEMBL.
+
+23
+00:02:41,356 --> 00:02:50,181
+The same analysis runs for every target, like empagliflozin sitting in the SGLT2 pocket, mapped to UniProt numbering.
+
+24
+00:02:50,733 --> 00:02:59,583
+Across a clinic, eye-detected demand per target meets how crowded each drug space is, showing a pharma partner exactly where to engage.
+
+25
+00:02:59,713 --> 00:03:05,063
+And one click produces a personalised therapy report and a discovery dossier.
+
+26
+00:03:05,617 --> 00:03:18,867
+Recruiting trials are matched by finding, real specialists come from the CMS NPI Registry, and manufacturers answer questions through a de-identified, firewalled medical-information channel.
+
+27
+00:03:19,419 --> 00:03:21,219
+What makes this new?
+
+28
+00:03:21,349 --> 00:03:31,199
+Retinal screening tools stop at refer. Insight Rx carries one photo all the way to the protein target, the drug and the physician, for each patient.
+
+29
+00:03:31,329 --> 00:03:43,504
+It checks drug safety against what the eye shows, measures AlphaFold confidence at the exact drug-binding site, and turns the finding into a compliant engagement for clinicians and manufacturers.
+
+30
+00:03:44,056 --> 00:03:48,831
+The return is concrete. For every ten thousand patients with diabetes:
+
+31
+00:03:48,961 --> 00:03:56,311
+about thirty-five hundred open eye-exam gaps can close, the ones Medicare and HEDIS quality scores track;
+
+32
+00:03:56,441 --> 00:04:08,541
+each physician-read screening bills CPT 92228, about $30 at the 2026 Medicare rate, around $300,000 per ten thousand reads;
+
+33
+00:04:08,671 --> 00:04:15,921
+and about twenty-six hundred people with retinopathy, five hundred of them vision-threatening, are found and routed to care.
+
+34
+00:04:16,478 --> 00:04:27,878
+Socially, this is a low-cost, no-needle screen that fits in a clinic bag, built on data from a Brazilian diabetes program, so it can reach rural and underserved patients first.
+
+35
+00:04:28,008 --> 00:04:34,433
+It is a research prototype that still needs prospective validation, and every line of code is open.
+
+36
+00:04:34,986 --> 00:04:37,161
+Why should Impiricus buy it?
+
+37
+00:04:37,291 --> 00:04:45,691
+It is a new channel on Impiricus's HCP network: a clinical signal, not an SMS, at the moment therapy is decided.
+
+38
+00:04:45,821 --> 00:04:56,771
+Manufacturers pay per qualified medical-information engagement and trial referral, inside a compliance firewall. Clinics pay per screen, offset by billable reads.
+
+39
+00:04:56,901 --> 00:05:03,376
+And the moat is validated retinal AI plus a personalised target engine built on AlphaFold.
+
+40
+00:05:03,934 --> 00:05:16,234
+Under the hood: FastAPI and Neon Postgres on Vercel, GPU models over a Cloudflare tunnel, Gemini behind a restricted-data guard, and open data from EMBL-EBI.
+
+41
+00:05:16,364 --> 00:05:24,689
+Insight Rx: HCP engagement, triggered by a clinical signal. One eye photo. The right therapy, and the right physician.
+

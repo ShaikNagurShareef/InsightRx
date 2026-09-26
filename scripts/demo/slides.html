@@ -59,6 +59,17 @@ p.lede { font-size: 30px; line-height: 1.35; color: #c9d6df; max-width: 1050px; 
 .social div { background: #fff; border-radius: 18px; padding: 28px; border: 1px solid var(--line); min-height: 250px; }
 .social b { display: block; font-size: 27px; margin: 14px 0 8px; } .social span { font-size: 19px; color: var(--ink2); line-height: 1.4; }
 .social .ic { width: 44px; height: 44px; color: var(--mol); fill: none; stroke: currentColor; stroke-width: 1.8; }
+#acquire { padding-top: 52px; }
+#acquire .pill { padding: 18px 24px; } #acquire .pill b { font-size: 26px; } #acquire .pill span { font-size: 19px; }
+.biz { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 18px; }
+.biz div { border-radius: 14px; padding: 14px 20px; background: var(--fundus); color: #1b0d03; }
+.biz b { display: block; font-size: 22px; } .biz span { font-size: 17px; line-height: 1.35; }
+#novelty { padding-top: 56px; }
+#novelty h2 { font-size: 46px; }
+#novelty .grid4 { margin-top: 26px; gap: 18px; }
+#novelty .pill { padding: 18px 24px; }
+#novelty .pill b { font-size: 26px; margin-bottom: 4px; }
+#novelty .pill span { font-size: 19px; line-height: 1.35; }
 .stack { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 22px; margin-top: 34px; }
 .stack div { border-left: 4px solid var(--mol); padding: 8px 14px; background: rgba(255,255,255,.05); border-radius: 0 10px 10px 0; }
 .stack b { font-size: 22px; display: block; } .stack span { font-size: 16px; color: #a9bac7; }
@@ -67,7 +78,8 @@ p.lede { font-size: 30px; line-height: 1.35; color: #c9d6df; max-width: 1050px; 
 
 <section id="title" class="dark">
   <div class="logo in"><i></i>Insight Rx</div>
-  <h1 class="in d1" style="margin-top:44px">From one eye photo<br>to a personalised therapy plan.</h1>
+  <h1 class="in d1" style="margin-top:36px;font-size:74px">One eye photo. What to treat,<br>which target, who to engage.</h1>
+  <p class="in d2" style="margin-top:14px;font-size:27px;color:#f3b27a;font-weight:700">A new HCP engagement channel, triggered by a clinical signal.</p>
   <div class="chain in d3">
     <div><b>Eye</b><span>Smartphone fundus photo</span></div>
     <div><b>Signal</b><span>Retina + whole-body</span></div>
@@ -107,6 +119,19 @@ p.lede { font-size: 30px; line-height: 1.35; color: #c9d6df; max-width: 1050px; 
   </div>
 </section>
 
+<section id="novelty" class="dark">
+  <p class="kicker in">Key differentiators · what is new</p>
+  <h2 class="in d1" style="margin-top:14px">Screening tools stop at "refer".<br>Insight Rx goes to the molecule, for each patient.</h2>
+  <div class="grid4" style="grid-template-columns:repeat(3,1fr)">
+    <div class="pill in d2"><b><em>1</em> Eye to protein target</b><span>A retinal phenotype ranked into protein targets per patient, with every rank explained.</span></div>
+    <div class="pill in d3"><b><em>2</em> Site-level structure confidence</b><span>AlphaFold pLDDT measured at the exact drug-contact residues from real PDB complexes.</span></div>
+    <div class="pill in d4"><b><em>3</em> Eye-aware drug safety</b><span>Drug-disease alerts tied to what the retina shows: semaglutide with DR, pioglitazone with edema.</span></div>
+    <div class="pill in d4"><b><em>4</em> Signal-triggered engagement</b><span>Consults, NPI referral and manufacturer med-info start from a clinical finding, behind a firewall.</span></div>
+    <div class="pill in d5"><b><em>5</em> Honest by design</b><span>Quality-gated, calibrated models with evidence tiers; research signals are never sold as diagnoses.</span></div>
+    <div class="pill in d6"><b><em>6</em> Real-world data, free to run</b><span>Portable-camera patients from Brazil; runs on free infrastructure with a live GPU worker.</span></div>
+  </div>
+</section>
+
 <section id="roi">
   <p class="kicker in">Return on investment · illustrative, sourced</p>
   <h2 class="in d1" style="margin-top:14px">Per 10,000 patients with diabetes screened</h2>
@@ -131,13 +156,18 @@ p.lede { font-size: 30px; line-height: 1.35; color: #c9d6df; max-width: 1050px; 
 </section>
 
 <section id="acquire" class="dark">
-  <p class="kicker in">Why Impiricus should acquire Insight Rx</p>
-  <h2 class="in d1" style="margin-top:14px">The next way to engage HCPs starts in the eye.</h2>
-  <div class="grid4">
+  <p class="kicker in">Commercial fit · why Impiricus should acquire Insight Rx</p>
+  <h2 class="in d1" style="margin-top:10px;font-size:46px">The next way to engage HCPs starts in the eye.</h2>
+  <div class="grid4" style="margin-top:24px;gap:16px">
     <div class="pill in d2"><b><em>1</em> A new engagement moment</b><span>A clinical signal at the point of care, exactly when therapy is decided. Not marketing, not SMS.</span></div>
     <div class="pill in d3"><b><em>2</em> Life-science revenue</b><span>Targeted medical information, trial recruitment and demand by protein target, inside a compliance firewall.</span></div>
     <div class="pill in d4"><b><em>3</em> A defensible moat</b><span>Validated retinal AI (AUROC 0.98) plus a personalised target engine on AlphaFold, PDB and ChEMBL.</span></div>
     <div class="pill in d5"><b><em>4</em> Adoption that pays for itself</b><span>Clinics come for CMS quality-gap closure and billable reads; HCP engagement follows.</span></div>
+  </div>
+  <div class="biz in d6">
+    <div><b>Manufacturers pay</b><span>per qualified med-info engagement and eligible trial referral</span></div>
+    <div><b>Clinics pay</b><span>per screen, offset by CPT 92228 reads and quality bonuses</span></div>
+    <div><b>Impiricus gains</b><span>a new non-SMS channel on its HCP network, triggered by clinical signals</span></div>
   </div>
 </section>
 
@@ -157,7 +187,8 @@ p.lede { font-size: 30px; line-height: 1.35; color: #c9d6df; max-width: 1050px; 
     <div><b>3Dmol.js · reportlab</b><span>3D viewer, PDF reports</span></div>
     <div><b>Kokoro-82M</b><span>This narration, generated locally</span></div>
   </div>
-  <p class="in d3" style="margin-top:38px;font-size:40px;font-weight:800">Insight Rx. One eye photo. The right therapy, and the right physician.</p>
+  <p class="in d3" style="margin-top:34px;font-size:38px;font-weight:800">Insight Rx: HCP engagement, triggered by a clinical signal.</p>
+  <p class="in d4" style="margin-top:8px;font-size:28px;color:#f3b27a;font-weight:700">One eye photo. The right therapy, and the right physician.</p>
   <p class="foot">github.com/ShaikNagurShareef/InsightRx · insightrx-hcp.vercel.app · research prototype, synthetic identities, not a diagnosis</p>
 </section>
 

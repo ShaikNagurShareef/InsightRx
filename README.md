@@ -1,8 +1,35 @@
 # Insight Rx
 
-**HackGT 13 · Impiricus challenge: "Invent the next way we engage HCPs."** (Formerly RetiLink.)
+> **Insight Rx is a new HCP engagement channel triggered by a clinical signal: one no-needle eye photo tells the clinician what to treat, which protein and drug to target, and who to engage next (a specialist, a trial or the manufacturer).**
 
-**From one eye photo to the right therapy and the right physician.** A retinal photo phenotypes the patient: diabetic eye disease plus signals about the heart, kidneys and nerves. Insight Rx turns that signal into the moment a clinician needs therapy information, which is where engagement with specialists *and* with manufacturers' medical teams becomes useful rather than promotional.
+**HackGT 13 · Impiricus challenge: "Invent the next way we engage HCPs."** Team **Coding Claws**: Nagur Shareef Shaik, Sahith Reddy Thummala, Pranav Nagothu and Geethanjali Nagaboina.
+
+[![Watch the Insight Rx demo (5:26)](docs/demo/poster.jpg)](docs/demo/InsightRx_demo.mp4)
+
+**▶ [Watch the demo video](docs/demo/InsightRx_demo.mp4)** (5:26, narrated, captioned; [captions .srt](docs/demo/InsightRx_demo.srt)) · **[Live app](https://insightrx-hcp.vercel.app)** (access code on request) · **[User guide](docs/USER_GUIDE.md)** · **[Architecture](docs/ARCHITECTURE.md)** · **[Impiricus fit and judging scorecard](docs/IMPIRICUS_FIT.md)** · **[Sample PDF reports](docs/reports/)**
+
+### Why it wins
+
+| Judging criterion | Insight Rx |
+|---|---|
+| **Impact on the HCP** | At the moment of decision, one photo gives a referable-DR verdict with attention maps, a whole-body view, guideline therapy with eye-specific drug-safety alerts, ranked protein targets, trials, and a one-click consult or referral letter. It also closes the diabetic eye-exam quality gap the clinician is measured on. |
+| **Originality** | Screening tools stop at "refer". Insight Rx carries the retinal phenotype to the **protein target, drug and physician for each patient**, and measures **AlphaFold confidence at the exact drug-contact residues** from real PDB complexes. |
+| **Technical execution** | DINOv2-L + LoRA ensemble trained on real Brazilian portable-camera data: **AUROC 0.980** on held-out patients. Live GPU worker, FastAPI on Vercel with Neon, strict CSP, tenant and role isolation, audit trail, 44 tests, and a reproducible demo pipeline. |
+| **Commercial fit** | **Manufacturers** pay per qualified med-info engagement and trial referral, inside a compliance firewall. **Clinics** pay per screen, offset by CPT 92228 reads (about $30 each) and quality bonuses. **Impiricus** gains a non-SMS channel on its HCP network plus eye-detected demand per protein target. Per 10,000 patients: 3,520 exam gaps closeable, about $304K in billable reads, and 2,600 people with retinopathy found. |
+
+### Screenshots
+
+| Screen result | Personalised targets | AlphaFold target view |
+|---|---|---|
+| ![](docs/screenshots/03_screen_result.png) | ![](docs/screenshots/05_screen_personal_targets.png) | ![](docs/screenshots/07_target_vegfa_alphafold.png) |
+| **Drug complex (PDB)** | **Therapy and trials** | **Medical-information desk** |
+| ![](docs/screenshots/06_target_vegfa_complex.png) | ![](docs/screenshots/13_case_therapy_trials.png) | ![](docs/screenshots/25_medinfo_manufacturer_desk.png) |
+| **NPI Registry referral** | **CMS quality and billing** | **Model performance** |
+| ![](docs/screenshots/15_refer_out_npi_registry.png) | ![](docs/screenshots/19_cms_quality_billing.png) | ![](docs/screenshots/20_model_performance.png) |
+
+All 26 screens are in [docs/screenshots](docs/screenshots/), and the [user guide](docs/USER_GUIDE.md) walks through them.
+
+## How it works
 
 A portable retinal photo taken in primary care often leads nowhere. The result sits in a chart, the referral is a fax, and nobody knows whether the retina specialist ever saw the patient. Insight Rx makes that photo the start of an accountable exchange between two clinicians:
 
@@ -224,13 +251,15 @@ The tests cover:
 
 ```
 insightrx/ml/    config, data, model, train_image, evaluate, frozen, systemic_cv, explain (train_systemic: P1-split reference)
-insightrx/app/   main (routes), models, workflow (state machine / audit / tasks), vision, remote_vision, seed, llm, evidence, templates/
+insightrx/app/   main (routes), routes_therapy, therapeutics, personalize, external, reports, models, workflow (state machine / audit / tasks), vision, remote_vision, seed, llm, evidence, templates/
 insightrx/vision_api.py  GPU vision worker API (used by the deployed app through the tunnel)
-scripts/        JobSubmit.sh, train_local.sh, seed_demo.py, run_app.sh, run_vision_tunnel.sh, deploy_space.py
+scripts/        JobSubmit.sh, train_local.sh, seed_demo.py, run_app.sh, run_vision_tunnel.sh, deploy_space.py, fetch_structures.py
+scripts/demo/   narrated demo video pipeline (Kokoro TTS, Playwright recording, ffmpeg captions) + screenshots.py
 api/, vercel.json  Vercel entry point + config (requirements.txt = web app deps; requirements-ml.txt = models)
 deploy/space/   Dockerfile + pinned requirements for the Hugging Face Space
 weights/        released checkpoints (Git LFS) + calibration + aggregate metrics
-tests/          test_workflow.py
+tests/          test_workflow.py, test_therapeutics.py
+docs/           USER_GUIDE, ARCHITECTURE, IMPIRICUS_FIT, screenshots/, reports/ (sample PDFs), demo/ (video via Git LFS, captions, slides)
 ```
 
 ## Limitations

@@ -9,7 +9,7 @@ Figures and their sources: see ROI in this file and the slide footers (slides.ht
 VOICE = "af_heart"          # Kokoro-82M voice
 SPEED = 1.08                # slightly brisk: about 150 words per minute
 GAP_S = 0.28                # silence between sentences
-SCENE_PAD_S = 0.5           # breathing room after each scene's narration
+SCENE_PAD_S = 0.7           # breathing room after each scene's narration
 
 # Sourced figures (fetched 2026-09-26), used by the ROI slide and narration
 ROI = {
@@ -33,8 +33,8 @@ SCENES = [
     {"id": "title", "slide": "title", "badges": ["Team Coding Claws · HackGT 13 · Impiricus challenge"],
      "say": [("We are team Coding Claws at HackGT 13: Nagur Shareef Shaik, Sahith Reddy Thummala, Pranav Nagothu and Geethanjali Nagaboina.",
               "We are team Coding Claws, at Hack G T thirteen: Nagur Shareef Shaik, Sahith Reddy Thummala, Pranav Nagothu, and Geethanjali Nagaboina."),
-             ("This is Insight Rx: from one eye photo to a personalised, target-level therapy plan.",
-              "This is Insight R X. From one eye photo, to a personalised, target-level therapy plan.")]},
+             ("This is Insight Rx, a new HCP engagement channel triggered by a clinical signal: one no-needle eye photo tells the clinician what to treat, which protein and drug to target, and who to engage next.",
+              "This is Insight R X: a new H C P engagement channel, triggered by a clinical signal. One no-needle eye photo tells the clinician what to treat, which protein and drug to target, and who to engage next.")]},
 
     {"id": "motivation", "slide": "motivation", "badges": [],
      "say": [("I'm Nagur Shareef, and I research oculomics at Georgia State.",
@@ -63,7 +63,8 @@ SCENES = [
 
     {"id": "targets", "app": "targets", "badges": ["Personalised target ranking"],
      "say": ["Now the part no screening tool does: personalised target discovery.",
-             "The patient's phenotype ranks the protein targets behind their disease, by evidence, guideline support, and how well we understand the drug-binding site."]},
+             "The patient's phenotype ranks the protein targets behind their disease, by evidence strength, guideline support, and how well we understand the drug-binding site.",
+             "Every rank explains itself."]},
 
     {"id": "vegfa", "app": "vegfa", "badges": ["AlphaFold DB (DeepMind · EMBL-EBI)", "RCSB Protein Data Bank · ChEMBL · 3Dmol.js"],
      "say": [("The top target for this patient is VEGF-A, the protein that makes retinal vessels leak.",
@@ -87,6 +88,11 @@ SCENES = [
      "say": [("Recruiting trials are matched by finding, real specialists come from the CMS NPI Registry, and manufacturers answer questions through a de-identified, firewalled medical-information channel.",
               "Recruiting trials are matched by finding. Real specialists come from the C M S N P I Registry. And manufacturers answer questions through a de-identified, firewalled medical information channel.")]},
 
+    {"id": "novelty", "slide": "novelty", "badges": ["What makes Insight Rx different"],
+     "say": ["What makes this new?",
+             "Retinal screening tools stop at refer. Insight Rx carries one photo all the way to the protein target, the drug and the physician, for each patient.",
+             "It checks drug safety against what the eye shows, measures AlphaFold confidence at the exact drug-binding site, and turns the finding into a compliant engagement for clinicians and manufacturers."]},
+
     {"id": "roi", "slide": "roi", "badges": ["Sources: CMS PFS 2026 · CDC · Healthy People 2030"],
      "say": ["The return is concrete. For every ten thousand patients with diabetes:",
              "about thirty-five hundred open eye-exam gaps can close, the ones Medicare and HEDIS quality scores track;",
@@ -96,20 +102,19 @@ SCENES = [
 
     {"id": "social", "slide": "social", "badges": [],
      "say": ["Socially, this is a low-cost, no-needle screen that fits in a clinic bag, built on data from a Brazilian diabetes program, so it can reach rural and underserved patients first.",
-             "It is a research prototype that still needs prospective validation."]},
+             "It is a research prototype that still needs prospective validation, and every line of code is open."]},
 
-    {"id": "acquire", "slide": "acquire", "badges": [],
+    {"id": "acquire", "slide": "acquire", "badges": ["Commercial fit"],
      "say": ["Why should Impiricus buy it?",
-             "It creates a new engagement moment: a clinical signal, exactly when therapy is decided.",
-             "It opens life-science revenue: targeted medical information, trial recruitment, and demand by protein target, inside a compliance firewall.",
-             "Its moat is validated retinal AI plus a personalised target engine built on AlphaFold.",
-             "And clinics adopt it on their own, because it closes quality gaps and it bills."]},
+             "It is a new channel on Impiricus's HCP network: a clinical signal, not an SMS, at the moment therapy is decided.",
+             "Manufacturers pay per qualified medical-information engagement and trial referral, inside a compliance firewall. Clinics pay per screen, offset by billable reads.",
+             "And the moat is validated retinal AI plus a personalised target engine built on AlphaFold."]},
 
     {"id": "stack", "slide": "stack", "badges": ["Vercel · Neon · Cloudflare · Google Gemini · EMBL-EBI"],
-     "say": [("Under the hood: FastAPI, Neon and Vercel, GPU models over a Cloudflare tunnel, and open data from EMBL-EBI.",
-              "Under the hood: Fast A P I, Neon and Vercel, G P U models over a Cloudflare tunnel, and open data from E M B L, E B I."),
-             ("Insight Rx. One eye photo. The right therapy, and the right physician.",
-              "Insight R X. One eye photo. The right therapy, and the right physician.")]},
+     "say": [("Under the hood: FastAPI and Neon Postgres on Vercel, GPU models over a Cloudflare tunnel, Gemini behind a restricted-data guard, and open data from EMBL-EBI.",
+              "Under the hood: Fast A P I and Neon Postgres on Vercel, G P U models over a Cloudflare tunnel, Gemini behind a restricted-data guard, and open data from E M B L, E B I."),
+             ("Insight Rx: HCP engagement, triggered by a clinical signal. One eye photo. The right therapy, and the right physician.",
+              "Insight R X. H C P engagement, triggered by a clinical signal. One eye photo. The right therapy, and the right physician.")]},
 ]
 
 
