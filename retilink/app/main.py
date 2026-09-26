@@ -23,6 +23,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from . import workflow as wf
 from .db import APP_ROOT, IMAGE_STORE, Base, SessionLocal, engine, get_db
 from . import activity as act
+from . import consult
 from . import oculomics as oc
 from . import trylab
 from .llm import draft_package, evidence_brief
@@ -692,6 +693,13 @@ async def sign_review(case_id: int, request: Request, user: User = Depends(curre
     case = case_for(db, user, case_id)
     require(user, "referring")
     f = await request.form()
+    sign_review_core(db, case, user, f)
+    db.commit()
+    return RedirectResponse(f"/cases/{case_id}?tab=review", 303)
+
+
+def sign_review_core(db: Session, case: Case, user: User, f) -> Review:
+    """Validate and sign the referring clinician's interpretation (bound to case version and model run)."""
     decision = f.get("decision")
     if decision not in ("accept", "disagree", "recapture", "manual_review"):
         wf.error(422, "bad_decision", "Choose a review decision.")
@@ -720,8 +728,8 @@ async def sign_review(case_id: int, request: Request, user: User = Depends(curre
         if note == "request_context":
             wf.add_task(db, case, f"context_{c}", f"Clarify {SYSTEMIC_LABELS[c]} history for {case.patient.ref}",
                         case.owner_id)
-    db.commit()
-    return RedirectResponse(f"/cases/{case_id}?tab=review", 303)
+    db.flush()
+    return rv
 
 
 # ------------------------------------------------------------------ consultation & dispatch (FR21-FR25, FR43)
@@ -755,6 +763,17 @@ async def create_referral(request: Request, user: User = Depends(current_user), 
         wf.error(409, "approval_invalidated", "Package, recipient or case changed since preview. Preview again before signing.")
     if not f.get("attest"):
         wf.error(422, "attestation_required", "Confirm the attestation to sign and send.")
+    ref = dispatch_referral(db, user, case, review, recipient, topic, question, f, idem)
+    if ref is None:
+        prior = db.scalar(select(Referral).where(Referral.sender_id == user.id, Referral.idempotency_key == idem))
+        return RedirectResponse(f"/referrals/{prior.id}", 303)
+    db.commit()
+    return RedirectResponse(f"/referrals/{ref.id}", 303)
+
+
+def dispatch_referral(db: Session, user: User, case: Case, review: Review, recipient: User, topic: str, question: str,
+                      f, idem: str):
+    """Build the traced package from case data and send it. Returns None if the idempotency key was already used."""
     run = latest_run(db, case)
     imgs = wf.active_images(db, case)
     package = draft_package(case, case.patient, review, run if run and run.case_version == case.version else None,
@@ -772,14 +791,71 @@ async def create_referral(request: Request, user: User = Depends(current_user), 
         db.flush()
     except IntegrityError:
         db.rollback()
-        prior = db.scalar(select(Referral).where(Referral.sender_id == user.id, Referral.idempotency_key == idem))
-        return RedirectResponse(f"/referrals/{prior.id}", 303)
+        return None
     wf.audit(db, case.tenant_id, case.id, user.id, "referral_sent",
              f"#{ref.id} to {recipient.name} ({topic}); package {phash[:12]}", case.version)
     wf.add_task(db, case, "acknowledge", f"Acknowledge consultation RL-{ref.id}", recipient.id, ref.id, wf.DEMO_DUE["acknowledge"])
     wf.notify(db, recipient, f"New consultation request RL-{ref.id}", f"/referrals/{ref.id}")
+    return ref
+
+
+# ------------------------------------------------------------------ guided consult: sign + send in one step
+def consult_token(case: Case) -> str:
+    return wf.digest({"consult": case.id, "v": case.version})
+
+
+@app.get("/cases/{case_id}/consult", response_class=HTMLResponse)
+def consult_page(case_id: int, request: Request, topic: str = "", user: User = Depends(current_user),
+                 db: Session = Depends(get_db)):
+    case = case_for(db, user, case_id)
+    require(user, "referring")
+    run = latest_run(db, case)
+    res = run.result if run and run.status == "completed" and run.case_version == case.version else None
+    snapshot = oc.patient_snapshot(case.patient, res, {**SYSTEMIC_LABELS, **COMPOSITE_LABELS}, get_service().metrics)
+    topics = consult.suggested_topics(res, snapshot)
+    topic = topic if topic in consult.TOPICS else topics[0][0]
+    specialists = db.scalars(select(User).where(User.tenant_id == user.tenant_id, User.role == "specialist",
+                                                User.active.is_(True))).all()
+    review = wf.current_review(db, case)
+    imgs = wf.active_images(db, case)
+    preview = draft_package(case, case.patient, review or Review(id=0, interpretation="(your interpretation, signed on send)",
+                                                                override_reason=""),
+                            run if res else None, imgs, topic, consult.TOPICS[topic]["question"])
+    sent = db.scalars(select(Referral).where(Referral.case_id == case.id).order_by(Referral.id.desc())).all()
+    return templates.TemplateResponse(request, "consult.html", ctx(
+        request, user, db, active="patients", case=case, res=res, run=run, review=review, topics=topics, topic=topic,
+        topic_info=consult.TOPICS[topic], specialists=consult.specialists_for(topic, specialists),
+        draft=consult.draft_interpretation(res), preview=preview, token=consult_token(case), idem=uuid.uuid4().hex,
+        sent=sent, TOPICS=consult.TOPICS))
+
+
+@app.post("/cases/{case_id}/consult")
+async def consult_send(case_id: int, request: Request, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    case = case_for(db, user, case_id)
+    require(user, "referring")
+    f = await request.form()
+    idem = f.get("idempotency_key", "")
+    prior = db.scalar(select(Referral).where(Referral.tenant_id == user.tenant_id, Referral.sender_id == user.id,
+                                             Referral.idempotency_key == idem)) if idem else None
+    if prior:                                              # double click / retry -> same consultation
+        return RedirectResponse(f"/referrals/{prior.id}?msg=Already+sent", 303)
+    if f.get("token") != consult_token(case):
+        wf.error(409, "case_changed", "The case changed while you were writing. Reopen Consult a specialist and check again.")
+    topic = f.get("topic") if f.get("topic") in consult.TOPICS else "retinal"
+    question = (f.get("question") or "").strip()
+    if not question:
+        wf.error(422, "missing_question", "Write the question you want the specialist to answer.")
+    recipient = db.get(User, int(f.get("recipient_id") or 0))
+    if not recipient or recipient.tenant_id != user.tenant_id or recipient.role != "specialist" or not recipient.active:
+        wf.error(422, "recipient_not_granted", "Choose a specialist from the directory.")
+    if not f.get("attest"):
+        wf.error(422, "attestation_required", "Tick the box to sign your interpretation and the package.")
+    review = wf.current_review(db, case) or sign_review_core(db, case, user, f)
+    ref = dispatch_referral(db, user, case, review, recipient, topic, question, f, idem or uuid.uuid4().hex)
+    if ref is None:
+        wf.error(409, "duplicate", "This consultation was already sent.")
     db.commit()
-    return RedirectResponse(f"/referrals/{ref.id}", 303)
+    return RedirectResponse(f"/referrals/{ref.id}?msg=Sent+to+{recipient.name.replace(' ', '+')}.+You+will+be+notified+when+they+accept.", 303)
 
 
 @app.get("/referrals/{rid}", response_class=HTMLResponse)
@@ -1053,9 +1129,9 @@ async def screen_save(request: Request, user: User = Depends(current_user), db: 
     db.flush()
     run_analysis(db, case, user)
     db.commit()
-    nxt = "review" if user.role == "referring" else "retinal"
-    return RedirectResponse(f"/cases/{case.id}?tab={nxt}&msg=Saved+as+{ref}." +
-                            ("+Sign+your+interpretation+to+send+a+consultation." if nxt == "review" else ""), 303)
+    if user.role == "referring":
+        return RedirectResponse(f"/cases/{case.id}/consult?msg=Saved+as+{ref}.+Now+choose+a+specialist+and+send.", 303)
+    return RedirectResponse(f"/cases/{case.id}?msg=Saved+as+{ref}.+{owner.name.replace(' ', '+')}+has+been+asked+to+review.", 303)
 
 
 # ------------------------------------------------------------------ patients (case list + whole-body panel)

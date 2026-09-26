@@ -11,13 +11,14 @@
     <h1 class="row" style="gap:12px">{{ case.patient.ref }} {{ case_stage(case.status) }}{% if case.urgent_concern %}<span class="tag signal">{{ icon('alert') }}Clinician-entered urgent concern</span>{% endif %}</h1>
     <p class="sub">{{ patient_line }}{{ case.device }}. Case version {{ case.version }}.</p>
   </div>
+  {% if user.role == 'referring' and user.id == case.owner_id %}<a class="btn" href="/cases/{{ case.id }}/consult">{{ icon('send') }}Consult a specialist</a>{% endif %}
 </div>
 <div class="panel" style="padding:6px 10px;margin-bottom:var(--s5)">{{ relay(legs) }}</div>
 
 <nav class="tabs" aria-label="Case sections">
 {% for k, l in [('retinal', 'Screening'), ('systemic', 'Systemic health'), ('review', 'Review and sign'), ('consult', 'Consultation'), ('referrals', 'Consultations sent'), ('timeline', 'Audit trail')] %}
   {% if not (user.role == 'specialist' and k in ('review', 'consult')) %}
-  <a href="/cases/{{ case.id }}?tab={{ k }}" {% if tab == k %}aria-current="page"{% endif %}>{{ l }}{% if k == 'referrals' and refs %}<span class="badge">{{ refs|length }}</span>{% endif %}</a>
+  <a href="{{ '/cases/%d/consult'|format(case.id) if k == 'consult' else '/cases/%d?tab=%s'|format(case.id, k) }}" {% if tab == k %}aria-current="page"{% endif %}>{{ l }}{% if k == 'referrals' and refs %}<span class="badge">{{ refs|length }}</span>{% endif %}</a>
   {% endif %}
 {% endfor %}
 </nav>

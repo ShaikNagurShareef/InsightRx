@@ -267,10 +267,10 @@ def test_screen_save_creates_case_and_patients_lists_it():
     pcp = client_as("Dr. Alex Morgan")
     r = pcp.post("/screen", data={"age": "70", "sex": "female"}, files=[("files_OD", ("a.jpg", fundus_bytes(6), "image/jpeg"))])
     token = re.search(r'name="token" value="([^"]+)"', r.text).group(1)
-    assert "Save &amp; consult a specialist" in r.text
+    assert "Save patient &amp; consult a specialist" in r.text
     saved = pcp.post("/screen/save", data={"token": token, "patient_ref": "RL-SAVE1", "age": "70", "sex": "female"})
-    assert saved.status_code == 303 and "tab=review" in saved.headers["location"]
-    cid = int(saved.headers["location"].split("?")[0].rsplit("/", 1)[1])
+    assert saved.status_code == 303 and "/consult" in saved.headers["location"]
+    cid = int(saved.headers["location"].split("/cases/")[1].split("/")[0])
     assert "Age 70" in pcp.get(f"/cases/{cid}?tab=systemic").text
     assert "RL-SAVE1" in pcp.get("/patients").text
     assert client_as("Dr. Priya Nair").post("/screen/save", data={"token": token}).status_code == 403   # specialists cannot
@@ -283,3 +283,23 @@ def test_home_and_old_routes_redirect():
     for old, new in [("/inbox", "/consults"), ("/try", "/screen"), ("/cases/new", "/screen"), ("/analytics", "/performance")]:
         assert c.get(old).headers["location"].startswith(new)
     assert c.get("/performance").status_code == 200 and c.get("/patients").status_code == 200
+
+
+def test_guided_consult_signs_and_sends_in_one_step():
+    pcp = client_as("Dr. Alex Morgan")
+    r = pcp.post("/screen", data={"age": "61"}, files=[("files_OD", ("a.jpg", fundus_bytes(7), "image/jpeg")),
+                                                       ("files_OS", ("b.jpg", fundus_bytes(8), "image/jpeg"))])
+    token = re.search(r'name="token" value="([^"]+)"', r.text).group(1)
+    saved = pcp.post("/screen/save", data={"token": token, "patient_ref": "RL-GUIDE"})
+    assert "/consult" in saved.headers["location"]
+    page = pcp.get(saved.headers["location"]).text
+    assert "Sign &amp; send consultation" in page and "Your reading" in page
+    f = {k: re.search(rf'name="{k}" value="([^"]+)"', page).group(1) for k in ("token", "idempotency_key", "topic")}
+    spec = re.search(r'name="recipient_id" value="(\d+)"', page).group(1)
+    data = {**f, "recipient_id": spec, "decision": "accept", "interpretation": "Agree.", "question": "Please assess.", "attest": "1"}
+    sent = pcp.post(saved.headers["location"].split("?")[0], data=data)
+    assert sent.status_code == 303 and "/referrals/" in sent.headers["location"]
+    again = pcp.post(saved.headers["location"].split("?")[0], data=data)          # double click -> same referral
+    assert again.headers["location"].split("?")[0] == sent.headers["location"].split("?")[0]
+    case_id = int(saved.headers["location"].split("/cases/")[1].split("/")[0])
+    assert "Signed" in pcp.get(f"/cases/{case_id}?tab=review").text                # review signed as part of sending

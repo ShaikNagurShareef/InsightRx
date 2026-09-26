@@ -6,6 +6,11 @@
   <div><h1>{{ 'Screening result' if results else 'Screen a patient' }}</h1>
   <p class="sub">{{ 'Retina and whole-body findings from this photo session. Save it as a case to consult a specialist.' if results else 'Add retinal photos of each eye and what you know about the patient. RetiLink checks quality, screens the retina and lays out what it can say about the rest of the body.' }}</p></div>
 </div>
+<ol class="steps" aria-label="How it works">
+  <li class="{{ 'done' if results else 'now' }}"><span>1</span>Add photos and patient details, then Screen</li>
+  <li class="{{ 'now' if results else '' }}"><span>2</span>Read the result, then save the patient</li>
+  <li><span>3</span>Consult a specialist in one step</li>
+</ol>
 <div class="workspace" style="grid-template-columns:minmax(0,1fr) 380px">
   <div class="stack-lg">
   {% if results %}
@@ -39,7 +44,7 @@
         {% for k in ['age', 'sex', 'dm_time', 'insulin', 'oral_treatment'] %}<input type="hidden" name="{{ k }}" value="{{ details[k] if details[k] is not none else '' }}">{% endfor %}
         {% for c, v in details.conditions.items() %}<input type="hidden" name="cond_{{ c }}" value="{{ v }}">{% endfor %}
         <label class="sr-only" for="pref">Patient reference</label><input id="pref" name="patient_ref" value="{{ patient_ref }}" placeholder="Patient reference (optional)" style="max-width:240px">
-        <button type="submit" class="btn"><span class="spin" aria-hidden="true"></span>{{ icon('send') }}<span data-label>Save &amp; consult a specialist</span></button>
+        <button type="submit" class="btn"><span class="spin" aria-hidden="true"></span>{{ icon('send') }}<span data-label>{{ 'Save patient & consult a specialist' if user.role == 'referring' else 'Save patient for clinician review' }}</span></button>
       </form>
       {% endif %}
       <a class="btn quiet" href="/performance">{{ icon('chart') }}How reliable is this?</a>
