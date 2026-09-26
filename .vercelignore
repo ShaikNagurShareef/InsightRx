@@ -4,4 +4,8 @@ deploy/
 scripts/
 *.docx
 .env
+.env.*
 **/__pycache__/
+.agents/
+.claude/
+skills-lock.json

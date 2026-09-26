@@ -10,3 +10,8 @@ app_store*/
 *.joblib
 !weights/**/*.pth
 !weights/**/*.joblib
+.vercel
+.env*
+.agents/
+.claude/
+skills-lock.json
