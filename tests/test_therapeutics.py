@@ -2,17 +2,17 @@
 the medical-information channel and access control. Runs offline (no network)."""
 import os
 
-os.environ.setdefault("RETILINK_EXTERNAL", "offline")
+os.environ.setdefault("INSIGHTRX_EXTERNAL", "offline")
 
 import httpx  # noqa: E402
 import pytest  # noqa: E402
 
 from test_workflow import client_as, fundus_bytes, new_case, uid, upload  # noqa: E402  (seeds a temp workspace)
 
-from retilink.app import external  # noqa: E402
-from retilink.app import therapeutics as tx  # noqa: E402
-from retilink.app.db import SessionLocal  # noqa: E402
-from retilink.app.models import MedInfoRequest, Patient  # noqa: E402
+from insightrx.app import external  # noqa: E402
+from insightrx.app import therapeutics as tx  # noqa: E402
+from insightrx.app.db import SessionLocal  # noqa: E402
+from insightrx.app.models import MedInfoRequest, Patient  # noqa: E402
 
 DR_RESULT = {"overall": "Referable DR signal", "images": {"1": {"edema_flag": True}}}
 KIDNEY_SNAPSHOT = [{"key": "kidneys", "state": "signal"}, {"key": "heart", "state": "recorded"}]
@@ -134,7 +134,7 @@ def med_case():
 
 def test_medicines_round_trip_through_intake(med_case):
     with SessionLocal() as db:
-        from retilink.app.models import Case
+        from insightrx.app.models import Case
         p = db.get(Patient, db.get(Case, med_case).patient_id)
         assert p.medications == ["semaglutide", "lisinopril", "losartan"]
 

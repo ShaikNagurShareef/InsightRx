@@ -1,9 +1,9 @@
 """
-Deploy RetiLink to a Hugging Face Docker Space (private by default).
+Deploy Insight Rx to a Hugging Face Docker Space (private by default).
 
-  python scripts/deploy_space.py [--space <user>/RetiLink] [--public]
+  python scripts/deploy_space.py [--space <user>/InsightRx] [--public]
 
-Uploads retilink/, scripts/, weights/ (model checkpoints + aggregate metrics only) and the Space Dockerfile.
+Uploads insightrx/, scripts/, weights/ (model checkpoints + aggregate metrics only) and the Space Dockerfile.
 No mBRSET images or per-patient outputs are uploaded; the Space seeds a synthetic workspace without images.
 The weights were trained on credentialed PhysioNet data: keep the Space private unless redistribution of the
 trained model has been cleared. Set GEMINI_API_KEY as a Space secret to enable LLM evidence briefs.
@@ -17,7 +17,7 @@ from huggingface_hub import HfApi
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SPACE_README = """---
-title: RetiLink
+title: Insight Rx
 emoji: 👁️
 colorFrom: green
 colorTo: blue
@@ -27,7 +27,7 @@ pinned: false
 short_description: Retinal screening to accountable HCP-to-HCP consultation
 ---
 
-# RetiLink
+# Insight Rx
 
 HackGT 13 · Impiricus challenge. Portable retinal screening → clinician review → signed specialist consultation →
 tracked handoff. Research prototype: synthetic patients, simulated workflow data, model outputs estimate mBRSET dataset
@@ -45,12 +45,12 @@ def main():
     args = ap.parse_args()
     api = HfApi()
     user = api.whoami()["name"]
-    space = args.space or f"{user}/RetiLink"
+    space = args.space or f"{user}/InsightRx"
     api.create_repo(space, repo_type="space", space_sdk="docker", private=not args.public, exist_ok=True)
 
     with tempfile.TemporaryDirectory() as tmp:
         ign = shutil.ignore_patterns("__pycache__", "*.pyc")
-        for d in ("retilink", "scripts", "weights"):
+        for d in ("insightrx", "scripts", "weights"):
             shutil.copytree(os.path.join(ROOT, d), os.path.join(tmp, d), ignore=ign)
         os.makedirs(os.path.join(tmp, "deploy", "space"))
         shutil.copy(os.path.join(ROOT, "deploy", "space", "requirements.txt"), os.path.join(tmp, "deploy", "space"))
@@ -58,7 +58,7 @@ def main():
         with open(os.path.join(tmp, "README.md"), "w") as f:
             f.write(SPACE_README)
         api.upload_folder(folder_path=tmp, repo_id=space, repo_type="space",
-                          commit_message="Deploy RetiLink", delete_patterns=["retilink/**", "scripts/**"])
+                          commit_message="Deploy Insight Rx", delete_patterns=["insightrx/**", "scripts/**"])
     print(f"https://huggingface.co/spaces/{space}  (private={not args.public})")
 
 

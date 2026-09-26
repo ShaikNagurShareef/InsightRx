@@ -1,5 +1,5 @@
 """
-Run the RetiLink models on any folder of fundus photographs (new images, external datasets).
+Run the Insight Rx models on any folder of fundus photographs (new images, external datasets).
 
   python scripts/predict.py IMAGES_DIR [--out results.csv] [--maps MAPS_DIR] [--labels labels.csv]
 
@@ -9,7 +9,7 @@ Run the RetiLink models on any folder of fundus photographs (new images, externa
                If given, prints AUROC / sensitivity / specificity at the frozen mBRSET threshold, so you can measure
                how well the model transfers to the new dataset (e.g. APTOS 2019, Messidor-2, IDRiD, EyePACS).
 
-Uses the same weights, calibration and thresholds as the app (./weights, or RETILINK_MODEL_DIR).
+Uses the same weights, calibration and thresholds as the app (./weights, or INSIGHTRX_MODEL_DIR).
 Scores are per photo; the app's two-eye rule needs laterality, so use a case for a full assessment.
 """
 import argparse
@@ -21,8 +21,8 @@ import time
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 os.environ.setdefault("HF_HUB_OFFLINE", "1")
 
-from retilink.app.vision import VisionService  # noqa: E402
-from retilink.app.vision import MODEL_DIR  # noqa: E402
+from insightrx.app.vision import VisionService  # noqa: E402
+from insightrx.app.vision import MODEL_DIR  # noqa: E402
 
 ICDR = ["No apparent DR", "Mild NPDR", "Moderate NPDR", "Severe NPDR", "PDR"]
 
@@ -30,7 +30,7 @@ ICDR = ["No apparent DR", "Mild NPDR", "Moderate NPDR", "Severe NPDR", "PDR"]
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("images")
-    ap.add_argument("--out", default="retilink_predictions.csv")
+    ap.add_argument("--out", default="insightrx_predictions.csv")
     ap.add_argument("--maps", default=None)
     ap.add_argument("--labels", default=None)
     ap.add_argument("--batch", type=int, default=8)

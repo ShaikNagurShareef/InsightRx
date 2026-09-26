@@ -1,5 +1,5 @@
 """
-Seed the RetiLink demo workspace (see retilink/app/seed.py).
+Seed the Insight Rx demo workspace (see insightrx/app/seed.py).
 
   python scripts/seed_demo.py --reset [--no-images]
 
@@ -11,8 +11,8 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from retilink.app.db import Base, SessionLocal, engine  # noqa: E402
-from retilink.app.seed import seed  # noqa: E402
+from insightrx.app.db import Base, SessionLocal, engine  # noqa: E402
+from insightrx.app.seed import seed  # noqa: E402
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()

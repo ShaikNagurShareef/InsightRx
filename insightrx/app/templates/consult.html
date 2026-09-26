@@ -1,0 +1,90 @@
+{% extends "base.html" %}{% from "_ui.html" import icon, status, stage %}
+{% block title %}Consult a specialist | Insight Rx{% endblock %}
+{% block crumbs %}<a href="/patients">Patients</a> / <a href="/cases/{{ case.id }}">{{ case.patient.ref }}</a> / Consult a specialist{% endblock %}
+{% block content %}
+<div class="head">
+  <div><p class="eyebrow">Consult a specialist</p><h1>{{ case.patient.ref }}</h1>
+    <p class="sub">Check your reading, pick the question and the specialist, then sign and send. They are asked to accept, and you are notified when they answer.</p></div>
+</div>
+<ol class="steps" aria-label="Steps">
+  <li class="{{ 'done' if review else 'now' }}"><span>1</span>Your reading</li>
+  <li class="now"><span>2</span>Question and specialist</li>
+  <li class="now"><span>3</span>Sign and send</li>
+</ol>
+
+<form method="post" action="/cases/{{ case.id }}/consult" data-busy="Sending">
+<input type="hidden" name="token" value="{{ token }}"><input type="hidden" name="idempotency_key" value="{{ idem }}">
+<input type="hidden" name="topic" value="{{ topic }}"><input type="hidden" name="next_action" value="refer_retina">
+<div class="workspace" style="grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)">
+  <div class="stack-lg">
+    <section class="panel" aria-labelledby="s1">
+      <div class="panel-head"><h2 id="s1"><span class="stepno">1</span>Your reading</h2>{% if res %}{{ status(res.overall) }}{% endif %}</div>
+      <div class="panel-body stack">
+      {% if not res %}<div class="note warn">{{ icon('alert') }}<span>No current screening result for this case. You can still consult on your own examination.</span></div>{% endif %}
+      {% if res %}<p class="small">
+        {% for e, n in [('OD', 'Right eye'), ('OS', 'Left eye')] %}<strong>{{ n }}:</strong> {{ res.eyes[e].status }}{% if res.eyes[e].score is defined %} (score {{ '%.2f'|format(res.eyes[e].score) }}){% endif %}{{ '. ' if loop.last else '; ' }}{% endfor %}
+        <a href="/cases/{{ case.id }}">See photos and whole-body view</a></p>{% endif %}
+      {% if review %}
+        <div class="note">{{ icon('shield') }}<span>Already signed by {{ review.hcp.name }}: “{{ review.interpretation }}” This reading goes with the consultation.</span></div>
+      {% else %}
+        <div class="choices" role="radiogroup" aria-label="Your decision">
+          {% for v, t, d in [('accept', 'I agree with the screening', 'My reading matches the model output.'), ('disagree', 'I read it differently', 'Give a short reason below.'), ('manual_review', 'I examined the patient myself', 'Consult on my own findings.')] %}
+          <label class="choice"><input type="radio" name="decision" value="{{ v }}" {% if loop.first %}checked{% endif %}><span><span class="t">{{ t }}</span><br><span class="d">{{ d }}</span></span></label>
+          {% endfor %}
+        </div>
+        <div class="field"><label for="interp">Your interpretation</label><textarea id="interp" name="interpretation" rows="3" required>{{ draft }}</textarea><span class="help">Suggested from the result; edit it to your own words.</span></div>
+        <div class="field"><label for="over">Reason, if you read it differently</label><input id="over" name="override_reason"></div>
+      {% endif %}
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="s2">
+      <div class="panel-head"><h2 id="s2"><span class="stepno">2</span>Question and specialist</h2></div>
+      <div class="panel-body stack">
+        <div><p class="label">What is it about?</p>
+          <div class="row" style="margin-top:6px">{% for key, why in topics %}<a class="topic {{ 'on' if key == topic }}" href="/cases/{{ case.id }}/consult?topic={{ key }}" {% if key == topic %}aria-current="true"{% endif %}><strong>{{ TOPICS[key].label }}</strong><span>{{ why }}</span></a>{% endfor %}</div>
+        </div>
+        <div class="field"><label for="q">Your question</label><textarea id="q" name="question" rows="3" required>{{ topic_info.question }}</textarea><span class="help">One focused question gets a faster, clearer answer.</span></div>
+        <fieldset><legend>Send to</legend>
+          <div class="choices">
+          {% for s, suggested in specialists %}
+            <label class="choice"><input type="radio" name="recipient_id" value="{{ s.id }}" required {% if loop.first %}checked{% endif %}>
+              <span><span class="t">{{ s.name }}</span> {% if suggested %}<span class="tag clear">Suggested for {{ topic_info.label|lower }}</span>{% endif %}<br><span class="d">{{ s.specialty }}</span></span></label>
+          {% endfor %}
+          </div>
+        </fieldset>
+        <details><summary class="small">Add a note or list missing information</summary>
+          <div class="stack" style="margin-top:8px">
+            <div class="field"><label for="note">Note to the specialist</label><textarea id="note" name="sender_note" rows="2"></textarea></div>
+            <div class="field"><label for="un">Information you know is unavailable</label><input id="un" name="unavailable" placeholder="For example: recent HbA1c not available"></div>
+          </div>
+        </details>
+      </div>
+    </section>
+  </div>
+
+  <aside class="stack-lg" style="position:sticky;top:76px">
+    <section class="panel" aria-labelledby="s3">
+      <div class="panel-head"><h2 id="s3"><span class="stepno">3</span>What the specialist receives</h2></div>
+      <div class="panel-body stack package">
+        <ul style="padding-left:18px;margin:0">{% for fct in preview.facts %}<li>{{ fct.text }}</li>{% endfor %}</ul>
+        {% if preview.gaps %}<div class="note warn">{{ icon('alert') }}<span>{% for g in preview.gaps %}{{ g }}{{ ' ' if not loop.last }}{% endfor %}</span></div>{% endif %}
+        {% if preview.evidence.references %}<p class="xs muted">With guideline evidence: {% for r in preview.evidence.references %}{{ r.title }}{{ '; ' if not loop.last }}{% endfor %}.</p>{% endif %}
+        <p class="xs muted">Plus the retinal photos and your question. Every line is traced to the case record.</p>
+        <label class="check"><input type="checkbox" name="attest" required><span>I sign {{ 'my interpretation and ' if not review }}this package for the chosen specialist.</span></label>
+        <button type="submit" class="btn lg block"><span class="spin" aria-hidden="true"></span>{{ icon('send') }}<span data-label>Sign &amp; send consultation</span></button>
+      </div>
+    </section>
+    <section class="panel panel-pad stack">
+      <h2 style="font-size:var(--t-base)">Specialist not in Insight Rx?</h2>
+      <p class="small">Search the CMS NPI Registry for a {{ topic_info.label|lower }} specialist near you and print a referral letter.</p>
+      <a class="btn quiet sm" href="/cases/{{ case.id }}/refer-out?topic={{ topic }}">{{ icon('search') }}Find in the NPI Registry</a>
+    </section>
+    {% if sent %}
+    <section class="panel panel-pad"><h2 style="font-size:var(--t-base)">Already sent for this patient</h2>
+      <ul class="small" style="padding-left:18px;margin:8px 0 0">{% for r in sent %}<li><a href="/referrals/{{ r.id }}">RL-{{ r.id }}</a> to {{ r.recipient.name }} {{ stage(r.stage) }}</li>{% endfor %}</ul>
+    </section>{% endif %}
+  </aside>
+</div>
+</form>
+{% endblock %}

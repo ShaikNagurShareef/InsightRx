@@ -1,0 +1,76 @@
+{% extends "base.html" %}{% from "_ui.html" import icon %}
+{% block title %}New screening | Insight Rx{% endblock %}
+{% block crumbs %}<a href="/patients">Patients</a> / New screening{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>New screening</h1><p class="sub">Capture the encounter, add photos of both eyes, and Insight Rx runs the quality check and screening model.</p></div>
+</div>
+<form method="post" action="/cases" enctype="multipart/form-data" data-busy="Creating and analysing">
+<div class="workspace">
+  <div class="stack-lg">
+    <section class="panel" aria-labelledby="p-h">
+      <div class="panel-head"><h2 id="p-h">Patient and encounter</h2><span class="hint">Use synthetic references only</span></div>
+      <div class="panel-body stack">
+        <div class="grid-2">
+          <div class="field"><label for="pid">Existing patient</label>
+            <select id="pid" name="patient_id"><option value="">New patient</option>{% for p in patients %}<option value="{{ p.id }}">{{ p.ref }}</option>{% endfor %}</select></div>
+          <div class="field"><label for="pref">New patient reference</label><input id="pref" name="patient_ref" placeholder="RL-P0200" autocomplete="off"><span class="help">Required when not choosing an existing patient.</span></div>
+        </div>
+        <div class="grid-3">
+          <div class="field"><label for="age">Age</label><input id="age" name="age" type="number" min="0" max="120" inputmode="numeric"></div>
+          <div class="field"><label for="sex">Sex</label><select id="sex" name="sex"><option value="">Not recorded</option><option>female</option><option>male</option></select></div>
+          <div class="field"><label for="dm">Years with diabetes</label><input id="dm" name="dm_time" type="number" min="0" max="90" step="0.5"></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><label for="ins">Insulin</label><select id="ins" name="insulin"><option value="unknown">Not recorded</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+          <div class="field"><label for="oral">Oral diabetes medication</label><select id="oral" name="oral_treatment"><option value="unknown">Not recorded</option><option value="yes">Yes</option><option value="no">No</option></select></div>
+        </div>
+        <div class="grid-3">
+          <div class="field"><label for="ed">Encounter date</label><input id="ed" type="date" name="encounter_date" value="{{ today }}" required></div>
+          <div class="field" style="grid-column: span 2"><label for="dev">Camera and capture</label><input id="dev" name="device" value="Portable smartphone fundus camera, dilated" required></div>
+        </div>
+        <div class="field"><label for="own">Referring clinician (owns the case)</label><select id="own" name="owner_id">{% for h in hcps %}<option value="{{ h.id }}" {% if h.id == user.id %}selected{% endif %}>{{ h.name }}, {{ h.specialty }}</option>{% endfor %}</select></div>
+        <div class="field"><label for="sym">Symptoms or clinical context</label><textarea id="sym" name="symptoms" rows="2" placeholder="Entered by the clinician. Reported symptoms always override a model result."></textarea></div>
+        {% if user.role == 'referring' %}<label class="check"><input type="checkbox" name="urgent_concern"><span>Urgent clinical concern. This is set by you and is never inferred by the model.</span></label>{% endif %}
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-h">
+      <div class="panel-head"><h2 id="h-h">Reported history</h2><span class="hint">Unknown stays unknown; it is never treated as absent</span></div>
+      <div class="panel-body">
+        <div class="table-wrap"><table class="table">
+          <tbody>
+          {% for code, label in conditions.items() %}
+          <tr><td style="padding-left:0">{{ label }}</td>
+            <td style="text-align:right;padding-right:0"><span class="seg" role="radiogroup" aria-label="{{ label }}">
+              {% for v, l in [('unknown', 'Unknown'), ('present', 'Present'), ('absent', 'Absent')] %}<label><input type="radio" name="cond_{{ code }}" value="{{ v }}" {% if v == 'unknown' %}checked{% endif %}>{{ l }}</label>{% endfor %}
+            </span></td></tr>
+          {% endfor %}
+          </tbody>
+        </table></div>
+      </div>
+    </section>
+  </div>
+
+  <aside class="stack-lg" style="position:sticky;top:76px">
+    <section class="panel" aria-labelledby="img-h">
+      <div class="panel-head"><h2 id="img-h">Retinal photographs</h2></div>
+      <div class="panel-body stack">
+        {% for eye, name in [('OD', 'Right eye'), ('OS', 'Left eye')] %}
+        <div class="drop" data-drop>
+          {{ icon('upload') }}
+          <div class="big">{{ name }} ({{ eye }})</div>
+          <p class="xs muted">Drop JPEG or PNG fundus photos, up to 2 views. Large photos are resized in your browser.</p>
+          <label class="btn quiet sm" style="margin-top:8px">Choose files<input class="sr-only" type="file" name="files_{{ eye }}" accept="image/jpeg,image/png" multiple></label>
+          <p class="xs muted" data-drop-note aria-live="polite"></p>
+          <div class="previews"></div>
+        </div>
+        {% endfor %}
+        <p class="xs muted">Photos are optional here; you can add or recapture them in the case workspace.</p>
+      </div>
+    </section>
+    <button type="submit" class="btn lg block"><span class="spin" aria-hidden="true"></span>{{ icon('eye') }}<span data-label>Create and analyse</span></button>
+  </aside>
+</div>
+</form>
+{% endblock %}

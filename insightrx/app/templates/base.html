@@ -1,0 +1,60 @@
+{% from "_ui.html" import icon, avatar %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Insight Rx{% endblock %}</title>
+<meta name="description" content="Insight Rx turns a portable retinal photo into therapy insight and an accountable handoff to the right physician.">
+<link rel="preload" href="/static/fonts/PublicSans.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/static/app.css?v={{ asset_v }}">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23E0782B'/%3E%3Ccircle cx='21.5' cy='13' r='3.4' fill='%23FCE3C4'/%3E%3C/svg%3E">
+<script src="/static/app.js?v={{ asset_v }}" defer></script>
+{% block head %}{% endblock %}
+</head>
+<body>
+<a href="#main" class="skip">Skip to content</a>
+{% if user %}
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="/"><svg aria-hidden="true"><use href="/static/icons.svg#i-logo"/></svg>Insight Rx</a>
+    <nav class="nav" aria-label="Main">
+    {% if user.role == 'medinfo' %}
+      <a href="/medinfo" {% if active == 'medinfo' %}aria-current="page"{% endif %}>{{ icon('inbox') }}Medical information</a>
+    {% else %}
+      <a href="/screen" {% if active == 'screen' %}aria-current="page"{% endif %}>{{ icon('eye') }}Screen</a>
+      <a href="/patients" {% if active == 'patients' %}aria-current="page"{% endif %}>{{ icon('user') }}Patients</a>
+      <a href="/consults" {% if active == 'consults' %}aria-current="page"{% endif %}>{{ icon('send') }}Consults{% if open_tasks %}<span class="count" aria-label="{{ open_tasks }} actions waiting">{{ open_tasks }}</span>{% endif %}</a>
+      <a href="/therapeutics" {% if active == 'therapeutics' %}aria-current="page"{% endif %}>{{ icon('flask') }}Therapeutics</a>
+    {% endif %}
+    </nav>
+    <div class="side-foot">
+    {% if user.role != 'medinfo' %}
+      <a href="/quality" {% if active == 'quality' %}aria-current="page"{% endif %}>{{ icon('file', 'ico-sm') }}CMS quality and billing</a>
+      <a href="/performance" {% if active == 'performance' %}aria-current="page"{% endif %}>{{ icon('chart', 'ico-sm') }}Model performance</a>
+      <a href="/oculomics?view=science" {% if active == 'oculomics' %}aria-current="page"{% endif %}>{{ icon('pulse', 'ico-sm') }}How oculomics works</a>
+    {% endif %}
+      <a href="/settings">{{ icon('sliders', 'ico-sm') }}Notification settings</a>
+      <div class="who">{{ avatar(user) }}<div><div class="name">{{ user.name }}</div><div class="role">{{ role_label(user) }}</div></div></div>
+      <a href="/login">{{ icon('switch', 'ico-sm') }}Switch account</a>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="crumbs">{% block crumbs %}{% endblock %}</div>
+      <div class="right">
+        <span class="svc {{ vision_mode }}" title="{{ 'Trained models are online' if vision_mode == 'live' else 'Model worker offline: outputs are simulated and labelled as such' }}">Vision model {{ 'live' if vision_mode == 'live' else 'simulated' }}</span>
+        <a class="bell" href="/notifications" aria-label="Notifications{% if unread %}, {{ unread }} unread{% endif %}">{{ icon('bell') }}{% if unread %}<span class="dot">{{ unread }}</span>{% endif %}</a>
+      </div>
+    </header>
+    <main id="main" class="content">
+      {% if msg %}<div class="toast" role="status">{{ icon('check') }}{{ msg }}</div>{% endif %}
+      {% block content %}{% endblock %}
+    </main>
+    <p class="disclaimer">Research prototype for HackGT 13. Patients are synthetic and workflow analytics are simulated. Model outputs estimate mBRSET dataset labels for clinician review; they are not diagnoses.</p>
+  </div>
+</div>
+{% else %}
+<main id="main">{% block bare %}{% endblock %}</main>
+{% endif %}
+</body>
+</html>

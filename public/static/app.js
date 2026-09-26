@@ -1,4 +1,4 @@
-// RetiLink: progressive enhancement only. Every form works without JS.
+// Insight Rx: progressive enhancement only. Every form works without JS.
 (() => {
   const MAX_SIDE = 2048, MAX_BYTES = 3.5 * 1024 * 1024;
 

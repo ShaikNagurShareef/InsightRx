@@ -1,15 +1,23 @@
-# RetiLink
+# Insight Rx
 
-**HackGT 13 · Impiricus challenge: "Invent the next way we engage HCPs."**
+**HackGT 13 · Impiricus challenge: "Invent the next way we engage HCPs."** (Formerly RetiLink.)
 
-A portable retinal photo taken in primary care often leads nowhere. The result sits in a chart, the referral is a fax, and nobody knows whether the retina specialist ever saw the patient. RetiLink makes that photo the start of an accountable exchange between two clinicians:
+**From one eye photo to the right therapy and the right physician.** A retinal photo phenotypes the patient: diabetic eye disease plus signals about the heart, kidneys and nerves. Insight Rx turns that signal into the moment a clinician needs therapy information, which is where engagement with specialists *and* with manufacturers' medical teams becomes useful rather than promotional.
+
+A portable retinal photo taken in primary care often leads nowhere. The result sits in a chart, the referral is a fax, and nobody knows whether the retina specialist ever saw the patient. Insight Rx makes that photo the start of an accountable exchange between two clinicians:
 
 1. **Screen.** An operator uploads fundus photos. A local vision model checks suitability and image quality, records coverage for each eye, and estimates a referable-DR signal plus research systemic-association signals.
 2. **Review.** The referring HCP accepts or overrides the model output and signs their own interpretation. The model output and the clinician's interpretation are always shown as separate things.
-3. **Engage.** RetiLink builds a consultation package in which every statement is traced to case data. It includes an evidence brief drawn from curated guidelines. The HCP signs it and sends it to a specialist from an approved directory.
+3. **Engage.** Insight Rx builds a consultation package in which every statement is traced to case data. It includes an evidence brief drawn from curated guidelines. The HCP signs it and sends it to a specialist from an approved directory.
 4. **Close the loop.** The specialist explicitly acknowledges the request, asks for more information, or declines it. They then return a signed response. A coordinator schedules the visit and tracks access barriers. The handoff only closes when the referrer acknowledges the response.
 
 This is a new engagement channel: **HCP-to-HCP engagement triggered by a clinical signal**, not marketing and not SMS. It has an action inbox, due-time tracking, notification preferences, and analytics on acknowledgement latency and completion.
+
+5. **Therapy and trials.** Each finding maps to guideline therapy classes (ADA, AAO, KDIGO) ranked by guideline strength only, checked against the patient's current medicines for drug-drug and drug-disease interactions (for example semaglutide with a DR signal, pioglitazone with macular edema, dual RAS blockade). Each class links to its molecular targets with **AlphaFold** structures (coloured by pLDDT) and **PDB drug complexes** in a 3D viewer, the **ChEMBL** drugs acting on them, and recruiting **ClinicalTrials.gov** studies near the clinic with an age/sex pre-check.
+6. **CMS.** Refer outside the network through the **CMS NPPES NPI Registry** with a printable referral letter, and see where each encounter stands against **CMS131 / MIPS #117 and HEDIS EED** (diabetic eye exam), with the retinal-imaging CPT codes (92227/92228/92229) that fit the workflow.
+7. **Medical information.** From any therapy option a clinician can ask the manufacturer's medical-information desk a question. The desk sees the clinician, the drug, the question and a de-identified context (age band and finding labels) only, cannot open cases, and nothing it sends changes scores, ranking or referrals. The desk in the demo is fictional.
+
+The retina does not discover drugs. It shows which disease process is active, and that phenotype prioritises targets, therapies and trials. Therapy content is guideline or label-sourced, cited on every card, and never a prescription.
 
 > Research prototype. Every patient is synthetic and the workflow analytics are **simulated**. Model outputs estimate mBRSET dataset labels for clinician review; they are not diagnoses.
 
@@ -65,7 +73,7 @@ Full metrics: `metrics/image_metrics.json` and `metrics/systemic_metrics.json` u
 
 ### Outputs and checkpoints
 
-The released weights used by the app are in [`weights/`](weights/), stored with Git LFS: two image checkpoints (199 MB each), `systemic_cv.joblib`, `calibration.json` and aggregate metrics only. No per-patient outputs or mBRSET images are included, and the repository must stay **private** (see Data use below). Training writes everything to `/data/users3/nshaik3/Projects/Oculomics/RetiLink/<RETILINK_EXP_NO>/`:
+The released weights used by the app are in [`weights/`](weights/), stored with Git LFS: two image checkpoints (199 MB each), `systemic_cv.joblib`, `calibration.json` and aggregate metrics only. No per-patient outputs or mBRSET images are included, and the repository must stay **private** (see Data use below). Training writes everything to `/data/users3/nshaik3/Projects/Oculomics/RetiLink/<INSIGHTRX_EXP_NO>/`:
 
 ```
 splits.json  label_audit.json  calibration.json
@@ -79,17 +87,17 @@ features/  metrics/
 # SLURM (2 GPUs, one seed per GPU)
 ssh nshaik3@arctrdlogin001.rs.gsu.edu
 cd /home/users/nshaik3/Desktop/Oculomics/RetiLink && sbatch scripts/JobSubmit.sh
-RETILINK_SMOKE=1 sbatch --export=ALL scripts/JobSubmit.sh            # 5-minute end-to-end check
+INSIGHTRX_SMOKE=1 sbatch --export=ALL scripts/JobSubmit.sh            # 5-minute end-to-end check
 
 # or one local GPU, seeds run one after the other
-GPU=0 RETILINK_EXP_NO=1 bash scripts/train_local.sh
+GPU=0 INSIGHTRX_EXP_NO=1 bash scripts/train_local.sh
 ```
 
 ## Oculomics: the whole-body view
 
-The retina is the only place where blood vessels and nerve tissue can be seen directly, without a needle. RetiLink presents what one retinal session can say about the whole patient, and it never claims a diagnosis.
+The retina is the only place where blood vessels and nerve tissue can be seen directly, without a needle. Insight Rx presents what one retinal session can say about the whole patient, and it never claims a diagnosis.
 
-- **Oculomics, "How it works" tab.** An illustrated retina: pointing at vessels, lesions, macula or optic nerve highlights the organ systems each feature informs. Next to it are the evidence ladder and the path from photo to signed answer, plus published context (Poplin 2018, Sabanayagam 2020, RETFound 2023), labelled as literature rather than RetiLink results.
+- **Oculomics, "How it works" tab.** An illustrated retina: pointing at vessels, lesions, macula or optic nerve highlights the organ systems each feature informs. Next to it are the evidence ladder and the path from photo to signed answer, plus published context (Poplin 2018, Sabanayagam 2020, RETFound 2023), labelled as literature rather than Insight Rx results.
 - **Oculomics, "Your panel" tab.** A population dashboard for the clinician's own patients:
   - a body map with counts per organ;
   - organ-by-organ stacked bars (signal, exploratory, known, unknown history, clear);
@@ -108,6 +116,19 @@ Every systemic condition is scored, and the reliability travels with each score:
 
 Recorded history always takes precedence. A model signal only raises a flag for a condition that is not already recorded as present.
 
+## Therapeutics layer
+
+| Piece | Source | Where |
+|---|---|---|
+| Therapy classes per finding | Curated from ADA Standards of Care, AAO PPP, KDIGO 2022, pivotal trials | `insightrx/app/data/therapeutics.json` |
+| Interaction rules | FDA labels and guidelines, each cited; not a complete checker | `insightrx/app/data/interactions.json` |
+| Targets, structures | UniProt, AlphaFold DB (CC-BY 4.0), RCSB PDB (1CZ8, 4ZUD, 1O86, 7VSI, 7KI0, 4JIR) | `data/targets.json`, `public/static/structures/` |
+| Drugs per target | ChEMBL mechanism records | `data/chembl_drugs.json` |
+| Trials, NPI Registry, labels | ClinicalTrials.gov v2, CMS NPPES, openFDA: live, cached, snapshot fallback | `insightrx/app/external.py` |
+| CMS quality and billing | CMS131 / MIPS #117, HEDIS EED, CPT 92227-92229 | `data/cms.json`, `/quality` |
+
+Only a fixed condition term or specialty and the clinic ZIP are ever sent to public APIs; no patient data leaves the app. Refresh the static data with `python scripts/fetch_structures.py` (`--snapshots-only` for trials and NPI snapshots). The 3D viewer is self-hosted 3Dmol.js (BSD-3), so the strict CSP stays `script-src 'self'`.
+
 ## Explainability
 
 | What | How | Where in the app |
@@ -124,11 +145,11 @@ FastAPI with server-rendered Jinja pages, a hand-built design system (`public/st
 
 ```bash
 python scripts/seed_demo.py --reset          # synthetic orgs, users, 5 scenario cases (local mBRSET images), simulated history
-bash scripts/run_app.sh                       # uses ./weights (override with RETILINK_MODEL_DIR)
+bash scripts/run_app.sh                       # uses ./weights (override with INSIGHTRX_MODEL_DIR)
 # open http://127.0.0.1:8000  -> pick a role
 ```
 
-Optional: put `GEMINI_API_KEY=...` in `.env` to have evidence briefs written by Gemini. Only the generic question and the curated public passages are sent; a guard blocks case, patient and image content. Without a key, or if the call fails, RetiLink falls back to a deterministic template.
+Optional: put `GEMINI_API_KEY=...` in `.env` to have evidence briefs written by Gemini. Only the generic question and the curated public passages are sent; a guard blocks case, patient and image content. Without a key, or if the call fails, Insight Rx falls back to a deterministic template.
 
 ### Deploy for free: Vercel + GPU worker tunnel
 
@@ -136,7 +157,7 @@ Optional: put `GEMINI_API_KEY=...` in `.env` to have evidence briefs written by 
 browser ──► Vercel (FastAPI workspace, free Hobby) ──► Neon Postgres (free): cases, reviews, referrals, images
                          │  HTTPS + shared key
                          ▼
-            Cloudflare quick tunnel (free, no account) ──► this machine: retilink/vision_api.py on the GPU
+            Cloudflare quick tunnel (free, no account) ──► this machine: insightrx/vision_api.py on the GPU
 ```
 
 - **Vercel** runs the whole HCP workspace: `api/index.py`, `vercel.json`, and the light dependencies in `requirements.txt`. Weights and training code are excluded from the bundle.
@@ -148,10 +169,10 @@ One-time setup:
 1. Deploy with `vercel deploy --prod`, or import the GitHub repo in the Vercel dashboard.
 2. In the Vercel project, open *Storage* → add **Neon** (free). This sets `DATABASE_URL`.
 3. Add these environment variables:
-   - `RETILINK_SECRET`: random; signs sessions.
-   - `RETILINK_VISION_KEY`: random; the shared secret with the worker.
+   - `INSIGHTRX_SECRET`: random; signs sessions.
+   - `INSIGHTRX_VISION_KEY`: random; the shared secret with the worker.
    - optional `GEMINI_API_KEY`.
-4. On this machine, put `RETILINK_VISION_KEY=<same>` and `RETILINK_APP_URL=https://<project>.vercel.app` in `.env` (git-ignored), then run `bash scripts/run_vision_tunnel.sh` for the demo.
+4. On this machine, put `INSIGHTRX_VISION_KEY=<same>` and `INSIGHTRX_APP_URL=https://<project>.vercel.app` in `.env` (git-ignored), then run `bash scripts/run_vision_tunnel.sh` for the demo.
 
 The database seeds itself with the synthetic workspace (no images) on first start.
 
@@ -198,9 +219,9 @@ The tests cover:
 ## Layout
 
 ```
-retilink/ml/    config, data, model, train_image, evaluate, frozen, systemic_cv, explain (train_systemic: P1-split reference)
-retilink/app/   main (routes), models, workflow (state machine / audit / tasks), vision, remote_vision, seed, llm, evidence, templates/
-retilink/vision_api.py  GPU vision worker API (used by the deployed app through the tunnel)
+insightrx/ml/    config, data, model, train_image, evaluate, frozen, systemic_cv, explain (train_systemic: P1-split reference)
+insightrx/app/   main (routes), models, workflow (state machine / audit / tasks), vision, remote_vision, seed, llm, evidence, templates/
+insightrx/vision_api.py  GPU vision worker API (used by the deployed app through the tunnel)
 scripts/        JobSubmit.sh, train_local.sh, seed_demo.py, run_app.sh, run_vision_tunnel.sh, deploy_space.py
 api/, vercel.json  Vercel entry point + config (requirements.txt = web app deps; requirements-ml.txt = models)
 deploy/space/   Dockerfile + pinned requirements for the Hugging Face Space

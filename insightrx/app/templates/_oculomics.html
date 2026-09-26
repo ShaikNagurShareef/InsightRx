@@ -1,0 +1,134 @@
+{% from "_ui.html" import icon, status %}{% from "_therapy.html" import med_picker %}
+
+{# Whole-body map: organ markers coloured by state (always paired with the text list), dashed "window" lines from the eye. #}
+{% macro body_map(organs, mode="patient", label="Whole-body view") -%}
+<svg class="bodymap" viewBox="0 0 320 470" role="img" aria-label="{{ label }}: {% for o in organs %}{{ o.label }}, {{ o.state_text if mode == 'patient' else (o.flag ~ ' flagged') }}{{ '; ' if not loop.last }}{% endfor %}">
+  <defs>
+    <radialGradient id="bm-glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#e0782b" stop-opacity=".55"/><stop offset="1" stop-color="#e0782b" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g class="figure">
+    <circle cx="160" cy="58" r="36"/>
+    <path d="M146 92h28v16h-28z"/>
+    <path d="M110 112 Q160 96 210 112 L220 250 Q160 268 100 250 Z"/>
+    <path class="limb" d="M114 122 Q86 192 80 266"/>
+    <path class="limb" d="M206 122 Q234 192 240 266"/>
+    <path class="limb leg" d="M134 252 L140 440"/>
+    <path class="limb leg" d="M186 252 L180 440"/>
+  </g>
+  {% set eye = organs|selectattr('key', 'equalto', 'eyes')|first %}
+  {% for o in organs if o.key != 'eyes' %}
+  <path class="window {{ o.state }}" data-organ="{{ o.key }}" d="M{{ eye.pos[0] }} {{ eye.pos[1] }} Q{{ (eye.pos[0] + o.pos[0]) / 2 + 60 }} {{ (eye.pos[1] + o.pos[1]) / 2 }} {{ o.pos[0] }} {{ o.pos[1] }}"/>
+  {% endfor %}
+  <circle class="glow" cx="{{ eye.pos[0] }}" cy="{{ eye.pos[1] }}" r="30" fill="url(#bm-glow)"/>
+  {% for o in organs %}
+  <g class="node {{ o.state if mode == 'patient' else ('signal' if o.counts['signal'] else 'exploratory' if o.counts['exploratory'] else 'recorded' if o.counts['recorded'] else 'clear' if o.counts['clear'] else 'unknown' if o.counts['unknown'] else 'na') }}" data-organ="{{ o.key }}" transform="translate({{ o.pos[0] }} {{ o.pos[1] }})">
+    <circle r="{{ 15 if o.key == 'eyes' else 13 }}"/>
+    {% if mode == 'panel' %}<text y="4.5" text-anchor="middle">{{ o.flag }}</text>
+    {% elif o.state in ('signal', 'exploratory') %}<text y="5" text-anchor="middle">{{ '!' if o.state == 'signal' else '?' }}</text>
+    {% elif o.state == 'clear' %}<path d="M-5 0l3.5 3.5L6 -4" class="tick"/>{% endif %}
+  </g>
+  <text class="lbl" x="{{ o.pos[0] + (26 if o.key in ('heart', 'kidneys') else -26) }}" y="{{ o.pos[1] + 4 }}" text-anchor="{{ 'start' if o.key in ('heart', 'kidneys') else 'end' }}">{{ o.label.split(' and ')[0] }}</text>
+  {% endfor %}
+</svg>
+{%- endmacro %}
+
+{% macro state_tag(state, text) -%}
+{%- if state == 'signal' -%}<span class="tag signal">{{ icon('alert') }}{{ text }}</span>
+{%- elif state == 'exploratory' -%}<span class="tag research">{{ icon('pulse') }}{{ text }}</span>
+{%- elif state == 'recorded' -%}<span class="tag caution">{{ icon('file') }}{{ text }}</span>
+{%- elif state == 'clear' -%}<span class="tag clear">{{ icon('check') }}{{ text }}</span>
+{%- elif state == 'unknown' -%}<span class="tag outline">{{ text }}</span>
+{%- else -%}<span class="tag">{{ text }}</span>{%- endif -%}
+{%- endmacro %}
+
+{% macro tier_tag(ev) -%}
+<span class="tier {{ ev.tier }}">{{ ev.label }}</span>
+{%- endmacro %}
+
+{# Illustrated fundus with the features Insight Rx reads; each links to organs (data-links) #}
+{% macro retina_svg() -%}
+<svg class="retina" viewBox="0 0 300 300" role="img" aria-label="Illustrated retina showing blood vessels, optic nerve head, macula and microvascular lesions">
+  <defs>
+    <radialGradient id="rt-bg" cx="42%" cy="50%" r="60%"><stop offset="0" stop-color="#d8662c"/><stop offset=".7" stop-color="#b44a1e"/><stop offset="1" stop-color="#6e2410"/></radialGradient>
+    <radialGradient id="rt-disc" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#fff4dc"/><stop offset="1" stop-color="#f0b979"/></radialGradient>
+    <clipPath id="rt-clip"><circle cx="150" cy="150" r="138"/></clipPath>
+  </defs>
+  <rect width="300" height="300" rx="16" fill="#05080b"/>
+  <circle cx="150" cy="150" r="138" fill="url(#rt-bg)"/>
+  <g clip-path="url(#rt-clip)">
+    <g class="feat" data-f="vessels">
+      <path d="M205 140 C170 95 120 70 40 60" /><path d="M205 142 C175 190 120 225 40 245"/>
+      <path d="M205 138 C215 90 225 55 250 20"/><path d="M207 146 C225 200 240 240 260 285"/>
+      <path class="thin" d="M150 104 C130 118 110 120 88 112"/><path class="thin" d="M150 196 C128 186 106 188 84 200"/>
+      <path class="thin" d="M232 70 C255 80 270 95 285 120"/><path class="thin" d="M235 225 C258 215 275 200 290 175"/>
+    </g>
+    <g class="feat" data-f="macula"><circle cx="112" cy="150" r="24" fill="#5f1c0b" opacity=".55"/><circle cx="112" cy="150" r="7" fill="#3d1006" opacity=".7"/></g>
+    <g class="feat" data-f="lesions">
+      <circle cx="96" cy="128" r="2.6"/><circle cx="130" cy="170" r="2.2"/><circle cx="84" cy="165" r="3"/><circle cx="140" cy="130" r="2"/>
+      <ellipse cx="92" cy="186" rx="6" ry="3.5" class="haem"/><ellipse cx="138" cy="112" rx="5" ry="3" class="haem"/>
+      <circle cx="120" cy="132" r="3.2" class="exud"/><circle cx="126" cy="136" r="2.4" class="exud"/>
+    </g>
+    <g class="feat" data-f="disc"><circle cx="205" cy="142" r="22" fill="url(#rt-disc)"/><circle cx="207" cy="142" r="9" fill="#fffaf0" opacity=".8"/></g>
+  </g>
+</svg>
+{%- endmacro %}
+
+{# Diverging bars: + raises the score (warm), - lowers it (cool), neutral midpoint #}
+{% macro contrib_bars(d, scale) -%}
+<div class="contrib">{% for k, v in d.items() %}{% set w = [((v|abs) / scale * 50), 50]|min %}
+<div class="c"><span>{{ k }}</span><span class="axis"><span class="{{ 'up' if v > 0 else 'down' }}" style="width:{{ w|round(1) }}%"></span></span><span class="num" style="text-align:right">{{ '%+.3f'|format(v) }}</span></div>{% endfor %}</div>
+{%- endmacro %}
+
+{# The clinical inputs the systemic models read, plus reported history (drives the whole-body view) #}
+{% macro patient_inputs(d, compact=False) -%}
+<fieldset class="inputs"><legend>Patient details the models use</legend>
+  <div class="grid-{{ 2 if compact else 3 }}">
+    <div class="field"><label for="in-age">Age</label><input id="in-age" name="age" type="number" min="0" max="120" value="{{ d.age|int if d.age is not none else '' }}" placeholder="Unknown"></div>
+    <div class="field"><label for="in-sex">Sex</label><select id="in-sex" name="sex"><option value="">Unknown</option>{% for v in ['female', 'male'] %}<option {% if d.sex == v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="in-dm">Years with diabetes</label><input id="in-dm" name="dm_time" type="number" min="0" max="90" step="0.5" value="{{ d.dm_time if d.dm_time is not none else '' }}" placeholder="Unknown"></div>
+    <div class="field"><label for="in-ins">Insulin</label><select id="in-ins" name="insulin">{% for v, l in [('unknown', 'Unknown'), ('yes', 'Yes'), ('no', 'No')] %}<option value="{{ v }}" {% if d.insulin == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="in-oral">Oral diabetes medication</label><select id="in-oral" name="oral_treatment">{% for v, l in [('unknown', 'Unknown'), ('yes', 'Yes'), ('no', 'No')] %}<option value="{{ v }}" {% if d.oral_treatment == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></div>
+  </div>
+  <p class="xs muted" style="margin-top:6px">Leave unknown rather than guessing: the fused models impute missing values and say so.</p>
+</fieldset>
+<fieldset class="inputs"><legend>Reported history</legend>
+  <div class="hist">
+  {% for code, label in SYSTEMIC_LABELS.items() %}
+    <div class="row-between"><span class="small">{{ label }}</span>
+      <span class="seg" role="radiogroup" aria-label="{{ label }}">{% for v, l in [('unknown', 'Unknown'), ('present', 'Present'), ('absent', 'Absent')] %}<label><input type="radio" name="cond_{{ code }}" value="{{ v }}" {% if (d.conditions or {}).get(code, 'unknown') == v %}checked{% endif %}>{{ l }}</label>{% endfor %}</span></div>
+  {% endfor %}
+  </div>
+  <p class="xs muted" style="margin-top:6px">History is shown beside the model output and takes precedence over it; it is not a model input.</p>
+</fieldset>
+{{ med_picker(d.medications or [], COMMON_MEDS) }}
+{%- endmacro %}
+
+{% macro organ_list(snapshot) -%}
+<ol class="organs">
+{% for o in snapshot %}
+  <li data-organ="{{ o.key }}" tabindex="0">
+    <div class="row-between"><strong>{{ o.label }}</strong>{{ state_tag(o.state, o.state_text) }}</div>
+    <p class="small" style="margin-top:2px">{{ o.note }}</p>
+    <p class="xs muted">{{ o.feature }}. {{ tier_tag(o.evidence) }} {{ o.evidence.detail }}.</p>
+  </li>
+{% endfor %}
+</ol>
+{%- endmacro %}
+
+{# One row per condition: score vs threshold, reliability, and what moved it #}
+{% macro condition_table(systemic) -%}
+<div class="table-wrap"><table class="table conds">
+  <thead><tr><th>Condition</th><th>Model output</th><th>Score vs threshold</th><th>What moved it for this patient</th></tr></thead>
+  <tbody>
+  {% for code, s in systemic.items() %}
+  <tr>
+    <td><strong>{{ s.label }}</strong><div class="xs muted">{{ s.inputs or '' }}</div></td>
+    <td>{{ status(s.status) }}{% if s.reliability_text %}<div class="xs" style="margin-top:4px;color:{{ 'var(--ink-2)' if s.reliability == 'research' else 'var(--research)' }}">{{ s.reliability_text }}</div>{% elif s.reason %}<div class="xs muted">{{ s.reason }}</div>{% endif %}</td>
+    <td style="min-width:150px">{% if s.score is defined %}{% set pct = [(s.score * 100)|round|int, 100]|min %}{% set tp = [(s.threshold * 100)|round|int, 100]|min %}
+      <div class="gauge {{ 'signal' if s.score >= s.threshold else 'clear' }}"><div class="track"><div class="fill" style="width:{{ pct }}%"></div><div class="thr" style="left:{{ tp }}%"></div></div><div class="lbl"><span>{{ s.score }}</span><span>{{ s.threshold }}</span></div></div>{% endif %}</td>
+    <td style="min-width:260px">{% if s.contributions %}{{ contrib_bars(s.contributions, 0.2) }}{% else %}<span class="xs muted">None</span>{% endif %}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{%- endmacro %}

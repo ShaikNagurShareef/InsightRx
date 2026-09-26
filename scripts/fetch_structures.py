@@ -4,9 +4,9 @@ Fetch the static reference data behind the Therapeutics layer (run once; outputs
   public/static/structures/AF-<uniprot>.pdb      AlphaFold DB models (CC-BY 4.0), B-factor = pLDDT
   public/static/structures/<pdb>.pdb             experimental drug complexes (RCSB PDB)
   public/static/vendor/3Dmol-min.js              3Dmol.js viewer (BSD-3)
-  retilink/app/data/chembl_drugs.json            drugs acting on each target (ChEMBL mechanisms)
-  retilink/app/data/trials_snapshot.json         recruiting trials per topic (ClinicalTrials.gov v2), offline fallback
-  retilink/app/data/nppes_snapshot.json          NPI Registry providers per taxonomy (CMS NPPES), offline fallback
+  insightrx/app/data/chembl_drugs.json            drugs acting on each target (ChEMBL mechanisms)
+  insightrx/app/data/trials_snapshot.json         recruiting trials per topic (ClinicalTrials.gov v2), offline fallback
+  insightrx/app/data/nppes_snapshot.json          NPI Registry providers per taxonomy (CMS NPPES), offline fallback
 
 Usage: python scripts/fetch_structures.py [--skip-structures | --snapshots-only]
 """
@@ -18,11 +18,11 @@ import httpx
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
-from retilink.app import external  # noqa: E402
+from insightrx.app import external  # noqa: E402
 
 STRUCT = os.path.join(ROOT, "public", "static", "structures")
 VENDOR = os.path.join(ROOT, "public", "static", "vendor")
-DATA = os.path.join(ROOT, "retilink", "app", "data")
+DATA = os.path.join(ROOT, "insightrx", "app", "data")
 THREEDMOL = "https://cdn.jsdelivr.net/npm/3dmol@2.4.2/build/3Dmol-min.js"
 MAX_DRUGS = 10
 
@@ -95,7 +95,7 @@ def snapshots():
 
 def main():
     targets = json.load(open(os.path.join(DATA, "targets.json")))["targets"]
-    with httpx.Client(headers={"User-Agent": "RetiLink-hackathon/1.0"}) as client:
+    with httpx.Client(headers={"User-Agent": "InsightRx-hackathon/1.0"}) as client:
         if not {"--skip-structures", "--snapshots-only"} & set(sys.argv):
             fetch_structures(client, targets)
             os.makedirs(VENDOR, exist_ok=True)

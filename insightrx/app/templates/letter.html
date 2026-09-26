@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% from "_ui.html" import icon %}
+{% block title %}Referral letter, {{ case.patient.ref }} | Insight Rx{% endblock %}
+{% block crumbs %}<a href="/patients">Patients</a> / <a href="/cases/{{ case.id }}">{{ case.patient.ref }}</a> / Referral letter{% endblock %}
+{% block content %}
+<div class="head noprint">
+  <div><h1>Referral letter</h1><p class="sub">Review, then print or save as PDF from your browser. This letter is not sent anywhere by Insight Rx.</p></div>
+  <a class="btn quiet" href="/cases/{{ case.id }}/refer-out">{{ icon('back') }}Choose another clinician</a>
+</div>
+<article class="panel letter">
+  <p class="xs muted">{{ today }}</p>
+  <address class="small" style="font-style:normal;margin-top:var(--s4)"><strong>{{ provider.name }}</strong><br>{{ provider.taxonomy }}<br>{{ provider.address }}{% if provider.phone %}<br>Tel. {{ provider.phone }}{% endif %}<br>NPI {{ provider.npi }}</address>
+  <h2 style="margin-top:var(--s5)">Re: {{ case.patient.ref }}, referral for {{ topic.label|lower }}</h2>
+  <p style="margin-top:var(--s3)">Dear colleague,</p>
+  <p style="margin-top:var(--s3)">{{ topic.question }}</p>
+  <h3 style="margin-top:var(--s4)">Findings</h3>
+  <ul>
+    <li>{{ patient_line }}Retinal screening on {{ case.encounter_date }} with a portable fundus camera{% if res %}: {{ res.overall|lower }}{% endif %}.</li>
+    {% for f in fnd if f.key != 'metabolism' %}<li>{{ f.label }} ({{ f.strength|lower }}).</li>{% endfor %}
+    {% if review %}<li>My interpretation: {{ review.interpretation }}</li>{% endif %}
+  </ul>
+  {% if meds %}<h3 style="margin-top:var(--s4)">Current medicines</h3><p>{{ meds|join(', ') }}.</p>{% endif %}
+  <p style="margin-top:var(--s4)">Retinal model outputs are decision support for clinician review and are not diagnoses. Photographs and the full screening report are available on request.</p>
+  <p style="margin-top:var(--s5)">Kind regards,</p>
+  <p style="margin-top:var(--s5)"><strong>{{ user.name }}</strong><br><span class="small">{{ user.specialty }}</span></p>
+</article>
+<div class="row noprint" style="margin-top:var(--s4)"><button type="button" class="btn" data-print>{{ icon('file') }}Print or save as PDF</button></div>
+{% endblock %}

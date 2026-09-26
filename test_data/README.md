@@ -1,6 +1,6 @@
 # test_data
 
-Sample photographs for demos and for testing RetiLink on new images. Rebuild them with:
+Sample photographs for demos and for testing Insight Rx on new images. Rebuild them with:
 
 ```bash
 python scripts/make_test_data.py

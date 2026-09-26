@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% from "_ui.html" import icon %}
+{% block title %}Insight Rx access{% endblock %}
+{% block bare %}
+<div class="access">
+  <form method="post" action="/access" class="panel panel-pad stack" aria-labelledby="ac-h">
+    <a class="brand" href="/access" style="color:var(--ink);padding:0"><svg aria-hidden="true"><use href="/static/icons.svg#i-logo"/></svg>Insight Rx</a>
+    <h1 id="ac-h" style="font-size:var(--t-lg)">Enter the access code</h1>
+    <p class="small muted">This demo shows research retinal photographs under a data-use agreement, so it is shared by invitation. Ask the Insight Rx team for the code.</p>
+    {% if error %}<div class="note signal" role="alert">{{ icon('alert') }}<span>That code is not right. Check it and try again.</span></div>{% endif %}
+    <div class="field"><label for="code">Access code</label><input id="code" name="code" autocomplete="off" autofocus required></div>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="btn lg block">{{ icon('shield') }}Continue</button>
+  </form>
+</div>
+{% endblock %}

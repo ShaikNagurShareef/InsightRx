@@ -10,20 +10,20 @@ import pytest
 from PIL import Image, ImageDraw
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TMP = tempfile.mkdtemp(prefix="retilink_test_")
-os.environ["RETILINK_APP_ROOT"] = TMP
-os.environ["RETILINK_MODEL_DIR"] = os.path.join(TMP, "no_model")     # -> SIMULATED vision
-os.environ["RETILINK_SECRET"] = "test"
+TMP = tempfile.mkdtemp(prefix="insightrx_test_")
+os.environ["INSIGHTRX_APP_ROOT"] = TMP
+os.environ["INSIGHTRX_MODEL_DIR"] = os.path.join(TMP, "no_model")     # -> SIMULATED vision
+os.environ["INSIGHTRX_SECRET"] = "test"
 sys.path.insert(0, ROOT)
 subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "seed_demo.py"), "--reset", "--no-images"], check=True,
                env=os.environ.copy(), capture_output=True)
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from retilink.app import main  # noqa: E402
-from retilink.app.db import SessionLocal  # noqa: E402
-from retilink.app.llm import RestrictedPayload, guard  # noqa: E402
-from retilink.app.models import Referral, User  # noqa: E402
+from insightrx.app import main  # noqa: E402
+from insightrx.app.db import SessionLocal  # noqa: E402
+from insightrx.app.llm import RestrictedPayload, guard  # noqa: E402
+from insightrx.app.models import Referral, User  # noqa: E402
 
 
 def fundus_bytes(seed=0, fmt="JPEG"):
@@ -113,7 +113,7 @@ def test_cross_tenant_and_unassigned_denied(ready_case):
     other = client_as("Dr. Riley Other")
     assert other.get(f"/cases/{ready_case}").status_code == 404
     with SessionLocal() as db:
-        from retilink.app.models import Image as Img
+        from insightrx.app.models import Image as Img
         iid = db.query(Img).filter(Img.case_id == ready_case).first().id
     assert other.get(f"/images/{iid}").status_code == 404
     assert client_as("Dr. Priya Nair").get(f"/cases/{ready_case}").status_code == 403    # not yet a recipient
@@ -175,7 +175,7 @@ def test_recipient_must_be_granted_specialist(ready_case):
 
 
 def test_unusable_images_never_reassure():
-    from retilink.app.vision import VisionService
+    from insightrx.app.vision import VisionService
     svc = VisionService(model_dir="/nonexistent")
     d = tempfile.mkdtemp()
     p = os.path.join(d, "white.jpg")
@@ -199,7 +199,7 @@ def test_gemini_guard_blocks_restricted_payload():
 def test_explanations_unavailable_in_simulated_mode(ready_case):
     pcp = client_as("Dr. Alex Morgan")
     with SessionLocal() as db:
-        from retilink.app.models import Image as Img
+        from insightrx.app.models import Image as Img
         iid = db.query(Img).filter(Img.case_id == ready_case).first().id
     assert pcp.get(f"/images/{iid}/explain?head=dr_referable").status_code == 404     # never a fabricated map
     assert client_as("Dr. Riley Other").get(f"/images/{iid}/explain").status_code == 404   # tenant check first
