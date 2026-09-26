@@ -9,7 +9,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 [ -f .env ] && set -a && . ./.env && set +a
-: "${INSIGHTRX_VISION_KEY:?set INSIGHTRX_VISION_KEY}" "${INSIGHTRX_APP_URL:?set INSIGHTRX_APP_URL (e.g. https://insightrx.vercel.app)}"
+: "${INSIGHTRX_VISION_KEY:?set INSIGHTRX_VISION_KEY}" "${INSIGHTRX_APP_URL:?set INSIGHTRX_APP_URL (e.g. https://insightrx-hcp.vercel.app)}"
 BIN=$HOME/.local/bin; mkdir -p "$BIN"
 if [ ! -x "$BIN/cloudflared" ]; then
   curl -sL -o "$BIN/cloudflared" https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64

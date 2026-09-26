@@ -78,7 +78,7 @@ def findings(result, snapshot) -> list:
     for o in snapshot or []:
         if o["key"] in ("heart", "kidneys", "nerves") and o["state"] in STATE_STRENGTH:
             found[o["key"]] = STATE_STRENGTH[o["state"]]
-    found["metabolism"] = "Diabetes (every screened patient)"
+    found["metabolism"] = "Applies to every screened patient"
     labels = catalogue()["findings"]
     return [{"key": k, "label": labels[k]["label"], "strength": found[k], "organ": labels[k]["organ"]}
             for k in FINDING_ORDER if k in found]
