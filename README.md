@@ -4,9 +4,9 @@
 
 **HackGT 13 · Impiricus challenge: "Invent the next way we engage HCPs."** Team **Coding Claws**: Nagur Shareef Shaik, Sahith Reddy Thummala, Pranav Nagothu and Geethanjali Nagaboina.
 
-[![Watch the Insight Rx demo (5:26)](docs/demo/poster.jpg)](docs/demo/InsightRx_demo.mp4)
+[![Watch the Insight Rx demo (5:35)](docs/demo/poster.jpg)](docs/demo/InsightRx_demo.mp4)
 
-**▶ [Watch the demo video](docs/demo/InsightRx_demo.mp4)** (5:26, narrated, captioned; [captions .srt](docs/demo/InsightRx_demo.srt)) · **[Live app](https://insightrx-hcp.vercel.app)** (access code on request) · **[User guide](docs/USER_GUIDE.md)** · **[Architecture](docs/ARCHITECTURE.md)** · **[Impiricus fit and judging scorecard](docs/IMPIRICUS_FIT.md)** · **[Sample PDF reports](docs/reports/)**
+**▶ [Watch the demo video](docs/demo/InsightRx_demo.mp4)** (5:35, narrated, captioned; [captions .srt](docs/demo/InsightRx_demo.srt)) · **[Live app](https://insightrx-hcp.vercel.app)** (access code on request) · **[User guide](docs/USER_GUIDE.md)** · **[Architecture](docs/ARCHITECTURE.md)** · **[Impiricus fit and judging scorecard](docs/IMPIRICUS_FIT.md)** · **[Sample PDF reports](docs/reports/)**
 
 ### Why it wins
 
@@ -254,7 +254,7 @@ insightrx/ml/    config, data, model, train_image, evaluate, frozen, systemic_cv
 insightrx/app/   main (routes), routes_therapy, therapeutics, personalize, external, reports, models, workflow (state machine / audit / tasks), vision, remote_vision, seed, llm, evidence, templates/
 insightrx/vision_api.py  GPU vision worker API (used by the deployed app through the tunnel)
 scripts/        JobSubmit.sh, train_local.sh, seed_demo.py, run_app.sh, run_vision_tunnel.sh, deploy_space.py, fetch_structures.py
-scripts/demo/   narrated demo video pipeline (Kokoro TTS, Playwright recording, ffmpeg captions) + screenshots.py
+scripts/demo/   narrated demo video pipeline (Microsoft VibeVoice voice + Whisper alignment, Playwright recording, ffmpeg captions) + screenshots.py
 api/, vercel.json  Vercel entry point + config (requirements.txt = web app deps; requirements-ml.txt = models)
 deploy/space/   Dockerfile + pinned requirements for the Hugging Face Space
 weights/        released checkpoints (Git LFS) + calibration + aggregate metrics

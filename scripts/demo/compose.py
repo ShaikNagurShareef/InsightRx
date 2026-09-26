@@ -7,6 +7,7 @@ Compose the final demo: narration placed on each scene's recorded start, burned-
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -20,6 +21,33 @@ SR = 24_000
 DEFAULT_OUT = "/data/users3/nshaik3/Projects/Oculomics/RetiLink/demo/out"
 FONTS = "/data/users3/nshaik3/Projects/Oculomics/RetiLink/demo/fonts"
 LEAD_IN = 0.35                 # narration starts shortly after the scene appears
+MAX_CAPTION = 96               # characters per caption chunk (two lines at 44 px)
+# broadcast-style voice polish: remove rumble, gentle compression, slight presence lift, then loudness normalisation
+VOICE_FX = ("highpass=f=75,lowpass=f=12000,acompressor=threshold=-20dB:ratio=2.5:attack=8:release=160:makeup=2,"
+            "equalizer=f=3200:t=q:w=1.2:g=2.5,equalizer=f=220:t=q:w=1.0:g=-1.5,loudnorm=I=-16:TP=-1.5:LRA=9")
+
+
+def chunks(text):
+    """Split a long caption at sentence, then clause boundaries into pieces of at most MAX_CAPTION characters."""
+    if len(text) <= MAX_CAPTION:
+        return [text]
+    for pattern in (r"(?<=[.?!])\s+", r"(?<=[,;:])\s+"):
+        parts = re.split(pattern, text)
+        if len(parts) > 1:
+            break
+    else:                                                # no punctuation: split at the space nearest the middle
+        mid = len(text) // 2
+        cut = min((i for i, ch in enumerate(text) if ch == " "), key=lambda i: abs(i - mid), default=None)
+        return [text] if cut is None else chunks(text[:cut]) + chunks(text[cut + 1:])
+    out, cur = [], ""
+    for p in parts:
+        if cur and len(cur) + 1 + len(p) > MAX_CAPTION:
+            out.append(cur)
+            cur = p
+        else:
+            cur = f"{cur} {p}".strip()
+    out.append(cur)
+    return [piece for part in out for piece in (chunks(part) if len(part) > MAX_CAPTION and part != text else [part])]
 
 ASS_HEAD = """[Script Info]
 ScriptType: v4.00+
@@ -75,8 +103,15 @@ def build(out):
             track[i:i + len(audio)] += audio[: max(0, len(track) - i)]
             end = t + row["dur"]
             placed.append((t, end))
-            events.append(f"Dialogue: 0,{ts_ass(t)},{ts_ass(end + 0.15)},Caption,,0,0,0,,{ass_text(row['caption'])}")
-            srt.append((t, end + 0.15, row["caption"]))
+            pieces = chunks(row["caption"])
+            total_chars = sum(len(p) for p in pieces)
+            c0 = t
+            for j, piece in enumerate(pieces):          # time each chunk by its share of the sentence
+                c1 = end if j == len(pieces) - 1 else c0 + row["dur"] * len(piece) / total_chars
+                tail = 0.15 if j == len(pieces) - 1 else 0.0
+                events.append(f"Dialogue: 0,{ts_ass(c0)},{ts_ass(c1 + tail)},Caption,,0,0,0,,{ass_text(piece)}")
+                srt.append((c0, c1 + tail, piece))
+                c0 = c1
             t = end + GAP_S
         assert t - GAP_S <= s["end"] + 0.6, f"narration overruns scene {sc['id']}"
         if sc["badges"]:
@@ -98,7 +133,7 @@ def render(out, video, final):
     vf = (f"fps=30,scale=1920:1080:flags=lanczos,format=yuv420p,"
           f"ass='{ass}':fontsdir='{FONTS}'")
     cmd = ["ffmpeg", "-y", "-hide_banner", "-loglevel", "error", "-i", video, "-i", os.path.join(out, "narration.wav"),
-           "-filter_complex", f"[0:v]{vf}[v];[1:a]aresample=48000,loudnorm=I=-16:TP=-1.5:LRA=11,aformat=channel_layouts=stereo[a]",
+           "-filter_complex", f"[0:v]{vf}[v];[1:a]aresample=48000,{VOICE_FX},aformat=channel_layouts=stereo[a]",
            "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-movflags", "+faststart",
            "-c:a", "aac", "-b:a", "160k", "-shortest", final]
     subprocess.run(cmd, check=True)

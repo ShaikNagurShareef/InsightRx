@@ -229,7 +229,7 @@ flowchart LR
 
 - `pytest tests/` runs 44 tests. They cover the workflow state machine, tenant and role isolation, idempotent referrals and signatures, the Gemini guard, therapy mapping, interaction rules, the sponsorship firewall, outbound privacy, network fallbacks, the med-info desk's lack of case access, medicine round-trips, target priorities, PDF endpoints and PDF text escaping.
 - UI checks use Playwright screenshots at 390, 768, 1024, 1280 and 1440 px, plus a text-overlap detector.
-- The demo video is reproducible: `bash scripts/demo/make_demo.sh` runs Kokoro narration, then Playwright recording, then ffmpeg captions.
+- The demo video is reproducible: `bash scripts/demo/make_demo.sh` runs VibeVoice narration (Whisper-aligned), then Playwright recording, then ffmpeg captions.
 
 ## 8. Repository layout
 
