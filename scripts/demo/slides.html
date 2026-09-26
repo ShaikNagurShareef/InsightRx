@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Insight Rx demo slides</title>
+<style>
+@font-face { font-family: "Public Sans"; src: url("PublicSans.woff2") format("woff2"); font-weight: 400 800; }
+:root { --ink:#16232e; --ink2:#3d4d5a; --ink3:#66788a; --paper:#f3f6f8; --line:#dce3e8; --fundus:#e0782b; --mol:#0f6b6b;
+        --molw:#e4f3f2; --signal:#b3261e; --clear:#1f7a4d; --blue:#1d5fa8; }
+* { box-sizing: border-box; margin: 0; }
+html, body { width: 1536px; height: 864px; overflow: hidden; font-family: "Public Sans", system-ui, sans-serif; color: var(--ink); }
+section { position: absolute; inset: 0; display: none; padding: 72px 96px; background: var(--paper); }
+section.on { display: block; }
+.dark { background: radial-gradient(1200px 700px at 85% 20%, #22384a 0%, #16232e 55%, #0f1820 100%); color: #fff; }
+.kicker { font-size: 20px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--fundus); }
+h1 { font-size: 84px; line-height: 1.02; letter-spacing: -.03em; font-weight: 800; }
+h2 { font-size: 54px; line-height: 1.08; letter-spacing: -.02em; font-weight: 800; }
+p.lede { font-size: 30px; line-height: 1.35; color: #c9d6df; max-width: 1050px; }
+.muted { color: var(--ink3); }
+.foot { position: absolute; left: 96px; right: 96px; bottom: 132px; font-size: 16px; color: var(--ink3); }
+.dark .foot { color: #8fa3b3; }
+.in { opacity: 0; transform: translateY(18px); animation: in .7s cubic-bezier(.16,1,.3,1) forwards; }
+.d1 { animation-delay: .25s } .d2 { animation-delay: .6s } .d3 { animation-delay: .95s } .d4 { animation-delay: 1.3s } .d5 { animation-delay: 1.65s } .d6 { animation-delay: 2s }
+@keyframes in { to { opacity: 1; transform: none; } }
+.logo { display: inline-flex; align-items: center; gap: 16px; font-size: 34px; font-weight: 800; }
+.logo i { width: 34px; height: 34px; border-radius: 50%; background: var(--fundus); box-shadow: inset -9px -7px 0 -3px #fce3c4; display: inline-block; }
+.team { margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; font-size: 21px; }
+.team b { color: var(--fundus); margin-right: 8px; font-size: 23px; }
+.team span { padding: 7px 14px; border: 1px solid #2f4658; border-radius: 999px; color: #dbe5ec; }
+.chain { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; margin-top: 40px; }
+.chain div { border: 1px solid #2f4658; border-radius: 16px; padding: 20px 22px; background: rgba(255,255,255,.04); }
+.chain b { display: block; font-size: 24px; } .chain span { font-size: 17px; color: #9fb3c3; }
+.chain div:nth-child(3) { border-color: var(--mol); background: rgba(15,107,107,.25); }
+.chain div:first-child { border-color: var(--fundus); }
+.quote { font-size: 42px; line-height: 1.32; font-weight: 650; letter-spacing: -.01em; max-width: 860px; }
+.quote em { font-style: normal; color: var(--fundus); }
+.retina { position: absolute; right: 90px; top: 170px; width: 380px; height: 380px; border-radius: 50%;
+          background: radial-gradient(circle at 62% 46%, #f7d7a8 0 7%, transparent 8%), radial-gradient(circle at 50% 50%, #d9652a 0%, #9c3614 62%, #3b1206 100%);
+          box-shadow: 0 0 120px rgba(224,120,43,.35); }
+.retina::after { content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: repeating-conic-gradient(from 20deg at 62% 46%, transparent 0 16deg, rgba(90,20,8,.55) 16deg 17.2deg); opacity: .8; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; margin-top: 56px; }
+.stat { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 30px 30px 26px; box-shadow: 0 10px 30px rgba(22,35,46,.07); }
+.stat .v { font-size: 76px; font-weight: 800; letter-spacing: -.03em; color: var(--signal); line-height: 1; }
+.stat .t { font-size: 25px; font-weight: 650; margin-top: 12px; line-height: 1.25; }
+.stat .s { font-size: 15px; color: var(--ink3); margin-top: 12px; }
+.band { margin-top: 36px; font-size: 28px; font-weight: 650; padding: 22px 28px; border-radius: 14px; background: var(--molw); color: #0b4f4f; }
+.pages { position: relative; height: 640px; margin-top: 28px; }
+.pages figure { position: absolute; top: 0; width: 430px; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 24px 60px rgba(22,35,46,.25); }
+.pages img { width: 100%; display: block; }
+.pages figcaption { position: absolute; bottom: 0; left: 0; right: 0; padding: 12px 16px; background: rgba(22,35,46,.88); color: #fff; font-size: 18px; font-weight: 650; }
+.p1 { left: 0; transform: rotate(-3deg); } .p2 { left: 470px; top: 10px !important; z-index: 2; } .p3 { left: 940px; transform: rotate(3deg); }
+.roi { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; margin-top: 40px; }
+.roi .stat .v { color: var(--mol); font-size: 70px; }
+.levers { margin-top: 26px; display: flex; gap: 14px; flex-wrap: wrap; }
+.levers span { font-size: 20px; font-weight: 650; padding: 10px 18px; border-radius: 999px; background: #fff; border: 1.5px solid var(--mol); color: var(--mol); }
+.grid4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 40px; }
+.pill { background: rgba(255,255,255,.05); border: 1px solid #2f4658; border-radius: 18px; padding: 26px 30px; }
+.pill b { display: block; font-size: 30px; margin-bottom: 8px; } .pill span { font-size: 21px; color: #c2d0da; line-height: 1.4; }
+.pill b em { font-style: normal; color: var(--fundus); }
+.social { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; margin-top: 50px; }
+.social div { background: #fff; border-radius: 18px; padding: 28px; border: 1px solid var(--line); min-height: 250px; }
+.social b { display: block; font-size: 27px; margin: 14px 0 8px; } .social span { font-size: 19px; color: var(--ink2); line-height: 1.4; }
+.social .ic { width: 44px; height: 44px; color: var(--mol); fill: none; stroke: currentColor; stroke-width: 1.8; }
+.stack { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 22px; margin-top: 34px; }
+.stack div { border-left: 4px solid var(--mol); padding: 8px 14px; background: rgba(255,255,255,.05); border-radius: 0 10px 10px 0; }
+.stack b { font-size: 22px; display: block; } .stack span { font-size: 16px; color: #a9bac7; }
+</style></head>
+<body>
+
+<section id="title" class="dark">
+  <div class="logo in"><i></i>Insight Rx</div>
+  <h1 class="in d1" style="margin-top:44px">From one eye photo<br>to a personalised therapy plan.</h1>
+  <div class="chain in d3">
+    <div><b>Eye</b><span>Smartphone fundus photo</span></div>
+    <div><b>Signal</b><span>Retina + whole-body</span></div>
+    <div><b>Protein target</b><span>AlphaFold · PDB</span></div>
+    <div><b>Therapy · Trial</b><span>Guidelines · drugs</span></div>
+    <div><b>Physician</b><span>Consult · NPI Registry</span></div>
+  </div>
+  <div class="team in d4"><b>Team Coding Claws</b><span>Nagur Shareef Shaik</span><span>Sahith Reddy Thummala</span><span>Pranav Nagothu</span><span>Geethanjali Nagaboina</span></div>
+  <p class="foot" style="bottom:36px;left:auto;right:96px;top:84px;bottom:auto;text-align:right">HackGT 13 · Impiricus challenge:<br>"Invent the next way we engage HCPs"</p>
+</section>
+
+<section id="motivation" class="dark">
+  <div class="retina in d1"></div>
+  <p class="kicker in">Why I built this</p>
+  <p class="quote in d1" style="margin-top:34px">I research oculomics. The retina is the one place where we can look straight at <em>blood vessels and nerves</em>, with no needle and no scan.</p>
+  <p class="quote in d3" style="margin-top:34px;color:#c9d6df">In most clinics that photo ends as a line in a chart. <em>Insight Rx makes it start a treatment plan.</em></p>
+</section>
+
+<section id="clinical">
+  <p class="kicker in">The clinical gap</p>
+  <h2 class="in d1" style="margin-top:14px">A preventable blindness, a missed exam,<br>and a window on the whole body.</h2>
+  <div class="stats">
+    <div class="stat in d2"><div class="v">#1</div><div class="t">cause of blindness in working-age adults: diabetic retinopathy</div><div class="s">CDC, Vision Loss and Diabetes</div></div>
+    <div class="stat in d3"><div class="v">26%</div><div class="t">of people with diabetes have retinopathy: 9.6 million in the US</div><div class="s">Lundeen et al., JAMA Ophthalmology 2023 (CDC)</div></div>
+    <div class="stat in d4"><div class="v">35%</div><div class="t">of adults with diabetes had no eye exam in the past year</div><div class="s">Healthy People 2030, objective D-04 (2019 data)</div></div>
+  </div>
+  <p class="band in d5">The retina's small vessels share the same damage as the heart, kidneys and nerves.</p>
+</section>
+
+<section id="reports">
+  <p class="kicker in">Personalised reports · portfolio view</p>
+  <h2 class="in d1" style="margin-top:14px;font-size:46px">One click: a patient therapy report, a target dossier,<br>and where pharma should engage.</h2>
+  <div class="pages">
+    <figure class="p1 in d2"><img src="page_patient.png" alt=""><figcaption>Patient: target priorities</figcaption></figure>
+    <figure class="p2 in d3"><img src="page_dossier.png" alt=""><figcaption>VEGF-A dossier: AlphaFold + drug pocket</figcaption></figure>
+    <figure class="p3 in d4"><img src="page_portfolio.png" alt=""><figcaption>Portfolio: demand vs drug crowding</figcaption></figure>
+  </div>
+</section>
+
+<section id="roi">
+  <p class="kicker in">Return on investment · illustrative, sourced</p>
+  <h2 class="in d1" style="margin-top:14px">Per 10,000 patients with diabetes screened</h2>
+  <div class="roi">
+    <div class="stat in d2"><div class="v">{{GAPS}}</div><div class="t">open eye-exam gaps that can close (CMS131 / HEDIS EED)</div><div class="s">35.2% without a yearly exam, Healthy People 2030</div></div>
+    <div class="stat in d3"><div class="v">${{BILLING_K}}K</div><div class="t">in physician-read screenings, CPT 92228 at ${{RATE}} each</div><div class="s">CMS PFS 2026: 0.91 RVU × $33.4009; assumes Medicare rate for every read</div></div>
+    <div class="stat in d4"><div class="v">{{DR}}</div><div class="t">people with retinopathy found, {{VTDR}} vision-threatening</div><div class="s">26% and 5% prevalence, Lundeen et al. 2023</div></div>
+  </div>
+  <div class="levers in d5"><span>Life-science levers (counted, not priced):</span><span>qualified med-info requests</span><span>trial-eligible patients by finding</span><span>eye-detected demand per target</span></div>
+  <p class="foot">Illustrative model, computed in scripts/demo/script.py from the cited sources. Actual payment depends on payer mix, locality and eligibility.</p>
+</section>
+
+<section id="social">
+  <p class="kicker in">Social impact</p>
+  <h2 class="in d1" style="margin-top:14px">Care that reaches people first where they already are.</h2>
+  <div class="social">
+    <div class="in d2"><svg class="ic"><use href="icons.svg#i-eye"/></svg><b>No needle, low cost</b><span>A handheld smartphone camera in primary care: seconds per eye, no dilation clinic needed to start.</span></div>
+    <div class="in d3"><svg class="ic"><use href="icons.svg#i-user"/></svg><b>Built on real patients</b><span>mBRSET: 1,291 people with diabetes screened in Itabuna, Brazil, with a portable camera.</span></div>
+    <div class="in d4"><svg class="ic"><use href="icons.svg#i-pulse"/></svg><b>One visit, whole body</b><span>The same photo surfaces heart, kidney and nerve risk, routed to the right specialist.</span></div>
+    <div class="in d5"><svg class="ic"><use href="icons.svg#i-book"/></svg><b>Open and honest</b><span>Open code and cited evidence. A research prototype that still needs prospective validation.</span></div>
+  </div>
+</section>
+
+<section id="acquire" class="dark">
+  <p class="kicker in">Why Impiricus should acquire Insight Rx</p>
+  <h2 class="in d1" style="margin-top:14px">The next way to engage HCPs starts in the eye.</h2>
+  <div class="grid4">
+    <div class="pill in d2"><b><em>1</em> A new engagement moment</b><span>A clinical signal at the point of care, exactly when therapy is decided. Not marketing, not SMS.</span></div>
+    <div class="pill in d3"><b><em>2</em> Life-science revenue</b><span>Targeted medical information, trial recruitment and demand by protein target, inside a compliance firewall.</span></div>
+    <div class="pill in d4"><b><em>3</em> A defensible moat</b><span>Validated retinal AI (AUROC 0.98) plus a personalised target engine on AlphaFold, PDB and ChEMBL.</span></div>
+    <div class="pill in d5"><b><em>4</em> Adoption that pays for itself</b><span>Clinics come for CMS quality-gap closure and billable reads; HCP engagement follows.</span></div>
+  </div>
+</section>
+
+<section id="stack" class="dark">
+  <p class="kicker in">Technology and what it does</p>
+  <div class="stack in d1">
+    <div><b>DINOv2-L + LoRA ensemble</b><span>Referable DR, grade, edema, quality gate</span></div>
+    <div><b>RETFound · DINOv2 features</b><span>Systemic signals, 5-fold patient CV</span></div>
+    <div><b>AlphaFold DB · DeepMind / EMBL-EBI</b><span>Protein structures, pLDDT confidence</span></div>
+    <div><b>RCSB PDB · UniProt</b><span>Drug complexes, drug-contact residues</span></div>
+    <div><b>ChEMBL</b><span>Approved and pipeline drugs per target</span></div>
+    <div><b>ClinicalTrials.gov · openFDA</b><span>Recruiting trials, label warnings</span></div>
+    <div><b>CMS NPPES NPI Registry</b><span>Real specialists for referral</span></div>
+    <div><b>FastAPI · Neon Postgres · Vercel</b><span>Secure web app and data</span></div>
+    <div><b>Cloudflare Tunnel · GPU worker</b><span>Live models, no cloud GPU bill</span></div>
+    <div><b>Google Gemini + data guard</b><span>Drafting, never restricted data</span></div>
+    <div><b>3Dmol.js · reportlab</b><span>3D viewer, PDF reports</span></div>
+    <div><b>Kokoro-82M</b><span>This narration, generated locally</span></div>
+  </div>
+  <p class="in d3" style="margin-top:38px;font-size:40px;font-weight:800">Insight Rx. One eye photo. The right therapy, and the right physician.</p>
+  <p class="foot">github.com/ShaikNagurShareef/InsightRx · insightrx-hcp.vercel.app · research prototype, synthetic identities, not a diagnosis</p>
+</section>
+
+<script>
+  const show = () => { document.querySelectorAll("section").forEach(s => s.classList.toggle("on", "#" + s.id === location.hash)); };
+  window.addEventListener("hashchange", show); show();
+</script>
+</body></html>
