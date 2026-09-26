@@ -31,7 +31,8 @@ class RemoteVisionService:
         self._health, self._checked = None, 0.0
 
     def health(self):
-        if time.time() - self._checked < 30:
+        ttl = 30 if self._health else 5          # re-check quickly after a failure (e.g. worker URL just re-registered)
+        if time.time() - self._checked < ttl:
             return self._health
         self._checked, self._health = time.time(), None
         u = self.url()
