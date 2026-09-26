@@ -1,0 +1,991 @@
+{
+ "systemic_hypertension": {
+  "n": 1280,
+  "n_pos": 914,
+  "n_unknown": 11,
+  "prevalence": 0.7140625,
+  "oof_auroc": {
+   "metadata": 0.6675246021212231,
+   "image:RETFound_dinov2_meh_224px": 0.5716032332508281,
+   "fused:RETFound_dinov2_meh_224px": 0.6192440602169053,
+   "image:RETFound_dinov2_meh_448px": 0.5960887709103084,
+   "fused:RETFound_dinov2_meh_448px": 0.6335957958173405,
+   "image:dinov2-large_224px": 0.6310070428429649,
+   "fused:dinov2-large_224px": 0.6650614006767825
+  },
+  "chosen": "metadata",
+  "enabled": true,
+  "chosen_metrics": {
+   "auroc": 0.6675246021212231,
+   "auroc_ci95": [
+    0.6361502152879169,
+    0.700041815220313
+   ],
+   "auprc": 0.797912801231401,
+   "brier_calibrated": 0.18859705685636774,
+   "threshold": 0.7064418473129181,
+   "sensitivity": 0.6903719912472648,
+   "specificity": 0.592896174863388
+  },
+  "retinal_added_value": {
+   "variant": "fused:dinov2-large_224px",
+   "delta_auroc": -0.002463201444440566,
+   "ci95": [
+    -0.032159543874281896,
+    0.025097863443255413
+   ]
+  },
+  "permutation_importance": {
+   "age": 0.10990326710627632,
+   "sex": 0.029993272009889993,
+   "dm_time": 0.0033605364618164877,
+   "insulin": 0.003702908284089479,
+   "oraltreatment_dm": 0.016124987947354872
+  },
+  "permutation_importance_all": {
+   "metadata": {
+    "age": 0.10990326710627632,
+    "sex": 0.029993272009889993,
+    "dm_time": 0.0033605364618164877,
+    "insulin": 0.003702908284089479,
+    "oraltreatment_dm": 0.016124987947354872
+   },
+   "image:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.09495811963811066
+   },
+   "fused:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.020811722776690248,
+    "age": 0.07038105863616755,
+    "sex": 0.031400626707161636,
+    "dm_time": 0.0022628292334108792,
+    "insulin": 0.0003473081173507827,
+    "oraltreatment_dm": 0.007816280879384456
+   },
+   "image:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.11469906248707055
+   },
+   "fused:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.05085757622249874,
+    "age": 0.057364514651736774,
+    "sex": 0.023211883800251208,
+    "dm_time": 0.003278930855845275,
+    "insulin": 0.0009306639219057871,
+    "oraltreatment_dm": 0.009074120156536495
+   },
+   "image:dinov2-large_224px": {
+    "retinal image": 0.13773600164797106
+   },
+   "fused:dinov2-large_224px": {
+    "retinal image": 0.0742746138097586,
+    "age": 0.052495671033735244,
+    "sex": 0.019993928156964286,
+    "dm_time": 0.004146393378371794,
+    "insulin": 0.00434687988022815,
+    "oraltreatment_dm": 0.006903846641102396
+   }
+  },
+  "reliability": [
+   {
+    "bin": 0.2,
+    "n": 5,
+    "mean_pred": 0.2546262106419494,
+    "observed": 0.2
+   },
+   {
+    "bin": 0.3,
+    "n": 12,
+    "mean_pred": 0.3598844626511895,
+    "observed": 0.25
+   },
+   {
+    "bin": 0.4,
+    "n": 61,
+    "mean_pred": 0.4603598606453419,
+    "observed": 0.45901639344262296
+   },
+   {
+    "bin": 0.5,
+    "n": 116,
+    "mean_pred": 0.5578817612855557,
+    "observed": 0.5086206896551724
+   },
+   {
+    "bin": 0.6,
+    "n": 268,
+    "mean_pred": 0.654169389352923,
+    "observed": 0.6380597014925373
+   },
+   {
+    "bin": 0.7,
+    "n": 512,
+    "mean_pred": 0.7511285453358836,
+    "observed": 0.775390625
+   },
+   {
+    "bin": 0.8,
+    "n": 285,
+    "mean_pred": 0.8375452864769023,
+    "observed": 0.8491228070175438
+   },
+   {
+    "bin": 0.9,
+    "n": 18,
+    "mean_pred": 0.9222611853541688,
+    "observed": 0.6666666666666666
+   }
+  ]
+ },
+ "nephropathy": {
+  "n": 1271,
+  "n_pos": 46,
+  "n_unknown": 20,
+  "prevalence": 0.03619197482297404,
+  "oof_auroc": {
+   "metadata": 0.5449334516415262,
+   "image:RETFound_dinov2_meh_224px": 0.5837267080745342,
+   "fused:RETFound_dinov2_meh_224px": 0.5804791481810115,
+   "image:RETFound_dinov2_meh_448px": 0.6022360248447205,
+   "fused:RETFound_dinov2_meh_448px": 0.5934338952972493,
+   "image:dinov2-large_224px": 0.572759538598048,
+   "fused:dinov2-large_224px": 0.5656078083407275
+  },
+  "chosen": "image:RETFound_dinov2_meh_448px",
+  "enabled": false,
+  "chosen_metrics": {
+   "auroc": 0.6022360248447205,
+   "auroc_ci95": [
+    0.514132353187225,
+    0.684847832560893
+   ],
+   "auprc": 0.05752100773588839,
+   "brier_calibrated": 0.03472412935825694,
+   "threshold": 0.04892760829986854,
+   "sensitivity": 0.32608695652173914,
+   "specificity": 0.8636734693877551
+  },
+  "retinal_added_value": {
+   "variant": "image:RETFound_dinov2_meh_448px",
+   "delta_auroc": 0.05730257320319432,
+   "ci95": [
+    -0.05160239086165469,
+    0.1836306563512565
+   ]
+  },
+  "permutation_importance": {
+   "retinal image": 0.10747694633408919
+  },
+  "permutation_importance_all": {
+   "metadata": {
+    "age": 0.05608012093726382,
+    "sex": -0.004084656084656047,
+    "dm_time": 0.028470143613000803,
+    "insulin": 3.930461073318598e-05,
+    "oraltreatment_dm": -0.007123204837490525
+   },
+   "image:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.03518065003779289
+   },
+   "fused:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.09158881330309905,
+    "age": 0.019851851851851888,
+    "sex": 0.0033015873015873097,
+    "dm_time": 0.001998488284202593,
+    "insulin": -0.002188964474678737,
+    "oraltreatment_dm": -0.004075585789871479
+   },
+   "image:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.10747694633408919
+   },
+   "fused:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.11198185941043079,
+    "age": 0.00510657596371881,
+    "sex": -0.0010491307634165243,
+    "dm_time": -0.0039486016628874,
+    "insulin": -0.006835978835978848,
+    "oraltreatment_dm": -0.004541194255479959
+   },
+   "image:dinov2-large_224px": {
+    "retinal image": 0.04785487528344672
+   },
+   "fused:dinov2-large_224px": {
+    "retinal image": 0.06393953136810283,
+    "age": 0.025883597883597915,
+    "sex": 0.005227513227513239,
+    "dm_time": -0.008202569916855584,
+    "insulin": 0.002445956160241906,
+    "oraltreatment_dm": -0.0035132275132274972
+   }
+  },
+  "reliability": [
+   {
+    "bin": 0.0,
+    "n": 1271,
+    "mean_pred": 0.036171955994547506,
+    "observed": 0.03619197482297404
+   }
+  ]
+ },
+ "vascular_disease": {
+  "n": 1272,
+  "n_pos": 217,
+  "n_unknown": 19,
+  "prevalence": 0.17059748427672955,
+  "oof_auroc": {
+   "metadata": 0.5644964727979558,
+   "image:RETFound_dinov2_meh_224px": 0.5848515954310176,
+   "fused:RETFound_dinov2_meh_224px": 0.5866818092471663,
+   "image:RETFound_dinov2_meh_448px": 0.5629239740537707,
+   "fused:RETFound_dinov2_meh_448px": 0.5626356826173368,
+   "image:dinov2-large_224px": 0.5359512525389303,
+   "fused:dinov2-large_224px": 0.5455959115032651
+  },
+  "chosen": "fused:RETFound_dinov2_meh_224px",
+  "enabled": false,
+  "chosen_metrics": {
+   "auroc": 0.5866818092471663,
+   "auroc_ci95": [
+    0.5423046759923229,
+    0.6272603808685222
+   ],
+   "auprc": 0.23100034652755536,
+   "brier_calibrated": 0.13953413424642,
+   "threshold": 0.17110634105996478,
+   "sensitivity": 0.5714285714285714,
+   "specificity": 0.5781990521327014
+  },
+  "retinal_added_value": {
+   "variant": "fused:RETFound_dinov2_meh_224px",
+   "delta_auroc": 0.022185336449210502,
+   "ci95": [
+    -0.027370182111760167,
+    0.07191552022959989
+   ]
+  },
+  "permutation_importance": {
+   "retinal image": 0.06954817657451848,
+   "age": 0.009270095421313311,
+   "sex": 0.0006963718525495081,
+   "dm_time": 0.008216018890547698,
+   "insulin": 0.0094760010554125,
+   "oraltreatment_dm": -0.0036141198160375863
+  },
+  "permutation_importance_all": {
+   "metadata": {
+    "age": 0.041128022203741406,
+    "sex": 0.0005236148545969241,
+    "dm_time": 0.02748080385025169,
+    "insulin": 0.014924317572284084,
+    "oraltreatment_dm": -0.005487894485469658
+   },
+   "image:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.09591979533013364
+   },
+   "fused:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.06954817657451848,
+    "age": 0.009270095421313311,
+    "sex": 0.0006963718525495081,
+    "dm_time": 0.008216018890547698,
+    "insulin": 0.0094760010554125,
+    "oraltreatment_dm": -0.0036141198160375863
+   },
+   "image:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.053193123787194097
+   },
+   "fused:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.045758143542779336,
+    "age": 0.00792561345851334,
+    "sex": 0.007415274757939884,
+    "dm_time": 0.0122038749670184,
+    "insulin": 0.013989392436433157,
+    "oraltreatment_dm": -0.005423517663129652
+   },
+   "image:dinov2-large_224px": {
+    "retinal image": 0.04262714213667592
+   },
+   "fused:dinov2-large_224px": {
+    "retinal image": 0.038623087482340175,
+    "age": 0.006986930920580188,
+    "sex": 0.00347735038024906,
+    "dm_time": 0.008646032684388225,
+    "insulin": 0.008851938318487405,
+    "oraltreatment_dm": -0.010471963100641623
+   }
+  },
+  "reliability": [
+   {
+    "bin": 0.0,
+    "n": 42,
+    "mean_pred": 0.08959064010920972,
+    "observed": 0.14285714285714285
+   },
+   {
+    "bin": 0.1,
+    "n": 949,
+    "mean_pred": 0.1561826332644948,
+    "observed": 0.1464699683877766
+   },
+   {
+    "bin": 0.2,
+    "n": 274,
+    "mean_pred": 0.228554727965987,
+    "observed": 0.25547445255474455
+   },
+   {
+    "bin": 0.3,
+    "n": 6,
+    "mean_pred": 0.32699342324934183,
+    "observed": 0.3333333333333333
+   }
+  ]
+ },
+ "neuropathy": {
+  "n": 1272,
+  "n_pos": 55,
+  "n_unknown": 19,
+  "prevalence": 0.04323899371069182,
+  "oof_auroc": {
+   "metadata": 0.45181892881153357,
+   "image:RETFound_dinov2_meh_224px": 0.5578098154926422,
+   "fused:RETFound_dinov2_meh_224px": 0.5575110181519385,
+   "image:RETFound_dinov2_meh_448px": 0.5586315081795772,
+   "fused:RETFound_dinov2_meh_448px": 0.5473817883020841,
+   "image:dinov2-large_224px": 0.5894524538731606,
+   "fused:dinov2-large_224px": 0.5920818704713527
+  },
+  "chosen": "fused:dinov2-large_224px",
+  "enabled": false,
+  "chosen_metrics": {
+   "auroc": 0.5920818704713527,
+   "auroc_ci95": [
+    0.5225334111919748,
+    0.6599895624089172
+   ],
+   "auprc": 0.07555259659084587,
+   "brier_calibrated": 0.04118946736951272,
+   "threshold": 0.04189438844238799,
+   "sensitivity": 0.7090909090909091,
+   "specificity": 0.5036976170912079
+  },
+  "retinal_added_value": {
+   "variant": "fused:dinov2-large_224px",
+   "delta_auroc": 0.14026294165981917,
+   "ci95": [
+    0.02651889781585456,
+    0.25302480540167405
+   ]
+  },
+  "permutation_importance": {
+   "retinal image": 0.08891393187082317,
+   "age": 0.0001940064478012018,
+   "sex": -0.0002214004035497796,
+   "dm_time": -0.00957388088535632,
+   "insulin": -0.0038750181433848895,
+   "oraltreatment_dm": 0.008843443542897083
+  },
+  "permutation_importance_all": {
+   "metadata": {
+    "age": -0.022345495023090682,
+    "sex": -0.008468616543904958,
+    "dm_time": 0.004787655956447665,
+    "insulin": -0.026239269848863066,
+    "oraltreatment_dm": 0.04696366621078216
+   },
+   "image:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.049398968433576794
+   },
+   "fused:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.04329256949171947,
+    "age": -0.0016814573584458196,
+    "sex": -0.006877416136675377,
+    "dm_time": 0.0034274131724040626,
+    "insulin": 0.0025055247884634762,
+    "oraltreatment_dm": 0.019898949012488794
+   },
+   "image:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.01469787942161958
+   },
+   "fused:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.03675849774817593,
+    "age": -0.0016675559480659938,
+    "sex": -0.0027655629355690325,
+    "dm_time": -0.005692831983056653,
+    "insulin": 0.00046048421883272016,
+    "oraltreatment_dm": 0.016764283188084
+   },
+   "image:dinov2-large_224px": {
+    "retinal image": 0.07912079712322578
+   },
+   "fused:dinov2-large_224px": {
+    "retinal image": 0.08891393187082317,
+    "age": 0.0001940064478012018,
+    "sex": -0.0002214004035497796,
+    "dm_time": -0.00957388088535632,
+    "insulin": -0.0038750181433848895,
+    "oraltreatment_dm": 0.008843443542897083
+   }
+  },
+  "reliability": [
+   {
+    "bin": 0.0,
+    "n": 1267,
+    "mean_pred": 0.04295779137396818,
+    "observed": 0.042620363062352014
+   },
+   {
+    "bin": 0.1,
+    "n": 5,
+    "mean_pred": 0.11019520164010359,
+    "observed": 0.2
+   }
+  ]
+ },
+ "acute_myocardial_infarction": {
+  "n": 1270,
+  "n_pos": 98,
+  "n_unknown": 21,
+  "prevalence": 0.07716535433070866,
+  "oof_auroc": {
+   "metadata": 0.6159016507626942,
+   "image:RETFound_dinov2_meh_224px": 0.5866650414431984,
+   "fused:RETFound_dinov2_meh_224px": 0.6053580135125722,
+   "image:RETFound_dinov2_meh_448px": 0.559143623319635,
+   "fused:RETFound_dinov2_meh_448px": 0.5828341575538065,
+   "image:dinov2-large_224px": 0.5186233196350212,
+   "fused:dinov2-large_224px": 0.5556784147105942
+  },
+  "chosen": "metadata",
+  "enabled": false,
+  "chosen_metrics": {
+   "auroc": 0.6159016507626942,
+   "auroc_ci95": [
+    0.5557562146892656,
+    0.6720147648582924
+   ],
+   "auprc": 0.12986223409818945,
+   "brier_calibrated": 0.0700354575668244,
+   "threshold": 0.06091143304033937,
+   "sensitivity": 0.7857142857142857,
+   "specificity": 0.39675767918088733
+  },
+  "retinal_added_value": {
+   "variant": "fused:RETFound_dinov2_meh_224px",
+   "delta_auroc": -0.010543637250121973,
+   "ci95": [
+    -0.07430525995465953,
+    0.052784428155504964
+   ]
+  },
+  "permutation_importance": {
+   "age": 0.006603162297451215,
+   "sex": 0.03475505115762675,
+   "dm_time": 0.0017222908152359883,
+   "insulin": 0.07803989880137698,
+   "oraltreatment_dm": -0.00192795021742392
+  },
+  "permutation_importance_all": {
+   "metadata": {
+    "age": 0.006603162297451215,
+    "sex": 0.03475505115762675,
+    "dm_time": 0.0017222908152359883,
+    "insulin": 0.07803989880137698,
+    "oraltreatment_dm": -0.00192795021742392
+   },
+   "image:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.12442035713032351
+   },
+   "fused:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.03985230169440697,
+    "age": -0.00024063386325419894,
+    "sex": 0.020897786838436346,
+    "dm_time": 0.0006148964883567531,
+    "insulin": 0.014742855957861577,
+    "oraltreatment_dm": 0.000763583809496519
+   },
+   "image:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.04763285509646093
+   },
+   "fused:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.05567388648015749,
+    "age": 0.0015758686587354093,
+    "sex": 0.00594549886263213,
+    "dm_time": 0.003938259906904935,
+    "insulin": 0.03106497832141732,
+    "oraltreatment_dm": 0.0007908614963486307
+   },
+   "image:dinov2-large_224px": {
+    "retinal image": 0.0238669391244979
+   },
+   "fused:dinov2-large_224px": {
+    "retinal image": -0.0014821195560277348,
+    "age": 0.0019909840066614894,
+    "sex": 0.015506567382267267,
+    "dm_time": -0.005239054628752305,
+    "insulin": 0.0409386874168509,
+    "oraltreatment_dm": 0.01075683617116987
+   }
+  },
+  "reliability": [
+   {
+    "bin": 0.0,
+    "n": 1044,
+    "mean_pred": 0.0644939012434923,
+    "observed": 0.06513409961685823
+   },
+   {
+    "bin": 0.1,
+    "n": 220,
+    "mean_pred": 0.13419153192382352,
+    "observed": 0.1318181818181818
+   },
+   {
+    "bin": 0.2,
+    "n": 6,
+    "mean_pred": 0.211172737635028,
+    "observed": 0.16666666666666666
+   }
+  ]
+ },
+ "diabetic_foot": {
+  "n": 1264,
+  "n_pos": 173,
+  "n_unknown": 27,
+  "prevalence": 0.13686708860759494,
+  "oof_auroc": {
+   "metadata": 0.5901728805836508,
+   "image:RETFound_dinov2_meh_224px": 0.592292164477623,
+   "fused:RETFound_dinov2_meh_224px": 0.6147830648024032,
+   "image:RETFound_dinov2_meh_448px": 0.5727205777167895,
+   "fused:RETFound_dinov2_meh_448px": 0.5870628314692465,
+   "image:dinov2-large_224px": 0.5535675495250154,
+   "fused:dinov2-large_224px": 0.5505475699761051
+  },
+  "chosen": "fused:RETFound_dinov2_meh_224px",
+  "enabled": false,
+  "chosen_metrics": {
+   "auroc": 0.6147830648024032,
+   "auroc_ci95": [
+    0.5663679576238368,
+    0.6641330596610218
+   ],
+   "auprc": 0.2295349182718406,
+   "brier_calibrated": 0.11483963764810094,
+   "threshold": 0.14558872853672852,
+   "sensitivity": 0.5606936416184971,
+   "specificity": 0.6562786434463794
+  },
+  "retinal_added_value": {
+   "variant": "fused:RETFound_dinov2_meh_224px",
+   "delta_auroc": 0.024610184218752384,
+   "ci95": [
+    -0.022623552677059053,
+    0.07095341665390022
+   ]
+  },
+  "permutation_importance": {
+   "retinal image": 0.08198337891563984,
+   "age": 0.006050462411934743,
+   "sex": 0.024195229094947444,
+   "dm_time": 0.013139884582713344,
+   "insulin": 0.00441518587243032,
+   "oraltreatment_dm": -0.00035131056318466245
+  },
+  "permutation_importance_all": {
+   "metadata": {
+    "age": 0.017993555932699436,
+    "sex": 0.03595202892015169,
+    "dm_time": 0.03182932022459188,
+    "insulin": 0.0017136688364759825,
+    "oraltreatment_dm": -0.009949112567820472
+   },
+   "image:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.08066867935226542
+   },
+   "fused:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.08198337891563984,
+    "age": 0.006050462411934743,
+    "sex": 0.024195229094947444,
+    "dm_time": 0.013139884582713344,
+    "insulin": 0.00441518587243032,
+    "oraltreatment_dm": -0.00035131056318466245
+   },
+   "image:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.054955903856243195
+   },
+   "fused:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.05791291590994403,
+    "age": 0.00495060459775211,
+    "sex": 0.015113072165316205,
+    "dm_time": 0.011219567547181408,
+    "insulin": -0.0037993911485251068,
+    "oraltreatment_dm": -0.0028363577008869195
+   },
+   "image:dinov2-large_224px": {
+    "retinal image": 0.08186260839219019
+   },
+   "fused:dinov2-large_224px": {
+    "retinal image": 0.03303039317188905,
+    "age": 0.0037199973198613345,
+    "sex": 0.012640905886882488,
+    "dm_time": 0.012934984223675694,
+    "insulin": -0.009165822082676594,
+    "oraltreatment_dm": -0.004997654878632711
+   }
+  },
+  "reliability": [
+   {
+    "bin": 0.0,
+    "n": 310,
+    "mean_pred": 0.07987915829392254,
+    "observed": 0.0967741935483871
+   },
+   {
+    "bin": 0.1,
+    "n": 824,
+    "mean_pred": 0.14130831494815072,
+    "observed": 0.12985436893203883
+   },
+   {
+    "bin": 0.2,
+    "n": 115,
+    "mean_pred": 0.22980150232158109,
+    "observed": 0.24347826086956523
+   },
+   {
+    "bin": 0.3,
+    "n": 10,
+    "mean_pred": 0.3347771679558714,
+    "observed": 0.5
+   },
+   {
+    "bin": 0.4,
+    "n": 5,
+    "mean_pred": 0.41201136124537446,
+    "observed": 0.6
+   }
+  ]
+ },
+ "obesity": {
+  "n": 1272,
+  "n_pos": 102,
+  "n_unknown": 19,
+  "prevalence": 0.08018867924528301,
+  "oof_auroc": {
+   "metadata": 0.5260767554885203,
+   "image:RETFound_dinov2_meh_224px": 0.48464890229596114,
+   "fused:RETFound_dinov2_meh_224px": 0.5032009384950562,
+   "image:RETFound_dinov2_meh_448px": 0.5037539802245685,
+   "fused:RETFound_dinov2_meh_448px": 0.5182001005530417,
+   "image:dinov2-large_224px": 0.49959778783308195,
+   "fused:dinov2-large_224px": 0.5183509301156359
+  },
+  "chosen": "metadata",
+  "enabled": false,
+  "chosen_metrics": {
+   "auroc": 0.5260767554885203,
+   "auroc_ci95": [
+    0.46811091459479215,
+    0.5824703227469923
+   ],
+   "auprc": 0.08867985160158388,
+   "brier_calibrated": 0.07367715285490686,
+   "threshold": 0.08142848796583628,
+   "sensitivity": 0.6372549019607843,
+   "specificity": 0.5
+  },
+  "retinal_added_value": {
+   "variant": "fused:dinov2-large_224px",
+   "delta_auroc": -0.007725825372884354,
+   "ci95": [
+    -0.07769347831275167,
+    0.061392119649430914
+   ]
+  },
+  "permutation_importance": {
+   "age": -0.01130714964048296,
+   "sex": 0.051932912766246134,
+   "dm_time": -0.002901573734907032,
+   "insulin": -0.010537579704246356,
+   "oraltreatment_dm": -0.0048334690001356415
+  },
+  "permutation_importance_all": {
+   "metadata": {
+    "age": -0.01130714964048296,
+    "sex": 0.051932912766246134,
+    "dm_time": -0.002901573734907032,
+    "insulin": -0.010537579704246356,
+    "oraltreatment_dm": -0.0048334690001356415
+   },
+   "image:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.012735042735042718
+   },
+   "fused:RETFound_dinov2_meh_224px": {
+    "retinal image": -0.015693257359924016,
+    "age": -0.0032207298873965493,
+    "sex": 0.007820512820512824,
+    "dm_time": 0.003336725003391676,
+    "insulin": -0.0009544159544159585,
+    "oraltreatment_dm": 0.012117080450413783
+   },
+   "image:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.010118708452041778
+   },
+   "fused:RETFound_dinov2_meh_448px": {
+    "retinal image": -0.0004605887939221426,
+    "age": 0.003081671415004724,
+    "sex": 0.01811355311355311,
+    "dm_time": -6.105006105013434e-06,
+    "insulin": 0.0034574684574684607,
+    "oraltreatment_dm": 0.00018111518111517286
+   },
+   "image:dinov2-large_224px": {
+    "retinal image": 0.010463302129968776
+   },
+   "fused:dinov2-large_224px": {
+    "retinal image": 0.014911816578483273,
+    "age": 0.00037918871252206053,
+    "sex": 0.011779948446615136,
+    "dm_time": -0.00018586351919683118,
+    "insulin": -0.006285442952109607,
+    "oraltreatment_dm": 0.009791751458418152
+   }
+  },
+  "reliability": [
+   {
+    "bin": 0.0,
+    "n": 1257,
+    "mean_pred": 0.07964712314686972,
+    "observed": 0.07875894988066826
+   },
+   {
+    "bin": 0.1,
+    "n": 15,
+    "mean_pred": 0.11913584074976687,
+    "observed": 0.2
+   }
+  ]
+ },
+ "cardiovascular": {
+  "n": 1270,
+  "n_pos": 275,
+  "n_unknown": 21,
+  "prevalence": 0.21653543307086615,
+  "oof_auroc": {
+   "metadata": 0.5902603928734582,
+   "image:RETFound_dinov2_meh_224px": 0.5770890817724988,
+   "fused:RETFound_dinov2_meh_224px": 0.5858711740520786,
+   "image:RETFound_dinov2_meh_448px": 0.5493321151210598,
+   "fused:RETFound_dinov2_meh_448px": 0.5599561443581544,
+   "image:dinov2-large_224px": 0.5479908634079489,
+   "fused:dinov2-large_224px": 0.5636838739150297
+  },
+  "chosen": "metadata",
+  "enabled": false,
+  "chosen_metrics": {
+   "auroc": 0.5902603928734582,
+   "auroc_ci95": [
+    0.5510399431946345,
+    0.6291676035975787
+   ],
+   "auprc": 0.2859721253131932,
+   "brier_calibrated": 0.1664180566726667,
+   "threshold": 0.20002726739751728,
+   "sensitivity": 0.6836363636363636,
+   "specificity": 0.45829145728643217
+  },
+  "retinal_added_value": {
+   "variant": "fused:RETFound_dinov2_meh_224px",
+   "delta_auroc": -0.004389218821379659,
+   "ci95": [
+    -0.044663394701569756,
+    0.03579242287499542
+   ]
+  },
+  "permutation_importance": {
+   "age": 0.029977158519872028,
+   "sex": 0.001215166742804885,
+   "dm_time": 0.0156022536927059,
+   "insulin": 0.049294959646718386,
+   "oraltreatment_dm": 0.0012151667428048774
+  },
+  "permutation_importance_all": {
+   "metadata": {
+    "age": 0.029977158519872028,
+    "sex": 0.001215166742804885,
+    "dm_time": 0.0156022536927059,
+    "insulin": 0.049294959646718386,
+    "oraltreatment_dm": 0.0012151667428048774
+   },
+   "image:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.06949901020252779
+   },
+   "fused:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.061373534338358446,
+    "age": 0.0025887010811633656,
+    "sex": 0.0010842089234048761,
+    "dm_time": 0.008557941221257807,
+    "insulin": 0.026307294045987483,
+    "oraltreatment_dm": -0.0004263742957210326
+   },
+   "image:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.055093650068524444
+   },
+   "fused:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.028560986751941537,
+    "age": 0.006919445713415587,
+    "sex": -0.001735952489721319,
+    "dm_time": 0.008497030607583386,
+    "insulin": 0.02552763819095481,
+    "oraltreatment_dm": -0.00485457590985227
+   },
+   "image:dinov2-large_224px": {
+    "retinal image": 0.046133698797015406
+   },
+   "fused:dinov2-large_224px": {
+    "retinal image": 0.01879701537992997,
+    "age": 0.005804781483173479,
+    "sex": 0.001181665905284035,
+    "dm_time": 0.005445408862494332,
+    "insulin": 0.027568143749048295,
+    "oraltreatment_dm": -0.006505253540429376
+   }
+  },
+  "reliability": [
+   {
+    "bin": 0.0,
+    "n": 14,
+    "mean_pred": 0.041079153285650975,
+    "observed": 0.07142857142857142
+   },
+   {
+    "bin": 0.1,
+    "n": 529,
+    "mean_pred": 0.17302729147476498,
+    "observed": 0.16257088846880907
+   },
+   {
+    "bin": 0.2,
+    "n": 603,
+    "mean_pred": 0.23485222603952774,
+    "observed": 0.23714759535655058
+   },
+   {
+    "bin": 0.3,
+    "n": 118,
+    "mean_pred": 0.32835886294565747,
+    "observed": 0.3559322033898305
+   },
+   {
+    "bin": 0.4,
+    "n": 6,
+    "mean_pred": 0.42669605030720636,
+    "observed": 0.5
+   }
+  ]
+ },
+ "dm_complications": {
+  "n": 1263,
+  "n_pos": 250,
+  "n_unknown": 28,
+  "prevalence": 0.19794140934283452,
+  "oof_auroc": {
+   "metadata": 0.5517966436327739,
+   "image:RETFound_dinov2_meh_224px": 0.5396485686080947,
+   "fused:RETFound_dinov2_meh_224px": 0.5411964461994077,
+   "image:RETFound_dinov2_meh_448px": 0.5397393879565646,
+   "fused:RETFound_dinov2_meh_448px": 0.5459664363277394,
+   "image:dinov2-large_224px": 0.5424481737413622,
+   "fused:dinov2-large_224px": 0.5458598223099704
+  },
+  "chosen": "metadata",
+  "enabled": false,
+  "chosen_metrics": {
+   "auroc": 0.5517966436327739,
+   "auroc_ci95": [
+    0.5107296748711808,
+    0.5939835139668714
+   ],
+   "auprc": 0.2576513529783656,
+   "brier_calibrated": 0.15718130597062177,
+   "threshold": 0.2166266921130601,
+   "sensitivity": 0.34,
+   "specificity": 0.7690029615004936
+  },
+  "retinal_added_value": {
+   "variant": "fused:RETFound_dinov2_meh_448px",
+   "delta_auroc": -0.005830207305034474,
+   "ci95": [
+    -0.05524625947940154,
+    0.04066328875491032
+   ]
+  },
+  "permutation_importance": {
+   "age": 0.0055088848786356785,
+   "sex": 0.015587913963810193,
+   "dm_time": 0.02086697881610825,
+   "insulin": 0.004490789965696122,
+   "oraltreatment_dm": -0.0009507876896063692
+  },
+  "permutation_importance_all": {
+   "metadata": {
+    "age": 0.0055088848786356785,
+    "sex": 0.015587913963810193,
+    "dm_time": 0.02086697881610825,
+    "insulin": 0.004490789965696122,
+    "oraltreatment_dm": -0.0009507876896063692
+   },
+   "image:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.028281812417694924
+   },
+   "fused:RETFound_dinov2_meh_224px": {
+    "retinal image": 0.013464826285584205,
+    "age": -0.0007795607146921624,
+    "sex": 0.0036801118535498833,
+    "dm_time": 0.011403631988814661,
+    "insulin": 0.002428132468419264,
+    "oraltreatment_dm": -0.00297868604594449
+   },
+   "image:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.026078427547188254
+   },
+   "fused:RETFound_dinov2_meh_448px": {
+    "retinal image": 0.03372358516639844,
+    "age": 0.0019281731128778217,
+    "sex": 0.0006638703279195248,
+    "dm_time": 0.012340145344583718,
+    "insulin": -0.0015175665349786093,
+    "oraltreatment_dm": -0.00122213009478284
+   },
+   "image:dinov2-large_224px": {
+    "retinal image": 0.05249999187110828
+   },
+   "fused:dinov2-large_224px": {
+    "retinal image": 0.03914617373067354,
+    "age": 0.002287242517355185,
+    "sex": 0.0015865970833536247,
+    "dm_time": 0.0066162675380838105,
+    "insulin": 0.00112074655741435,
+    "oraltreatment_dm": -0.0013941699588678302
+   }
+  },
+  "reliability": [
+   {
+    "bin": 0.1,
+    "n": 759,
+    "mean_pred": 0.17485406809784435,
+    "observed": 0.17786561264822134
+   },
+   {
+    "bin": 0.2,
+    "n": 486,
+    "mean_pred": 0.2296008014600046,
+    "observed": 0.2222222222222222
+   },
+   {
+    "bin": 0.3,
+    "n": 14,
+    "mean_pred": 0.32524319620771047,
+    "observed": 0.42857142857142855
+   }
+  ]
+ }
+}

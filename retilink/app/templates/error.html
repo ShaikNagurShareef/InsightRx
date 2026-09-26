@@ -1,0 +1,4 @@
+{% extends "base.html" %}{% block content %}
+<div class="card max-w-xl border-rose-300" role="alert"><h1 class="text-lg font-semibold text-rose-800">Action not completed ({{ status }})</h1>
+<p class="mt-2">{{ message }}</p><p class="mt-4"><a class="btn btn-sec" href="javascript:history.back()">Go back</a></p></div>
+{% endblock %}

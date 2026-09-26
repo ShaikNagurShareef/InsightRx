@@ -1,0 +1,235 @@
+{% extends "base.html" %}{% block title %}Case #{{ case.id }} · RetiLink{% endblock %}{% block content %}
+{% set res = run.result if run else None %}
+{% macro status_pill(s) -%}
+<span class="pill {{ 'st-pos' if s in ('Referable DR signal','Research signal') else 'st-neg' if s in ('No model finding','No research signal') else 'st-warn' if s in ('Assessment incomplete','Uncertain quality','Unable to assess','Abstained') else 'st-na' }}">{{ s }}</span>
+{%- endmacro %}
+<div class="flex flex-wrap items-start gap-4 mb-3">
+  <div>
+    <h1 class="text-2xl font-semibold">Case #{{ case.id }} · {{ case.patient.ref }} <span class="text-sm font-normal text-slate-500">(synthetic patient)</span></h1>
+    <p class="text-sm text-slate-600">Encounter {{ case.encounter_date }} · {{ case.device }} · owner {{ case.owner.name }} · version v{{ case.version }} · stage <span class="pill st-na">{{ case.status }}</span>
+    {% if case.urgent_concern %}<span class="pill st-pos">Clinician-entered urgent concern</span>{% endif %}</p>
+  </div>
+  {% if msg %}<div role="status" class="ml-auto pill st-na">{{ msg }}</div>{% endif %}
+</div>
+
+<nav class="flex flex-wrap border-b border-slate-200 mb-5" aria-label="Case sections">
+{% for k, l in [('retinal','Retinal assessment'),('systemic','Systemic health'),('review','Review & sign'),('consult','Consultation'),('referrals','Referrals (%d)'|format(refs|length)),('timeline','Audit timeline')] %}
+  {% if not (user.role=='specialist' and k in ('review','consult')) %}<a class="tab" href="/cases/{{ case.id }}?tab={{ k }}" {% if tab==k %}aria-current="page"{% endif %}>{{ l }}</a>{% endif %}
+{% endfor %}</nav>
+
+{# ================================================================ RETINAL #}
+{% if tab == 'retinal' %}
+<div class="grid lg:grid-cols-3 gap-5">
+<section class="lg:col-span-2 card" aria-labelledby="img-h">
+  <div class="flex items-center mb-3"><h2 id="img-h" class="font-semibold">Images (original, unaltered)</h2>
+    {% if run_stale %}<span class="ml-3 pill st-warn">Result below is from v{{ run.case_version }} - case changed, re-run analysis</span>{% endif %}</div>
+  <div class="grid md:grid-cols-2 gap-4">
+  {% for eye, label in [('OD','Right eye (OD)'),('OS','Left eye (OS)'),('unknown','Laterality unresolved')] %}
+    {% set eye_imgs = imgs|selectattr('laterality','equalto',eye)|list %}
+    {% if eye != 'unknown' or eye_imgs %}
+    <div class="{{ 'md:col-span-2 border border-amber-300 rounded-lg p-2' if eye=='unknown' else '' }}">
+      <h3 class="text-sm font-semibold mb-1">{{ label }}
+        {% if res and eye in res.eyes %} · {{ status_pill(res.eyes[eye].status) }} <span class="text-xs text-slate-500">{{ res.eyes[eye].n_assessable }} assessable / {{ res.eyes[eye].n_images }}</span>{% endif %}</h3>
+      {% if not eye_imgs %}<div class="h-40 grid place-items-center bg-slate-100 rounded text-sm text-slate-500">No image for this eye</div>{% endif %}
+      <div class="grid grid-cols-2 gap-2">
+      {% for im in eye_imgs %}{% set r = res.images.get(im.id|string) or res.images.get(im.id) if res else None %}
+        <figure class="border rounded-lg overflow-hidden bg-black">
+          <a href="/images/{{ im.id }}" target="_blank"><img src="/images/{{ im.id }}" alt="Fundus photograph, {{ label }}, image {{ im.id }}" class="w-full aspect-square object-contain"></a>
+          <figcaption class="bg-white p-2 text-xs space-y-1">
+            <div>#{{ im.id }} · {{ im.view }} · {{ im.width }}×{{ im.height }}</div>
+            {% if r %}<div>Quality: <span class="pill {{ 'st-neg' if r.quality=='assessable' else 'st-warn' if r.quality=='uncertain' else 'st-pos' }}">{{ r.quality }}</span>
+              {% if r.p_quality_poor is defined %}<span class="text-slate-500">P(unusable) {{ '%.2f'|format(r.p_quality_poor) }}</span>{% endif %}</div>
+              {% if r.p_dr is defined and r.quality!='unassessable' %}<div>Referable-DR score {{ '%.2f'|format(r.p_dr) }} · ICDR est. {{ r.icdr_grade }} ({{ ICDR_NAMES[r.icdr_grade] }})</div>{% endif %}
+              {% if r.reasons %}<div class="text-rose-700">Unsupported input: {{ r.reasons|join('; ') }}</div>{% endif %}{% endif %}
+            {% if r and run.source=='live' and r.quality in ('assessable','uncertain','unassessable') %}
+            {% set xh = 'quality_poor' if r.quality=='unassessable' else 'dr_referable' %}
+            <details class="mt-1"><summary class="cursor-pointer text-teal-800">Show model attention ({{ 'image quality' if xh=='quality_poor' else 'referable DR' }})</summary>
+              <img loading="lazy" src="/images/{{ im.id }}/explain?head={{ xh }}" alt="Model attention heat map for image {{ im.id }}" class="w-full rounded mt-1">
+              <p class="text-[11px] text-slate-500">Highlighted regions most influenced the model's {{ 'unusable-image' if xh=='quality_poor' else 'referable-DR' }} score (gradient × activation, 2-model average). Model attention, not lesion segmentation or proof of causation.</p>
+            </details>{% endif %}
+            {% if user.role in ('operator','referring') %}
+            <form method="post" action="/images/{{ im.id }}/laterality" class="flex gap-1 items-center"><label class="sr-only" for="lat{{ im.id }}">Laterality</label>
+              <select id="lat{{ im.id }}" name="laterality" class="inp !py-0 !w-auto text-xs">{% for l in ['OD','OS','unknown'] %}<option {% if l==im.laterality %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+              <button class="btn btn-sec !py-0 text-xs">Set</button></form>
+            <form method="post" action="/images/{{ im.id }}/recapture" enctype="multipart/form-data" class="flex gap-1 items-center">
+              <label class="sr-only" for="rc{{ im.id }}">Recapture file</label><input id="rc{{ im.id }}" type="file" name="file" accept="image/jpeg,image/png" class="text-xs w-32" required>
+              <button class="btn btn-sec !py-0 text-xs">Recapture</button></form>{% endif %}
+          </figcaption>
+        </figure>
+      {% endfor %}</div>
+    </div>{% endif %}
+  {% endfor %}</div>
+  {% if superseded %}<p class="text-xs text-slate-500 mt-3">Superseded images kept for provenance: {% for s in superseded %}#{{ s.id }}→#{{ s.superseded_by }} {% endfor %}</p>{% endif %}
+  {% if user.role in ('operator','referring') %}
+  <form method="post" action="/cases/{{ case.id }}/images" enctype="multipart/form-data" class="mt-4 flex flex-wrap gap-2 items-end border-t pt-3">
+    <div><label class="lbl" for="files">Upload JPEG/PNG (≤10 MB each, ≤8 per case)</label><input id="files" type="file" name="files" multiple accept="image/jpeg,image/png" required></div>
+    <div><label class="lbl" for="lat">Confirmed laterality</label><select id="lat" name="laterality" class="inp"><option value="unknown">unknown - confirm later</option><option value="OD">Right (OD)</option><option value="OS">Left (OS)</option></select></div>
+    <div><label class="lbl" for="view">View</label><select id="view" name="view" class="inp"><option>macula-centred</option><option>disc-centred</option><option>other</option></select></div>
+    <button class="btn btn-sec">Upload</button>
+  </form>
+  <form method="post" action="/cases/{{ case.id }}/analyze" class="mt-3"><button class="btn" {% if not imgs %}disabled{% endif %}>Run quality + DR analysis</button>
+    <span class="text-xs text-slate-500 ml-2">Runs locally; images never leave the research environment.</span></form>{% endif %}
+</section>
+
+<aside class="card" aria-labelledby="res-h">
+  <h2 id="res-h" class="font-semibold mb-2">Model output <span class="pill tag-model">Research model</span></h2>
+  {% if not run %}<p class="text-slate-500 text-sm">Not assessed yet. Absence of a result is not a negative result.</p>
+  {% elif run.status=='failed' %}<p class="text-rose-700">Model unavailable - proceed with manual clinical review.</p>
+  {% else %}
+  <p class="text-3xl font-semibold my-2">{{ status_pill(res.overall) }}</p>
+  {% if res.overall=='No model finding' %}<p class="text-sm">No referable-DR signal in either eye. This is <strong>not</strong> “no disease”.</p>{% endif %}
+  {% if res.overall=='Unable to assess' %}<p class="text-sm">No assessable image. Recapture or refer for manual review - no reassurance is given.</p>{% endif %}
+  {% if res.overall=='Assessment incomplete' %}<p class="text-sm">At least one eye lacks an assessable image; findings from the available eye are preserved but the assessment is incomplete.</p>{% endif %}
+  <dl class="text-sm grid grid-cols-2 gap-x-2 gap-y-1 mt-3">
+    <dt class="text-slate-500">Patient score</dt><dd>{{ '%.2f'|format(res.patient_score) if res.patient_score is not none else '-' }}</dd>
+    <dt class="text-slate-500">Threshold</dt><dd>{{ '%.2f'|format(res.thresholds.dr_referable) }} <span class="text-xs">(val sens ≥ 90%)</span></dd>
+    <dt class="text-slate-500">Eye coverage</dt><dd>{{ 'complete' if res.complete else 'INCOMPLETE' }}</dd>
+    <dt class="text-slate-500">Views disagree</dt><dd>{{ 'YES - review' if res.discrepant else 'no' }}</dd>
+    {% for eye in ['OD','OS'] %}{% if res.eyes[eye].max_icdr is defined %}<dt class="text-slate-500">{{ eye }} ICDR est.</dt><dd>{{ res.eyes[eye].max_icdr }} · {{ ICDR_NAMES[res.eyes[eye].max_icdr] }}{% if res.eyes[eye].edema_signal %} · edema signal{% endif %}</dd>{% endif %}{% endfor %}
+    <dt class="text-slate-500">Source</dt><dd><span class="pill {{ 'st-neg' if run.source=='live' else 'st-pos' }}">{{ run.source|upper }}</span></dd>
+    <dt class="text-slate-500">Model</dt><dd class="break-all text-xs">{{ run.model_version }}</dd>
+    <dt class="text-slate-500">Thresholds</dt><dd class="text-xs">{{ run.threshold_version }}</dd>
+    <dt class="text-slate-500">Run</dt><dd class="text-xs">#{{ run.id }} · v{{ run.case_version }} · {{ run.latency_ms }} ms</dd>
+  </dl>
+  <p class="text-xs text-slate-500 mt-2">Score type: {{ res.score_type }}. ICDR grade and edema are research signals (P1).</p>
+  <h3 class="font-semibold text-sm mt-4">Why this result</h3>
+  <ul class="text-xs text-slate-700 space-y-2 mt-1">
+  {% for eye, name in [('OD','Right eye'),('OS','Left eye')] %}{% set e = res.eyes[eye] %}
+    <li><strong>{{ name }}:</strong>
+    {% if e.score is defined %}
+      {% set drivers = [] %}{% for im in imgs if im.laterality==eye %}{% set r = res.images.get(im.id|string) %}{% if r and r.p_dr is defined and r.quality!='unassessable' %}{% set _ = drivers.append((r.p_dr, im.id, r)) %}{% endif %}{% endfor %}
+      {% set top = (drivers|sort(reverse=True))[0] %}
+      highest score {{ '%.2f'|format(e.score) }} from image #{{ top[1] }}, {{ 'above' if e.score >= res.thresholds.dr_referable else 'below' }} the frozen threshold {{ '%.2f'|format(res.thresholds.dr_referable) }} by {{ '%.2f'|format((e.score - res.thresholds.dr_referable)|abs) }}.
+      {% if e.discrepant %}Views disagree.{% endif %}
+      <div class="mt-1" aria-label="ICDR grade probabilities for image {{ top[1] }}">{% for pr in top[2].icdr_probs %}<div class="flex items-center gap-1"><span class="w-16">ICDR {{ loop.index0 }}</span><span class="inline-block h-2 bg-indigo-400 rounded" style="width: {{ (pr*100)|round|int }}px"></span><span>{{ '%.0f'|format(pr*100) }}%</span></div>{% endfor %}</div>
+    {% else %}{{ e.status }} - {{ e.n_images }} image(s), none assessable by the quality gate (threshold P(unusable) {{ '%.2f'|format(res.thresholds.quality_poor) }}).{% endif %}</li>
+  {% endfor %}</ul>
+  <h3 class="font-semibold text-sm mt-4">Limitations</h3>
+  <ul class="list-disc ml-5 text-xs text-slate-600 space-y-1">{% for l in res.limitations %}<li>{{ l }}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if review %}<div class="mt-4 border-t pt-3"><span class="pill tag-hcp">HCP interpretation (signed)</span><p class="text-sm mt-1">{{ review.interpretation }}</p><p class="text-xs text-slate-500">{{ review.hcp.name }} · {{ review.signed_at|dt }}</p></div>{% endif %}
+</aside>
+</div>
+
+{# ================================================================ SYSTEMIC #}
+{% elif tab == 'systemic' %}
+{% macro contrib_bars(c) -%}
+<div class="space-y-0.5">{% for k, v in c.items() %}<div class="flex items-center gap-1 text-[11px]"><span class="w-40 truncate">{{ k }}</span>
+<span class="relative inline-block w-32 h-2 bg-slate-100 rounded"><span class="absolute top-0 h-2 rounded {{ 'bg-rose-400' if v > 0 else 'bg-emerald-400' }}" style="{{ 'left:50%' if v > 0 else 'right:50%' }}; width: {{ [(v|abs)*200, 64]|min|round|int }}px"></span><span class="absolute left-1/2 top-[-2px] h-3 border-l border-slate-400"></span></span>
+<span class="w-12 text-right">{{ '%+.3f'|format(v) }}</span></div>{% endfor %}</div>
+{%- endmacro %}
+<section class="card">
+  <h2 class="font-semibold">Systemic health review</h2>
+  <p class="text-sm text-slate-600 mb-3">Three separate kinds of evidence. A research association never overwrites recorded history and never writes a diagnosis. “Not evaluated” is not zero. Associations are validated by 5-fold patient cross-validation on all 1,291 mBRSET patients; labels are self-reported history.</p>
+  <table class="t"><thead><tr><th>Condition</th><th><span class="pill tag-rec">Recorded history</span></th><th><span class="pill tag-model">Research model association</span></th><th><span class="pill tag-hcp">HCP assessment</span></th><th>Next task</th></tr></thead><tbody>
+  {% for code, label in (conditions.items()|list) + (COMPOSITE_LABELS.items()|list) %}{% set h = (case.patient.conditions or {}).get(code, {}) %}{% set s = res.systemic.get(code) if res else None %}
+  <tr><td class="font-medium">{{ label }}</td>
+    <td>{% if code in COMPOSITE_LABELS %}<span class="text-xs text-slate-500">derived research target</span>{% else %}<span class="pill {{ 'st-pos' if h.value=='present' else 'st-neg' if h.value=='absent' else 'st-na' }}">reported {{ h.value or 'unknown' }}</span><div class="text-xs text-slate-500">{{ h.source or 'no source' }}{% if h.date %} · {{ h.date }}{% endif %}</div>{% endif %}</td>
+    <td class="min-w-[18rem]">{% if s %}{{ status_pill(s.status) }}
+        {% if s.score is defined %}<div class="text-xs text-slate-500">score {{ s.score }} / threshold {{ s.threshold }} · {{ s.inputs }}</div>{% elif s.reason %}<div class="text-xs text-slate-500">{{ s.reason }}</div>{% endif %}
+        {% if s.status=='No research signal' and h.value=='present' %}<div class="text-xs text-amber-800">Recorded history stands; a low model score does not make it absent.</div>{% endif %}
+        {% if s.cv_auroc is defined %}
+        <details class="mt-1"><summary class="cursor-pointer text-xs text-teal-800">Why / how reliable?</summary>
+          <div class="text-xs space-y-2 mt-1">
+            <p>Validation: 5-fold CV AUROC <strong>{{ s.cv_auroc }}</strong> (95% CI {{ s.cv_ci95[0] }}-{{ s.cv_ci95[1] }}), {{ s.n_pos }} positive of {{ s.n }} patients · model {{ s.variant }}.</p>
+            <p>Retinal added value vs metadata only: {{ '%+.3f'|format(s.retinal_added_value.delta_auroc) }} AUROC (95% CI {{ s.retinal_added_value.ci95[0] }} to {{ s.retinal_added_value.ci95[1] }}){% if s.retinal_added_value.ci95[0] <= 0 %} - <em>not shown to add value</em>{% endif %}.</p>
+            {% if s.contributions %}<p class="font-semibold">This patient: what moved the score (vs cohort baseline)</p>{{ contrib_bars(s.contributions) }}{% endif %}
+            <p class="font-semibold">Across the cohort: AUROC lost when each input is shuffled</p>{{ contrib_bars(s.global_importance) }}
+            {% if s.per_image %}<p class="font-semibold">Per-image scores</p><p>{% for iid, v in s.per_image.items() %}#{{ iid }}: {{ v }}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+              {% set first = (s.per_image.keys()|list)[0] %}<details><summary class="cursor-pointer text-teal-800">Model attention on image #{{ first }}</summary><img loading="lazy" src="/images/{{ first }}/explain?head={{ code }}" alt="Attention map for {{ label }} association, image {{ first }}" class="w-64 rounded mt-1"><p class="text-[11px] text-slate-500">Regions that moved the image term of this association score. Not a lesion finding.</p></details>{% endif %}
+          </div></details>{% endif %}
+        {% else %}<span class="pill st-na">Not evaluated</span>{% endif %}</td>
+    <td>{% if review and review.systemic_notes.get(code) %}<span class="pill tag-hcp">{{ review.systemic_notes[code]|replace('_',' ') }}</span>{% else %}<span class="text-slate-400 text-sm">-</span>{% endif %}</td>
+    <td class="text-sm">{% if h.value=='present' %}Care coordination (known condition){% elif s and s.status=='Research signal' %}HCP review queue (model-only signal){% elif code in COMPOSITE_LABELS %}-{% elif h.value=='unknown' or not h.value %}Clarify history{% else %}-{% endif %}</td></tr>
+  {% endfor %}</tbody></table>
+  {% if user.role in ('operator','referring') %}
+  <details class="mt-4"><summary class="cursor-pointer text-sm font-semibold">Update recorded history / clinical context (creates a new case version)</summary>
+  <form method="post" action="/cases/{{ case.id }}/intake" class="grid md:grid-cols-4 gap-2 mt-2">
+    {% for code, label in conditions.items() %}<label class="text-sm">{{ label }}<select name="cond_{{ code }}" class="inp">{% for v in ['unknown','present','absent'] %}<option {% if (case.patient.conditions or {}).get(code,{}).get('value')==v %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>{% endfor %}
+    <label class="md:col-span-4 text-sm">Symptoms / context<textarea name="symptoms" class="inp" rows="2">{{ case.symptoms }}</textarea></label>
+    {% if user.role=='referring' %}<label class="text-sm md:col-span-4"><input type="checkbox" name="urgent_concern" {% if case.urgent_concern %}checked{% endif %}> Clinician-entered urgent concern</label>{% endif %}
+    <div><button class="btn btn-sec">Save</button></div></form></details>{% endif %}
+</section>
+
+{# ================================================================ REVIEW #}
+{% elif tab == 'review' %}
+<div class="grid lg:grid-cols-2 gap-5">
+<section class="card">
+  <h2 class="font-semibold mb-2">Clinician review and signature</h2>
+  {% if user.role != 'referring' %}<p class="text-slate-600">Only the referring HCP can sign a clinical interpretation.</p>
+  {% else %}
+  {% if not run %}<p class="pill st-warn mb-2">No model result - you may still review manually.</p>{% elif run_stale %}<p class="pill st-warn mb-2">Model result is from an earlier case version and will not be bound to this signature.</p>{% endif %}
+  <form method="post" action="/cases/{{ case.id }}/reviews" class="space-y-3">
+    <fieldset><legend class="lbl">Decision on the model output</legend>
+      {% for v, l in [('accept','Accept model output'),('disagree','Disagree (reason required)'),('recapture','Request recapture'),('manual_review','Proceed with manual review')] %}
+      <label class="block text-sm"><input type="radio" name="decision" value="{{ v }}" required> {{ l }}</label>{% endfor %}</fieldset>
+    <label class="block"><span class="lbl">Your interpretation (separate from the model)</span><textarea name="interpretation" rows="3" class="inp" required></textarea></label>
+    <label class="block"><span class="lbl">Override / disagreement reason</span><textarea name="override_reason" rows="2" class="inp"></textarea></label>
+    <label class="block"><span class="lbl">Next action (clinician decision, independent of the model)</span>
+      <select name="next_action" class="inp"><option value="refer_retina">Refer to retina specialist</option><option value="routine_rescreen">Routine re-screen per local policy</option><option value="manual_exam">Comprehensive eye exam</option><option value="recapture">Recapture images</option><option value="systemic_review">Systemic review only</option></select></label>
+    <fieldset><legend class="lbl">Systemic review (per condition)</legend>
+      <div class="grid sm:grid-cols-2 gap-2">{% for code, label in conditions.items() %}<label class="text-sm">{{ label }}<select name="sys_{{ code }}" class="inp"><option value="">- no action -</option><option value="reviewed_known">Reviewed known history</option><option value="request_context">Request missing context</option><option value="consider_specialist">Consider specialist question</option><option value="not_relevant">Not relevant today</option></select></label>{% endfor %}</div></fieldset>
+    <label class="block text-sm"><input type="checkbox" name="attest" required> I have reviewed the images and outputs and sign this interpretation (binds case v{{ case.version }}{% if run and not run_stale %}, model run #{{ run.id }}{% endif %}).</label>
+    <button class="btn">Sign review</button>
+  </form>{% endif %}
+</section>
+<section class="card"><h2 class="font-semibold mb-2">Signed reviews</h2>
+  {% for r in reviews %}<div class="border-b py-2 text-sm">
+    <div><span class="pill tag-hcp">{{ r.decision|replace('_',' ') }}</span> {% if r.case_version != case.version %}<span class="pill st-warn">superseded (v{{ r.case_version }})</span>{% else %}<span class="pill st-neg">current</span>{% endif %}</div>
+    <p class="mt-1">{{ r.interpretation }}</p>{% if r.override_reason %}<p class="text-xs">Reason: {{ r.override_reason }}</p>{% endif %}
+    <p class="text-xs text-slate-500">{{ r.hcp.name }} · {{ r.signed_at|dt }} · next: {{ r.next_action }} · run {{ r.model_run_id or 'none' }} · sig {{ r.signature[:16] }}…</p></div>
+  {% else %}<p class="text-slate-500 text-sm">No signed review.</p>{% endfor %}
+</section></div>
+
+{# ================================================================ CONSULT #}
+{% elif tab == 'consult' %}
+{% if not review %}<div class="card"><p>A current signed review is required before a consultation package can be prepared. {% if reviews %}The case changed after the last signature.{% endif %}</p><a class="btn mt-2" href="/cases/{{ case.id }}?tab=review">Go to review</a></div>
+{% else %}
+<div class="grid lg:grid-cols-5 gap-5">
+<section class="card lg:col-span-2">
+  <h2 class="font-semibold mb-2">1 · Question and recipient</h2>
+  <form method="get" action="/cases/{{ case.id }}" class="space-y-3"><input type="hidden" name="tab" value="consult">
+    <label class="block"><span class="lbl">Topic</span><select name="topic" class="inp"><option value="retinal" {% if topic=='retinal' %}selected{% endif %}>Retinal consultation</option>{% for code, label in conditions.items() %}<option value="{{ code }}" {% if topic==code %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+    <label class="block"><span class="lbl">Focused consultation question *</span><textarea name="question" rows="3" class="inp" required placeholder="e.g. Please assess for referable diabetic retinopathy and advise on management and follow-up.">{{ q_question }}</textarea></label>
+    <label class="block"><span class="lbl">Specialist (approved directory) *</span><select name="recipient_id" class="inp" required><option value="">- choose -</option>{% for s in specialists %}<option value="{{ s.id }}" {% if s.id==q_recipient %}selected{% endif %}>{{ s.name }} · {{ s.specialty }}</option>{% endfor %}</select></label>
+    <button class="btn btn-sec">Preview package</button>
+  </form>
+  <p class="text-xs text-slate-500 mt-3">Separate referrals can be sent for different questions under this case; each has its own owner, acknowledgement and closure.</p>
+</section>
+<section class="card lg:col-span-3">
+  <h2 class="font-semibold mb-2">2 · Package preview (exactly what the specialist receives)</h2>
+  {% if draft and q_question and q_recipient %}
+  <h3 class="text-sm font-semibold">Question</h3><p class="mb-2">{{ draft.question }}</p>
+  <h3 class="text-sm font-semibold">Reviewed facts <span class="text-xs font-normal text-slate-500">(each traced to case data)</span></h3>
+  <ul class="text-sm space-y-1 mb-2">{% for f in draft.facts %}<li>• {{ f.text }} <span class="text-xs text-slate-400">[{{ f.source }}]</span></li>{% endfor %}</ul>
+  {% if draft.gaps %}<h3 class="text-sm font-semibold">Coverage gaps / unknowns</h3><ul class="text-sm text-amber-800 mb-2">{% for g in draft.gaps %}<li>• {{ g }}</li>{% endfor %}</ul>{% endif %}
+  <h3 class="text-sm font-semibold">Evidence brief <span class="text-xs font-normal text-slate-500">({{ draft.evidence.source }})</span></h3>
+  <p class="text-sm mb-1">{{ draft.evidence.answer }}</p>
+  <ol class="text-xs text-slate-600 list-decimal ml-5 mb-3">{% for r in draft.evidence.references %}<li><a class="underline" href="{{ r.url }}" target="_blank" rel="noopener">{{ r.title }}</a> - {{ r.publisher }}, {{ r.version }}</li>{% endfor %}</ol>
+  <form method="post" action="/referrals" class="space-y-2 border-t pt-3">
+    <input type="hidden" name="case_id" value="{{ case.id }}"><input type="hidden" name="topic" value="{{ topic }}">
+    <input type="hidden" name="question" value="{{ q_question }}"><input type="hidden" name="recipient_id" value="{{ q_recipient }}">
+    <input type="hidden" name="approval_token" value="{{ token }}"><input type="hidden" name="idempotency_key" value="{{ idem }}">
+    <label class="block"><span class="lbl">Note to specialist (optional)</span><textarea name="sender_note" rows="2" class="inp"></textarea></label>
+    <label class="block"><span class="lbl">Information intentionally marked unavailable (optional)</span><input name="unavailable" class="inp" placeholder="e.g. recent HbA1c not available"></label>
+    <label class="block text-sm"><input type="checkbox" name="attest" required> I approve this exact package and recipient. Any change to case, images, findings or recipient invalidates this approval.</label>
+    <button class="btn">Sign and send to specialist</button>
+  </form>
+  {% else %}<p class="text-slate-500 text-sm">Enter a question and choose a specialist, then preview.</p>{% endif %}
+</section></div>{% endif %}
+
+{# ================================================================ REFERRALS #}
+{% elif tab == 'referrals' %}
+<section class="card"><h2 class="font-semibold mb-2">Referrals for this case</h2>
+<table class="t"><thead><tr><th>Ref</th><th>Topic</th><th>Recipient</th><th>Stage</th><th>Accountable</th><th>Appointment</th></tr></thead><tbody>
+{% for r in refs %}<tr><td><a class="underline" href="/referrals/{{ r.id }}">RL-{{ r.id }}</a></td><td>{{ conditions.get(r.topic, 'Retinal consultation') }}</td><td>{{ r.recipient.name }}</td><td><span class="pill st-na">{{ r.stage }}</span></td><td>{{ r.owner.name }}</td><td>{{ r.appointment.get('date') or '-' }}</td></tr>
+{% else %}<tr><td colspan="6" class="text-slate-500">No referrals yet.</td></tr>{% endfor %}</tbody></table></section>
+
+{# ================================================================ TIMELINE #}
+{% elif tab == 'timeline' %}
+<section class="card"><h2 class="font-semibold mb-2">Audit timeline <span class="text-xs font-normal text-slate-500">(append-only)</span></h2>
+<ol class="border-l-2 border-slate-200 ml-2">{% for e in events %}
+<li class="ml-4 mb-3"><div class="text-xs text-slate-500">{{ e.created_at|dt }}{% if e.version %} · v{{ e.version }}{% endif %}</div>
+<div class="text-sm"><strong>{{ e.action|replace('_',' ') }}</strong> · {{ actors[e.actor_id].name if e.actor_id in actors else 'system' }}</div><div class="text-sm text-slate-700">{{ e.detail }}</div></li>{% endfor %}</ol></section>
+{% endif %}
+{% endblock %}

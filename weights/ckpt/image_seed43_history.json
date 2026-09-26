@@ -1,0 +1,105 @@
+{
+ "history": [
+  {
+   "epoch": 1,
+   "train_loss": 3.1688765419267977,
+   "val_score": 0.9634030441120999,
+   "val_auroc": {
+    "quality_poor": 0.9261390089790489,
+    "dr_referable": 0.9821132781191557,
+    "edema": 0.9819568452380953
+   },
+   "minutes": 7.86992316643397
+  },
+  {
+   "epoch": 2,
+   "train_loss": 2.3845073100739875,
+   "val_score": 0.9692046564279669,
+   "val_auroc": {
+    "quality_poor": 0.931559694047223,
+    "dr_referable": 0.9870024044883783,
+    "edema": 0.9890518707482993
+   },
+   "minutes": 15.72872583468755
+  },
+  {
+   "epoch": 3,
+   "train_loss": 2.1375479845874077,
+   "val_score": 0.970681704950047,
+   "val_auroc": {
+    "quality_poor": 0.9355836381775856,
+    "dr_referable": 0.9886053967405823,
+    "edema": 0.9878560799319727
+   },
+   "minutes": 23.572762739658355
+  },
+  {
+   "epoch": 4,
+   "train_loss": 1.9905702587777534,
+   "val_score": 0.9719902927466902,
+   "val_auroc": {
+    "quality_poor": 0.9368473561689391,
+    "dr_referable": 0.9894870424792946,
+    "edema": 0.9896364795918366
+   },
+   "minutes": 31.423780107498168
+  },
+  {
+   "epoch": 5,
+   "train_loss": 1.748747899469021,
+   "val_score": 0.9707464515387735,
+   "val_auroc": {
+    "quality_poor": 0.9323578317259728,
+    "dr_referable": 0.987135987176062,
+    "edema": 0.9927455357142857
+   },
+   "minutes": 39.30400778452555
+  },
+  {
+   "epoch": 6,
+   "train_loss": 1.517269262434107,
+   "val_score": 0.9686784254947344,
+   "val_auroc": {
+    "quality_poor": 0.9295976055869637,
+    "dr_referable": 0.9841704515094842,
+    "edema": 0.9922672193877552
+   },
+   "minutes": 47.151346520582834
+  },
+  {
+   "epoch": 7,
+   "train_loss": 1.259743687853349,
+   "val_score": 0.9670572826725726,
+   "val_auroc": {
+    "quality_poor": 0.9255404057199867,
+    "dr_referable": 0.9824873096446701,
+    "edema": 0.9931441326530612
+   },
+   "minutes": 54.99813540379206
+  },
+  {
+   "epoch": 8,
+   "train_loss": 0.9944661001188565,
+   "val_score": 0.9668116324415328,
+   "val_auroc": {
+    "quality_poor": 0.9260059860325907,
+    "dr_referable": 0.9812316323804434,
+    "edema": 0.9931972789115646
+   },
+   "minutes": 62.84551767508189
+  }
+ ],
+ "best_val_score": 0.9719902927466902,
+ "pos_weights": {
+  "quality_poor": 4.047791420591652,
+  "dr_referable": 2.16127192771177,
+  "edema": 3.250259864870683,
+  "systemic_hypertension": 1.0,
+  "nephropathy": 5.087119801890641,
+  "vascular_disease": 2.23606797749979,
+  "neuropathy": 4.545166287977356,
+  "acute_myocardial_infarction": 3.4163472556853134,
+  "diabetic_foot": 2.5248762345905194,
+  "obesity": 3.588175023601831
+ }
+}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% block content %}
+<div class="max-w-3xl mx-auto">
+<h1 class="text-2xl font-semibold mb-1">Sign in to the demo workspace</h1>
+<p class="text-slate-600 mb-6">Pick a synthetic account. Each role sees and can do different things (operator, referring HCP, specialist, coordinator, admin).</p>
+{% for tid, tname in tenants.items() %}
+<h2 class="font-semibold mt-4 mb-2">{{ tname }}</h2>
+<div class="grid sm:grid-cols-2 gap-3">
+{% for u in users if u.tenant_id == tid %}
+<form method="post" action="/login" class="card flex items-center justify-between">
+  <input type="hidden" name="user_id" value="{{ u.id }}">
+  <div><div class="font-semibold">{{ u.name }}</div><div class="text-sm text-slate-500">{{ u.role }}{% if u.specialty %} · {{ u.specialty }}{% endif %}</div></div>
+  <button class="btn">Sign in</button>
+</form>
+{% endfor %}</div>{% endfor %}
+</div>{% endblock %}

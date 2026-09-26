@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% block content %}
+<h1 class="text-2xl font-semibold mb-4">New screening case</h1>
+<form method="post" action="/cases" class="card grid md:grid-cols-2 gap-4 max-w-4xl">
+  <div><label class="lbl" for="pid">Existing synthetic patient</label>
+    <select id="pid" name="patient_id" class="inp"><option value="">- new patient -</option>{% for p in patients %}<option value="{{ p.id }}">{{ p.ref }}</option>{% endfor %}</select></div>
+  <div><label class="lbl" for="pref">or new patient reference (synthetic only)</label><input id="pref" name="patient_ref" class="inp" placeholder="RL-P0100"></div>
+  <div><label class="lbl" for="ed">Encounter date *</label><input id="ed" type="date" name="encounter_date" class="inp" required></div>
+  <div><label class="lbl" for="dev">Device / image source *</label><input id="dev" name="device" class="inp" value="Portable smartphone fundus camera (dilated)" required></div>
+  <div><label class="lbl" for="own">Referring HCP (case owner)</label><select id="own" name="owner_id" class="inp">{% for h in hcps %}<option value="{{ h.id }}" {% if h.id==user.id %}selected{% endif %}>{{ h.name }}</option>{% endfor %}</select></div>
+  <div class="grid grid-cols-3 gap-2">
+    <div><label class="lbl" for="age">Age</label><input id="age" name="age" type="number" min="0" max="120" class="inp"></div>
+    <div><label class="lbl" for="sex">Sex</label><select id="sex" name="sex" class="inp"><option value="">unknown</option><option>female</option><option>male</option></select></div>
+    <div><label class="lbl" for="dm">Diabetes (yrs)</label><input id="dm" name="dm_time" type="number" min="0" max="90" step="0.5" class="inp"></div>
+  </div>
+  <div class="grid grid-cols-2 gap-2">
+    <div><label class="lbl" for="ins">Insulin</label><select id="ins" name="insulin" class="inp"><option>unknown</option><option>yes</option><option>no</option></select></div>
+    <div><label class="lbl" for="oral">Oral diabetes treatment</label><select id="oral" name="oral_treatment" class="inp"><option>unknown</option><option>yes</option><option>no</option></select></div>
+  </div>
+  <fieldset class="md:col-span-2"><legend class="lbl">Reported history (unknown stays unknown - never treated as “no”)</legend>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">{% for code, label in conditions.items() %}
+      <label class="text-sm">{{ label }}<select name="cond_{{ code }}" class="inp"><option>unknown</option><option>present</option><option>absent</option></select></label>{% endfor %}</div></fieldset>
+  <div class="md:col-span-2"><label class="lbl" for="sym">Current symptoms / clinical context (clinician-entered)</label><textarea id="sym" name="symptoms" rows="2" class="inp"></textarea></div>
+  {% if user.role=='referring' %}<label class="text-sm"><input type="checkbox" name="urgent_concern"> Clinician-entered urgent concern (overrides any model result)</label>{% endif %}
+  <div class="md:col-span-2"><button class="btn">Create case</button></div>
+</form>{% endblock %}

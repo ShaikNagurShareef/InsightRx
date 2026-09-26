@@ -1,0 +1,189 @@
+{
+ "seeds": [
+  42,
+  43
+ ],
+ "calibration": {
+  "seeds": [
+   42,
+   43
+  ],
+  "temperatures": {
+   "quality_poor": 0.9118908322301632,
+   "dr_referable": 0.7465200288733648,
+   "edema": 1.0186906987804865
+  },
+  "thresholds": {
+   "quality_poor": 0.08829712122678757,
+   "quality_uncertain": 0.08829712122678757,
+   "dr_referable_patient": 0.8792955875396729,
+   "edema": 0.6972044706344604
+  },
+  "threshold_version": "val-P1-1",
+  "rules": {
+   "quality": "recall(unusable) >= 0.95 on val images",
+   "dr": "patient sensitivity >= 0.9 on val (max over assessable images)",
+   "edema": "image sensitivity >= 0.90 on val"
+  }
+ },
+ "image_quality_poor": {
+  "n": 1032,
+  "n_pos": 53,
+  "auroc": 0.916703605912849,
+  "auprc": 0.5280980888360773,
+  "brier": 0.04467134837269426,
+  "sensitivity": 0.8490566037735849,
+  "specificity": 0.8212461695607763,
+  "ppv": 0.20454545454545456,
+  "npv": 0.9901477832512315,
+  "accuracy": 0.8226744186046512,
+  "confusion": {
+   "tn": 804,
+   "fp": 175,
+   "fn": 8,
+   "tp": 45
+  },
+  "threshold": 0.08829712122678757
+ },
+ "image_dr_referable": {
+  "n": 981,
+  "n_pos": 165,
+  "auroc": 0.983236779560309,
+  "auprc": 0.9462922272198966,
+  "brier": 0.03421751662724336,
+  "sensitivity": 0.8363636363636363,
+  "specificity": 0.9779411764705882,
+  "ppv": 0.8846153846153846,
+  "npv": 0.9672727272727273,
+  "accuracy": 0.9541284403669725,
+  "confusion": {
+   "tn": 798,
+   "fp": 18,
+   "fn": 27,
+   "tp": 138
+  },
+  "threshold": 0.5
+ },
+ "image_edema": {
+  "n": 986,
+  "n_pos": 89,
+  "auroc": 0.9832274873799055,
+  "auprc": 0.8829472140610518,
+  "brier": 0.0333794350727287,
+  "sensitivity": 0.7640449438202247,
+  "specificity": 0.9832775919732442,
+  "ppv": 0.8192771084337349,
+  "npv": 0.9767441860465116,
+  "accuracy": 0.9634888438133874,
+  "confusion": {
+   "tn": 882,
+   "fp": 15,
+   "fn": 21,
+   "tp": 68
+  },
+  "threshold": 0.6972044706344604
+ },
+ "image_dr_referable_gated": {
+  "n": 805,
+  "n_pos": 145,
+  "auroc": 0.9818861024033438,
+  "auprc": 0.9447774921505306,
+  "brier": 0.03739993573776866,
+  "sensitivity": 0.7310344827586207,
+  "specificity": 0.9939393939393939,
+  "ppv": 0.9636363636363636,
+  "npv": 0.943884892086331,
+  "accuracy": 0.9465838509316771,
+  "confusion": {
+   "tn": 656,
+   "fp": 4,
+   "fn": 39,
+   "tp": 106
+  },
+  "threshold": 0.8792955875396729
+ },
+ "image_icdr": {
+  "qwk": 0.8737331743889557,
+  "accuracy": 0.8858307849133538,
+  "confusion": [
+   [
+    755,
+    0,
+    3,
+    0,
+    2
+   ],
+   [
+    45,
+    5,
+    6,
+    0,
+    0
+   ],
+   [
+    24,
+    3,
+    73,
+    16,
+    0
+   ],
+   [
+    1,
+    0,
+    1,
+    16,
+    3
+   ],
+   [
+    0,
+    0,
+    2,
+    6,
+    20
+   ]
+  ]
+ },
+ "patient_dr_referable": {
+  "n": 247,
+  "n_pos": 60,
+  "auroc": 0.980035650623886,
+  "auprc": 0.9590459847924866,
+  "brier": 0.04360832998408168,
+  "sensitivity": 0.7333333333333333,
+  "specificity": 0.9946524064171123,
+  "ppv": 0.9777777777777777,
+  "npv": 0.9207920792079208,
+  "accuracy": 0.9311740890688259,
+  "confusion": {
+   "tn": 186,
+   "fp": 1,
+   "fn": 16,
+   "tp": 44
+  },
+  "threshold": 0.8792955875396729,
+  "auroc_ci95": [
+   0.9593132868089764,
+   0.9958213947984458
+  ],
+  "sensitivity_ci95": [
+   0.6176225490196079,
+   0.8484848484848485
+  ],
+  "specificity_ci95": [
+   0.9833333333333333,
+   1.0
+  ],
+  "cascade": {
+   "patients_labeled": 258,
+   "patients_scored": 247,
+   "unable_to_assess": 11,
+   "positives_unable_to_assess": 0,
+   "incomplete_eye_coverage": 46
+  }
+ },
+ "quality_gate": {
+  "unusable_recall": 0.8490566037735849,
+  "usable_false_rejection": 0.1787538304392237,
+  "coverage": 0.7868217054263565
+ }
+}

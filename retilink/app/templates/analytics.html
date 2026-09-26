@@ -1,0 +1,66 @@
+{% extends "base.html" %}{% block title %}Analytics · RetiLink{% endblock %}{% block content %}
+<div class="flex items-center gap-3 mb-4"><h1 class="text-2xl font-semibold">Analytics</h1>
+<nav class="flex border-b" aria-label="Analytics views"><a class="tab" href="/analytics?view=workflow" {% if view=='workflow' %}aria-current="page"{% endif %}>Workflow (engagement)</a><a class="tab" href="/analytics?view=model" {% if view=='model' %}aria-current="page"{% endif %}>Model performance</a></nav></div>
+{% if view == 'workflow' %}
+<p class="pill st-warn mb-4">SIMULATED demo workflow data - not a measured clinical benefit</p>
+<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+  <div class="card"><div class="text-sm text-slate-500">Referrals sent</div><div class="text-3xl font-semibold">{{ n_sent }}</div></div>
+  <div class="card"><div class="text-sm text-slate-500">Median acknowledgement latency</div><div class="text-3xl font-semibold">{{ '%.1f h'|format(ack_median) if ack_median is not none else '-' }}</div><div class="text-xs text-slate-500">n={{ n_ack }} acknowledged</div></div>
+  <div class="card"><div class="text-sm text-slate-500">Closed with signed response</div><div class="text-3xl font-semibold">{{ closed }} / {{ n_sent }}</div><div class="text-xs text-slate-500">pending {{ pending }} · alternative dispositions {{ alt|dictsort|map('join',': ')|join(', ') or 0 }}</div></div>
+  <div class="card"><div class="text-sm text-slate-500">Open tasks · overdue</div><div class="text-3xl font-semibold">{{ n_open }} · <span class="{{ 'text-rose-700' if overdue else '' }}">{{ overdue }}</span></div></div>
+</div>
+<section class="card"><h2 class="font-semibold mb-3">Handoff funnel (referrals that reached each stage)</h2>
+{% set mx = (funnel[0][1] or 1) %}
+{% for s, n in funnel %}<div class="flex items-center gap-3 mb-2"><div class="w-40 text-sm">{{ s }}</div><div class="flex-1 bg-slate-100 rounded h-6"><div class="bg-teal-700 h-6 rounded" style="width: {{ (100 * n / mx)|round(1) }}%"></div></div><div class="w-10 text-sm text-right">{{ n }}</div></div>{% endfor %}
+<p class="text-xs text-slate-500 mt-2">Denominator: all referrals in this tenant; observation window: since workspace seed. Declined / unreachable / patient-declined are not counted as completed.</p></section>
+{% else %}
+{% set im = metrics.get('image_metrics.json') %}
+{% if not im %}<div class="card">No evaluation metrics found for the loaded model ({{ model_version }}).</div>{% else %}
+{% set pd = im.patient_dr_referable %}
+<p class="text-sm text-slate-600 mb-3">Untouched mBRSET test split (patient-grouped, {{ pd.cascade.patients_labeled }} labelled patients) · {{ model_version }} · thresholds frozen on validation ({{ calib.threshold_version }}).</p>
+<div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+  <div class="card"><div class="text-sm text-slate-500">Referable DR · patient AUROC</div><div class="text-3xl font-semibold">{{ '%.3f'|format(pd.auroc) }}</div><div class="text-xs text-slate-500">95% CI {{ '%.3f'|format(pd.auroc_ci95[0]) }}-{{ '%.3f'|format(pd.auroc_ci95[1]) }}</div></div>
+  <div class="card"><div class="text-sm text-slate-500">Sensitivity / specificity</div><div class="text-3xl font-semibold">{{ '%.0f'|format(100*pd.sensitivity) }}% / {{ '%.0f'|format(100*pd.specificity) }}%</div><div class="text-xs text-slate-500">target ≥90% / ≥70% · n_pos {{ pd.n_pos }} of {{ pd.n }}</div></div>
+  <div class="card"><div class="text-sm text-slate-500">Quality gate · unusable recall</div><div class="text-3xl font-semibold">{{ '%.0f'|format(100*im.quality_gate.unusable_recall) }}%</div><div class="text-xs text-slate-500">usable falsely rejected {{ '%.1f'|format(100*im.quality_gate.usable_false_rejection) }}% · coverage {{ '%.1f'|format(100*im.quality_gate.coverage) }}%</div></div>
+  <div class="card"><div class="text-sm text-slate-500">ICDR 0-4 · quadratic κ</div><div class="text-3xl font-semibold">{{ '%.3f'|format(im.image_icdr.qwk) }}</div><div class="text-xs text-slate-500">image level (P1)</div></div>
+</div>
+<div class="grid lg:grid-cols-2 gap-5">
+<section class="card"><h2 class="font-semibold mb-2">Image-level heads (test)</h2><table class="t"><thead><tr><th>Head</th><th>n (pos)</th><th>AUROC</th><th>AUPRC</th><th>Sens</th><th>Spec</th></tr></thead><tbody>
+{% for k, l in [('image_quality_poor','Unusable image'),('image_dr_referable','Referable DR (ICDR≥2)'),('image_dr_referable_gated','Referable DR, gated images @ patient thr'),('image_edema','Macular edema (research)')] %}{% set m = im[k] %}
+<tr><td>{{ l }}</td><td>{{ m.n }} ({{ m.n_pos }})</td><td>{{ '%.3f'|format(m.auroc) }}</td><td>{{ '%.3f'|format(m.auprc) }}</td><td>{{ '%.2f'|format(m.sensitivity) }}</td><td>{{ '%.2f'|format(m.specificity) }}</td></tr>{% endfor %}</tbody></table>
+<h3 class="font-semibold text-sm mt-4">Patient confusion matrix (referable DR)</h3>
+<table class="t w-auto"><tr><th></th><th>Pred −</th><th>Pred +</th></tr><tr><th>True −</th><td>{{ pd.confusion.tn }}</td><td>{{ pd.confusion.fp }}</td></tr><tr><th>True +</th><td>{{ pd.confusion.fn }}</td><td>{{ pd.confusion.tp }}</td></tr></table>
+<p class="text-xs text-slate-500 mt-2">Cascade: {{ pd.cascade.unable_to_assess }} patients unable to assess ({{ pd.cascade.positives_unable_to_assess }} of them positive) · {{ pd.cascade.incomplete_eye_coverage }} with incomplete eye coverage. PPV {{ '%.2f'|format(pd.ppv) }} · NPV {{ '%.2f'|format(pd.npv) }} at observed prevalence.</p></section>
+{% macro reliability_svg(rows, title) -%}
+<figure class="mt-2"><svg viewBox="0 0 220 220" width="220" height="220" role="img" aria-label="{{ title }}">
+  <rect x="30" y="10" width="180" height="180" fill="none" stroke="#cbd5e1"/>
+  <line x1="30" y1="190" x2="210" y2="10" stroke="#94a3b8" stroke-dasharray="4 3"/>
+  {% for r in rows %}<circle cx="{{ 30 + 180*r.mean_pred }}" cy="{{ 190 - 180*r.observed }}" r="{{ [3, (r.n ** 0.5)/2]|max|round(1) }}" fill="#0f766e" fill-opacity="0.75"><title>predicted {{ '%.2f'|format(r.mean_pred) }}, observed {{ '%.2f'|format(r.observed) }}, n={{ r.n }}</title></circle>{% endfor %}
+  <text x="120" y="212" font-size="10" text-anchor="middle" fill="#475569">predicted</text>
+  <text x="10" y="100" font-size="10" text-anchor="middle" fill="#475569" transform="rotate(-90 10 100)">observed</text>
+</svg><figcaption class="text-xs text-slate-500">{{ title }} (dot size ∝ n; dashed = perfect calibration)</figcaption></figure>
+{%- endmacro %}
+<section class="card"><h2 class="font-semibold mb-2">Calibration (test split)</h2>
+<div class="flex flex-wrap gap-6">{{ reliability_svg(im.reliability.image_dr_referable, 'Referable DR, image level') }}{{ reliability_svg(im.reliability.patient_dr_referable, 'Referable DR, patient max score') }}</div>
+<p class="text-xs text-slate-500">The patient score is the maximum over images, so it runs above observed rates - one reason it is shown as a screening score against a frozen threshold rather than as a probability.</p></section></div>
+{% set cv = metrics.get('systemic_cv.json') %}
+{% if cv %}
+<section class="card mt-5"><h2 class="font-semibold mb-1">Systemic association models · 5-fold patient cross-validation (all 1,291 patients)</h2>
+<p class="text-xs text-slate-500 mb-2">Frozen RETFound / DINOv2-L image features (never exposed to labels) vs metadata. Chosen variant = best out-of-fold AUROC among 7 (mildly optimistic). Enabled only if AUROC ≥ 0.65 and 95% CI lower bound ≥ 0.55.</p>
+<div class="overflow-x-auto"><table class="t"><thead><tr><th>Target</th><th>Pos / n</th><th>Metadata only</th><th>Best image-only</th><th>Best fused</th><th>Chosen (95% CI)</th><th>Retina adds (95% CI)</th><th>Most important input</th><th>Status</th></tr></thead><tbody>
+{% for t, r in cv.items() %}{% set a = r.oof_auroc %}
+{% set ns = namespace(img=0, fus=0) %}{% for k, v in a.items() %}{% if k.startswith('image:') and v > ns.img %}{% set ns.img = v %}{% elif k.startswith('fused:') and v > ns.fus %}{% set ns.fus = v %}{% endif %}{% endfor %}
+{% set top = r.permutation_importance|dictsort(by='value', reverse=True)|first %}
+<tr><td>{{ SYSTEMIC_LABELS.get(t) or COMPOSITE_LABELS.get(t) or t }}</td><td>{{ r.n_pos }} / {{ r.n }}</td>
+<td>{{ '%.3f'|format(a.metadata) }}</td><td>{{ '%.3f'|format(ns.img) }}</td><td>{{ '%.3f'|format(ns.fus) }}</td>
+<td><strong>{{ '%.3f'|format(r.chosen_metrics.auroc) }}</strong> ({{ '%.2f'|format(r.chosen_metrics.auroc_ci95[0]) }}-{{ '%.2f'|format(r.chosen_metrics.auroc_ci95[1]) }})<div class="text-[11px] text-slate-500">{{ r.chosen.replace('RETFound_dinov2_meh_','RETFound ').replace('dinov2-large_','DINOv2-L ') }}</div></td>
+<td>{{ '%+.3f'|format(r.retinal_added_value.delta_auroc) }} ({{ '%+.2f'|format(r.retinal_added_value.ci95[0]) }}, {{ '%+.2f'|format(r.retinal_added_value.ci95[1]) }})</td>
+<td>{{ META_LABELS.get(top[0], top[0]) }} ({{ '%.3f'|format(top[1]) }})</td>
+<td><span class="pill {{ 'st-neg' if r.enabled else 'st-na' }}">{{ 'enabled' if r.enabled else 'not evaluated' }}</span></td></tr>{% endfor %}
+</tbody></table></div>
+<p class="text-xs text-slate-500 mt-2">“Retina adds” = paired bootstrap AUROC difference, best image-containing variant minus metadata-only. Importance = mean AUROC drop on held-out folds when the input is shuffled. Labels are self-reported history, not adjudicated diagnoses.</p></section>
+{% endif %}
+{% endif %}
+<section class="card mt-5"><h2 class="font-semibold mb-2">Live inference runs in this workspace</h2><p class="text-sm">{{ runs|length }} runs · median latency {{ (runs|map(attribute='latency_ms')|sort|list)[runs|length//2] if runs else '-' }} ms · sources {{ runs|map(attribute='source')|unique|join(', ') }}</p></section>
+{% endif %}
+{% endblock %}

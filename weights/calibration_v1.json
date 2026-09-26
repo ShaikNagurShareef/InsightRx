@@ -1,0 +1,23 @@
+{
+ "seeds": [
+  42,
+  43
+ ],
+ "temperatures": {
+  "quality_poor": 0.9118908322301632,
+  "dr_referable": 0.7465200288733648,
+  "edema": 1.0186906987804865
+ },
+ "thresholds": {
+  "quality_poor": 0.08829712122678757,
+  "quality_uncertain": 0.08829712122678757,
+  "dr_referable_patient": 0.8792955875396729,
+  "edema": 0.6972044706344604
+ },
+ "threshold_version": "val-P1-1",
+ "rules": {
+  "quality": "recall(unusable) >= 0.95 on val images",
+  "dr": "patient sensitivity >= 0.9 on val (max over assessable images)",
+  "edema": "image sensitivity >= 0.90 on val"
+ }
+}

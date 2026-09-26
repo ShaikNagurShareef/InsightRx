@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% block title %}Inbox · RetiLink{% endblock %}{% block content %}
+<div class="flex flex-wrap items-center gap-3 mb-4">
+  <h1 class="text-2xl font-semibold">Action inbox</h1>
+  <nav class="flex gap-2 text-sm" aria-label="Filters">
+    {% for k, l in [('', 'All'), ('overdue','Overdue'), ('awaiting','Awaiting response'), ('incomplete','Incomplete information')] %}
+    <a href="/inbox?filter={{ k }}" class="pill {{ 'st-neg' if filter==k else 'st-na' }}" {% if filter==k %}aria-current="page"{% endif %}>{{ l }}</a>{% endfor %}
+  </nav>
+  <span class="text-xs text-slate-500 ml-auto">Sorted by due time (SIMULATED demo due rules). Urgency is clinician-assigned, never inferred.</span>
+</div>
+<section class="card mb-6" aria-labelledby="tasks-h">
+  <h2 id="tasks-h" class="font-semibold mb-2">My next actions ({{ tasks|length }})</h2>
+  {% if tasks %}<table class="t"><thead><tr><th>Task</th><th>Case</th><th>Due</th><th></th></tr></thead><tbody>
+  {% for t in tasks %}<tr>
+    <td>{{ t.title }}</td>
+    <td><a class="underline" href="{{ '/referrals/%d'|format(t.referral_id) if t.referral_id else '/cases/%d'|format(t.case_id) }}">{{ 'RL-%d'|format(t.referral_id) if t.referral_id else 'Case #%d'|format(t.case_id) }}</a></td>
+    <td>{% if is_overdue(t.due_at) %}<span class="pill st-pos">Overdue · {{ t.due_at|dt }}</span>{% elif t.due_at %}{{ t.due_at|dt }}{% else %}-{% endif %}</td>
+    <td><a class="btn" href="{{ '/referrals/%d'|format(t.referral_id) if t.referral_id else '/cases/%d'|format(t.case_id) }}">Open</a></td></tr>{% endfor %}
+  </tbody></table>{% else %}<p class="text-slate-500">Nothing assigned to you.</p>{% endif %}
+</section>
+{% if refs %}<section class="card mb-6"><h2 class="font-semibold mb-2">Consultations</h2>
+<table class="t"><thead><tr><th>Ref</th><th>Topic</th><th>From → To</th><th>Stage</th><th>Accountable</th><th>Sent</th></tr></thead><tbody>
+{% for r in refs %}<tr><td><a class="underline" href="/referrals/{{ r.id }}">RL-{{ r.id }}</a></td><td>{{ SYSTEMIC_LABELS.get(r.topic, 'Retinal consultation') }}</td>
+<td>{{ r.sender.name }} → {{ r.recipient.name }}</td><td><span class="pill {{ 'st-neg' if r.stage=='Closed' else 'st-warn' if r.stage in ('Sent','Needs information') else 'st-na' }}">{{ r.stage }}</span>{% if r.stage=='Sent' and r.opened_at %} <span class="text-xs text-slate-500">opened</span>{% endif %}</td>
+<td>{{ r.owner.name }}</td><td>{{ r.sent_at|dt }}</td></tr>{% endfor %}</tbody></table></section>{% endif %}
+{% if cases %}<section class="card"><h2 class="font-semibold mb-2">Cases</h2>
+<table class="t"><thead><tr><th>Case</th><th>Patient (synthetic)</th><th>Encounter</th><th>Stage</th><th>Owner</th><th>Open tasks</th></tr></thead><tbody>
+{% for c in cases %}<tr><td><a class="underline" href="/cases/{{ c.id }}">#{{ c.id }}</a>{% if c.urgent_concern %} <span class="pill st-pos">Clinician: urgent concern</span>{% endif %}</td><td>{{ c.patient.ref }}</td><td>{{ c.encounter_date }}</td><td><span class="pill st-na">{{ c.status }}</span></td><td>{{ c.owner.name }}</td><td>{{ case_tasks.get(c.id, 0) }}</td></tr>{% endfor %}
+</tbody></table></section>{% endif %}
+{% endblock %}

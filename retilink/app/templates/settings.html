@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block content %}
+<h1 class="text-2xl font-semibold mb-4">Notification preferences</h1>
+<form method="post" action="/settings" class="card max-w-lg space-y-3">
+<fieldset><legend class="lbl">Delivery</legend>
+<label class="block"><input type="radio" name="mode" value="immediate" {% if (user.prefs or {}).get('mode','immediate')=='immediate' %}checked{% endif %}> Immediate in-app notification</label>
+<label class="block"><input type="radio" name="mode" value="digest" {% if (user.prefs or {}).get('mode')=='digest' %}checked{% endif %}> Digest (batched)</label></fieldset>
+<div class="grid grid-cols-2 gap-2"><label>Quiet hours start (0-23)<input name="quiet_start" type="number" min="0" max="23" class="inp" value="{{ (user.prefs or {}).get('quiet_start') if (user.prefs or {}).get('quiet_start') is not none else '' }}"></label>
+<label>Quiet hours end<input name="quiet_end" type="number" min="0" max="23" class="inp" value="{{ (user.prefs or {}).get('quiet_end') if (user.prefs or {}).get('quiet_end') is not none else '' }}"></label></div>
+<p class="text-xs text-slate-500">Notifications never contain clinical detail. External channels (email/SMS) are not enabled in this prototype.</p>
+<button class="btn">Save</button></form>{% endblock %}

@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.env
+*.db
+*.npy
+app_store*/
+.pytest_cache/
+# model weights are tracked with Git LFS under weights/ only
+*.pth
+*.joblib
+!weights/**/*.pth
+!weights/**/*.joblib

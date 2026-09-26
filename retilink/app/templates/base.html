@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}RetiLink{% endblock %}</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:p-2 focus:bg-white">Skip to content</a>
+<header class="bg-white border-b border-slate-200">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center gap-4">
+    <a href="/inbox" class="flex items-center gap-2 font-semibold text-lg text-teal-800">
+      <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="currentColor"/><path d="M2 12h6M16 12h6" stroke="currentColor" stroke-width="2"/></svg>
+      RetiLink</a>
+    <span class="text-xs px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">Research prototype · not for clinical use</span>
+    {% if user %}
+    <nav class="flex gap-3 text-sm" aria-label="Main">
+      <a class="nav" href="/inbox">Action inbox</a>
+      {% if user.role in ('operator','referring') %}<a class="nav" href="/cases/new">New case</a>{% endif %}
+      <a class="nav" href="/evidence">Evidence</a>
+      <a class="nav" href="/analytics">Analytics</a>
+      <a class="nav" href="/settings">Preferences</a>
+    </nav>
+    <div class="ml-auto flex items-center gap-3 text-sm">
+      <span class="text-xs px-2 py-0.5 rounded border {{ 'bg-emerald-50 border-emerald-300 text-emerald-900' if vision_mode=='live' else 'bg-rose-50 border-rose-300 text-rose-900' }}">Vision model: {{ vision_mode|upper }}</span>
+      <a href="/notifications" class="relative" aria-label="Notifications, {{ unread }} unread">🔔{% if unread %}<span class="absolute -top-2 -right-3 text-[10px] bg-rose-600 text-white rounded-full px-1.5">{{ unread }}</span>{% endif %}</a>
+      <span><strong>{{ user.name }}</strong> <span class="text-slate-500">· {{ user.role }}{% if user.specialty %} · {{ user.specialty }}{% endif %}</span></span>
+      <a class="underline" href="/login">Switch user</a>
+    </div>
+    {% endif %}
+  </div>
+</header>
+<main id="main" class="max-w-7xl mx-auto px-4 py-6">
+{% block content %}{% endblock %}
+</main>
+<footer class="max-w-7xl mx-auto px-4 pb-8 text-xs text-slate-500">
+RetiLink · HackGT 13 · Synthetic patients and simulated workflow data. Model outputs estimate mBRSET dataset labels for clinician review and are not diagnoses.
+</footer>
+</body>
+</html>

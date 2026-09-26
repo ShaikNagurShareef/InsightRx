@@ -1,0 +1,65 @@
+[
+  {
+    "id": "icdr-2003",
+    "title": "Proposed international clinical diabetic retinopathy and diabetic macular edema disease severity scales",
+    "publisher": "Ophthalmology (Wilkinson CP et al.)",
+    "version": "2003;110(9):1677-1682",
+    "url": "https://doi.org/10.1016/S0161-6420(03)00475-5",
+    "topics": ["dr", "grading", "icdr", "retinal", "severity", "referable", "moderate", "npdr", "pdr"],
+    "passage": "Paraphrased summary: the international clinical scale has five levels - no apparent retinopathy, mild non-proliferative DR (microaneurysms only), moderate non-proliferative DR (more than microaneurysms but less than severe), severe non-proliferative DR, and proliferative DR (neovascularisation and/or vitreous or preretinal haemorrhage)."
+  },
+  {
+    "id": "ada-soc-retinopathy",
+    "title": "Standards of Care in Diabetes - Retinopathy, Neuropathy, and Foot Care",
+    "publisher": "American Diabetes Association (Diabetes Care, annual supplement)",
+    "version": "current annual edition - confirm year at use",
+    "url": "https://diabetesjournals.org/care",
+    "topics": ["dr", "retinal", "screening", "referral", "referable", "macular", "edema", "ophthalmologist", "interval"],
+    "passage": "Paraphrased summary: people with any level of macular edema, moderate or worse non-proliferative DR, or any proliferative DR should be referred to an ophthalmologist experienced in DR management; retinal photography with remote reading can serve as a screening tool but is not a substitute for a comprehensive eye examination."
+  },
+  {
+    "id": "ada-soc-foot",
+    "title": "Standards of Care in Diabetes - Foot Care",
+    "publisher": "American Diabetes Association (Diabetes Care, annual supplement)",
+    "version": "current annual edition - confirm year at use",
+    "url": "https://diabetesjournals.org/care",
+    "topics": ["diabetic_foot", "foot", "neuropathy", "ulcer", "podiatry"],
+    "passage": "Paraphrased summary: a comprehensive foot evaluation at least annually is recommended for people with diabetes to identify risk factors for ulcers and amputation, with more frequent inspection for those with high-risk features."
+  },
+  {
+    "id": "kdigo-2022-dm-ckd",
+    "title": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in Chronic Kidney Disease",
+    "publisher": "Kidney Disease: Improving Global Outcomes (Kidney International)",
+    "version": "2022;102(5S):S1-S127",
+    "url": "https://kdigo.org/guidelines/diabetes-ckd/",
+    "topics": ["nephropathy", "kidney", "ckd", "albuminuria", "egfr", "renal"],
+    "passage": "Paraphrased summary: kidney involvement in diabetes is assessed with urine albumin-to-creatinine ratio and estimated GFR, generally at least annually; staging and treatment decisions rest on those measurements, not on imaging surrogates."
+  },
+  {
+    "id": "wong-2001-retinal-microvasculature",
+    "title": "Retinal microvascular abnormalities and their relationship with hypertension, cardiovascular disease, and mortality",
+    "publisher": "Survey of Ophthalmology (Wong TY et al.)",
+    "version": "2001;46(1):59-80",
+    "url": "https://doi.org/10.1016/S0039-6257(01)00234-X",
+    "topics": ["hypertension", "vascular_disease", "cardiovascular", "retinal", "microvascular", "acute_myocardial_infarction"],
+    "passage": "Paraphrased summary: population studies report associations between retinal microvascular signs (e.g. arteriolar narrowing, arteriovenous nicking, retinopathy) and hypertension and cardiovascular outcomes; these are population associations and do not establish an individual diagnosis."
+  },
+  {
+    "id": "mbrset-2025",
+    "title": "A portable retinal imaging dataset of people with diabetes from Brazil (mBRSET)",
+    "publisher": "Scientific Data (Nakayama LF et al.)",
+    "version": "2025; PhysioNet mBRSET v1.0",
+    "url": "https://www.nature.com/articles/s41597-025-04627-3",
+    "topics": ["mbrset", "dataset", "portable", "camera", "limitations", "model", "validation"],
+    "passage": "Paraphrased summary: mBRSET contains 5,164 images from 1,291 people with diabetes captured with a handheld smartphone-based fundus camera after pharmacological dilation, with image-quality, ICDR grading and self-reported clinical metadata. Model performance on this dataset does not transfer automatically to other cameras or populations."
+  },
+  {
+    "id": "aao-ppp-dr-2019",
+    "title": "Diabetic Retinopathy Preferred Practice Pattern",
+    "publisher": "American Academy of Ophthalmology",
+    "version": "2019 (check for updates)",
+    "url": "https://www.aao.org/education/preferred-practice-pattern/diabetic-retinopathy-ppp",
+    "topics": ["dr", "retinal", "follow-up", "macular", "edema", "management", "referral", "specialist"],
+    "passage": "Paraphrased summary: the recommended follow-up interval and management depend on the retinopathy level and presence of centre-involving macular edema, as determined by examination; the ophthalmologist communicates findings back to the primary care physician managing the patient's diabetes."
+  }
+]

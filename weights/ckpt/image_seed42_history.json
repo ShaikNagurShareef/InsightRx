@@ -1,0 +1,72 @@
+{
+ "history": [
+  {
+   "epoch": 1,
+   "train_loss": 3.1679869510431207,
+   "val_score": 0.9734306066702655,
+   "val_auroc": {
+    "quality_poor": 0.9461922181576321,
+    "dr_referable": 0.9916644402885385,
+    "edema": 0.9824351615646258
+   },
+   "minutes": 7.888234031200409
+  },
+  {
+   "epoch": 2,
+   "train_loss": 2.365275992756396,
+   "val_score": 0.9618495148704939,
+   "val_auroc": {
+    "quality_poor": 0.900997672098437,
+    "dr_referable": 0.9931605663905958,
+    "edema": 0.9913903061224489
+   },
+   "minutes": 15.752138936519623
+  },
+  {
+   "epoch": 3,
+   "train_loss": 2.1637303560181,
+   "val_score": 0.9717191695273567,
+   "val_auroc": {
+    "quality_poor": 0.9345859660791487,
+    "dr_referable": 0.9894469676729896,
+    "edema": 0.9911245748299319
+   },
+   "minutes": 23.590015641848247
+  },
+  {
+   "epoch": 4,
+   "train_loss": 1.9194501630500354,
+   "val_score": 0.9695269355865009,
+   "val_auroc": {
+    "quality_poor": 0.9333555038244097,
+    "dr_referable": 0.9909831685813518,
+    "edema": 0.9842421343537415
+   },
+   "minutes": 31.43250338236491
+  },
+  {
+   "epoch": 5,
+   "train_loss": 1.7191272594232474,
+   "val_score": 0.9731129708135571,
+   "val_auroc": {
+    "quality_poor": 0.9428001330229464,
+    "dr_referable": 0.9856799358803099,
+    "edema": 0.9908588435374149
+   },
+   "minutes": 39.264022664229074
+  }
+ ],
+ "best_val_score": 0.9734306066702655,
+ "pos_weights": {
+  "quality_poor": 4.047791420591652,
+  "dr_referable": 2.16127192771177,
+  "edema": 3.250259864870683,
+  "systemic_hypertension": 1.0,
+  "nephropathy": 5.087119801890641,
+  "vascular_disease": 2.23606797749979,
+  "neuropathy": 4.545166287977356,
+  "acute_myocardial_infarction": 3.4163472556853134,
+  "diabetic_foot": 2.5248762345905194,
+  "obesity": 3.588175023601831
+ }
+}

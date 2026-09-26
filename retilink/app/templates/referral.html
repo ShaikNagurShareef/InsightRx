@@ -1,0 +1,84 @@
+{% extends "base.html" %}{% block title %}RL-{{ ref.id }} · RetiLink{% endblock %}{% block content %}
+{% set p = ref.package %}
+<div class="flex flex-wrap items-center gap-3 mb-4">
+  <h1 class="text-2xl font-semibold">Consultation RL-{{ ref.id }}</h1>
+  <span class="pill st-na text-base">{{ ref.stage }}</span>
+  <span class="text-sm text-slate-600">{{ ref.sender.name }} → {{ ref.recipient.name }} ({{ ref.recipient.specialty }}) · accountable now: <strong>{{ ref.owner.name }}</strong></span>
+  {% if msg %}<span class="pill st-warn" role="status">{{ msg }}</span>{% endif %}
+</div>
+<ol class="flex flex-wrap gap-1 text-xs mb-5" aria-label="Referral progress">
+{% for s in ['Sent','Acknowledged','Scheduled','Visit recorded','Response received','Closed'] %}
+<li class="pill {{ 'st-neg' if s==ref.stage else 'st-na' }}">{{ s }}</li>{% endfor %}
+<li class="text-slate-500 ml-2">Sent {{ ref.sent_at|dt }} · Opened {{ ref.opened_at|dt }} · Acknowledged {{ ref.acknowledged_at|dt }}{% if ref.due_at and ref.stage=='Sent' %} · ack due {{ ref.due_at|dt }} (SIMULATED){% endif %}</li></ol>
+
+<div class="grid lg:grid-cols-5 gap-5">
+<section class="card lg:col-span-3" aria-labelledby="pkg-h">
+  <h2 id="pkg-h" class="font-semibold">Signed consultation package <span class="text-xs font-normal text-slate-500">hash {{ ref.package_hash[:16] }}…</span></h2>
+  <p class="mt-2"><strong>Question:</strong> {{ ref.question }}</p>
+  <ul class="text-sm space-y-1 my-2">{% for f in p.facts %}<li>• {{ f.text }} <span class="text-xs text-slate-400">[{{ f.source }}]</span></li>{% endfor %}</ul>
+  {% if p.gaps %}<p class="text-sm font-semibold">Gaps</p><ul class="text-sm text-amber-800">{% for g in p.gaps %}<li>• {{ g }}</li>{% endfor %}</ul>{% endif %}
+  {% if p.unavailable %}<p class="text-sm"><strong>Marked unavailable by sender:</strong> {{ p.unavailable }}</p>{% endif %}
+  {% if p.sender_note %}<p class="text-sm"><strong>Note:</strong> {{ p.sender_note }}</p>{% endif %}
+  <div class="grid grid-cols-4 gap-2 my-3">{% for im in imgs %}<a href="/images/{{ im.id }}" target="_blank"><img src="/images/{{ im.id }}" alt="Shared fundus image {{ im.laterality }}" class="rounded bg-black aspect-square object-contain"><span class="text-xs">{{ im.laterality }}</span></a>{% endfor %}</div>
+  <details><summary class="text-sm font-semibold cursor-pointer">Evidence brief & limitations</summary>
+    <p class="text-sm mt-2">{{ p.evidence.answer }}</p>
+    <ol class="text-xs list-decimal ml-5">{% for r in p.evidence.references %}<li><a class="underline" href="{{ r.url }}" target="_blank" rel="noopener">{{ r.title }}</a> ({{ r.publisher }})</li>{% endfor %}</ol>
+    <ul class="text-xs text-slate-600 mt-2">{% for l in p.limitations %}<li>• {{ l }}</li>{% endfor %}</ul></details>
+  <p class="text-sm mt-3"><a class="underline" href="/cases/{{ ref.case_id }}">Open case workspace</a></p>
+</section>
+
+<section class="lg:col-span-2 space-y-4">
+  <div class="card"><h2 class="font-semibold mb-2">Conversation</h2>
+  {% for m in msgs %}<div class="border-b py-2 text-sm"><div class="text-xs text-slate-500">{{ m.author.name }} · {{ m.created_at|dt }} · {{ m.kind|replace('_',' ') }}</div>
+    <p>{{ m.body }}</p>{% if m.recommendation %}<p><span class="pill tag-hcp">Recommendation: {{ m.recommendation }}</span></p>{% endif %}
+    {% if m.signature %}<p class="text-xs text-emerald-700">✔ Signed · {{ m.signature[:16] }}… (immutable)</p>{% endif %}</div>
+  {% else %}<p class="text-sm text-slate-500">No messages yet.</p>{% endfor %}</div>
+
+  <div class="card space-y-3"><h2 class="font-semibold">Actions</h2>
+  {% if user.id == ref.recipient_id %}
+    {% if ref.stage in ('Sent','Needs information') %}
+    <form method="post" action="/referrals/{{ ref.id }}/action"><input type="hidden" name="action" value="acknowledge"><button class="btn">Accept case</button> <span class="text-xs text-slate-500">Delivery/opening is not acknowledgement.</span></form>
+    <form method="post" action="/referrals/{{ ref.id }}/action" class="space-y-1"><input type="hidden" name="action" value="request_info"><label class="lbl" for="ri">Request more information</label><textarea id="ri" name="body" class="inp" rows="2"></textarea><button class="btn btn-sec">Send request</button></form>
+    <form method="post" action="/referrals/{{ ref.id }}/action" class="space-y-1"><input type="hidden" name="action" value="decline"><label class="lbl" for="dr">Decline (reason required)</label><input id="dr" name="body" class="inp"><button class="btn btn-warn">Decline</button></form>
+    {% endif %}
+    {% if ref.stage in ('Acknowledged','Scheduled','Visit recorded') %}
+    <form method="post" action="/referrals/{{ ref.id }}/action" class="space-y-1"><input type="hidden" name="action" value="respond">
+      <label class="lbl" for="resp">Signed specialist response</label><textarea id="resp" name="body" class="inp" rows="4" required></textarea>
+      <label class="lbl" for="rec">Recommended next action</label><select id="rec" name="recommendation" class="inp" required><option value="">- choose -</option><option>Specialist follow-up visit</option><option>Treatment evaluation at specialist clinic</option><option>Return to primary care with re-screen per local policy</option><option>Further tests requested (see response)</option><option>Refer to another specialty</option></select>
+      <label class="text-sm block"><input type="checkbox" name="attest" required> I sign this response; it cannot be edited afterwards.</label>
+      <button class="btn">Sign and return response</button></form>{% endif %}
+  {% endif %}
+  {% if user.id == ref.sender_id %}
+    {% if ref.stage == 'Needs information' %}<form method="post" action="/referrals/{{ ref.id }}/action" class="space-y-1"><input type="hidden" name="action" value="provide_info"><label class="lbl" for="pi">Provide requested information</label><textarea id="pi" name="body" class="inp" rows="2" required></textarea><button class="btn">Send information</button></form>{% endif %}
+    {% if ref.stage == 'Response received' %}<form method="post" action="/referrals/{{ ref.id }}/action"><input type="hidden" name="action" value="close"><button class="btn">Acknowledge response and close handoff</button></form>{% endif %}
+    {% if ref.stage == 'Declined' %}<a class="btn" href="/cases/{{ ref.case_id }}?tab=consult&topic={{ ref.topic }}&question={{ ref.question|urlencode }}">Send to another specialist</a>{% endif %}
+    {% if 'Cancelled' in allowed %}<form method="post" action="/referrals/{{ ref.id }}/action" class="flex gap-1"><input type="hidden" name="action" value="cancel"><input name="body" class="inp" placeholder="Reason"><button class="btn btn-sec">Cancel</button></form>{% endif %}
+  {% endif %}
+  {% if user.role == 'coordinator' or user.id == ref.recipient_id %}
+    {% if ref.stage in ('Acknowledged','Scheduled') %}
+    <form method="post" action="/referrals/{{ ref.id }}/action" class="grid grid-cols-2 gap-1"><input type="hidden" name="action" value="schedule">
+      <label class="text-xs">Date<input type="date" name="date" class="inp" required></label><label class="text-xs">Time<input type="time" name="time" class="inp"></label>
+      <label class="text-xs">Timezone<input name="tz" class="inp" value="America/New_York"></label><label class="text-xs">Facility<input name="facility" class="inp"></label>
+      <label class="text-xs col-span-2">Confirmation source<input name="confirmation" class="inp" placeholder="phone call with patient"></label>
+      <input type="hidden" name="body" value="rescheduled"><button class="btn col-span-2">{{ 'Reschedule' if ref.stage=='Scheduled' else 'Record appointment' }}</button></form>{% endif %}
+    {% if ref.stage == 'Scheduled' %}
+    <form method="post" action="/referrals/{{ ref.id }}/action" class="inline"><input type="hidden" name="action" value="visit"><button class="btn btn-sec">Visit recorded</button></form>
+    <form method="post" action="/referrals/{{ ref.id }}/action" class="flex gap-1 mt-1"><input type="hidden" name="action" value="missed"><input name="body" class="inp" placeholder="missed / cancelled reason"><button class="btn btn-sec">Missed</button></form>{% endif %}
+  {% endif %}
+  {% if (user.role == 'coordinator' or user.id == ref.sender_id) and ref.stage in ('Acknowledged','Scheduled') %}
+    <form method="post" action="/referrals/{{ ref.id }}/action" class="flex gap-1"><select name="action" class="inp"><option value="unreachable">Patient unreachable</option><option value="patient_declined">Patient declined</option></select><input name="body" class="inp" placeholder="note"><button class="btn btn-sec">Record disposition</button></form>{% endif %}
+  {% if ref.stage not in ('Closed','Declined','Cancelled','Unreachable','Patient declined') and (user.role=='coordinator' or user.id==ref.sender_id) %}
+    <form method="post" action="/referrals/{{ ref.id }}/action" class="flex gap-1"><input type="hidden" name="action" value="reassign_owner"><select name="owner_id" class="inp">{% for c in coords %}<option value="{{ c.id }}">{{ c.name }} (coordinator)</option>{% endfor %}<option value="{{ ref.recipient_id }}">{{ ref.recipient.name }} (specialist)</option><option value="{{ ref.sender_id }}">{{ ref.sender.name }} (referrer)</option></select><button class="btn btn-sec">Reassign owner</button></form>{% endif %}
+  </div>
+
+  {% if user.role in ('coordinator','referring') or user.id == ref.recipient_id %}
+  <div class="card"><h2 class="font-semibold mb-1">Access barriers</h2><p class="text-xs text-slate-500 mb-2">Voluntary; tracked for support, never lowers medical priority.</p>
+    {% for b in barriers %}<div class="flex items-center gap-2 text-sm py-1"><span class="pill {{ 'st-neg' if b.resolved else 'st-warn' }}">{{ b.category }}</span>{{ b.note }}{% if not b.resolved %}<form method="post" action="/barriers/{{ b.id }}/resolve" class="ml-auto"><button class="btn btn-sec !py-0 text-xs">Resolved</button></form>{% endif %}</div>{% endfor %}
+    {% if user.role in ('coordinator','referring') %}<form method="post" action="/referrals/{{ ref.id }}/barriers" class="flex gap-1 mt-2"><select name="category" class="inp !w-36">{% for c in ['transport','language','affordability','contact','preference','other'] %}<option>{{ c }}</option>{% endfor %}</select><input name="note" class="inp" placeholder="note"><button class="btn btn-sec">Add</button></form>{% endif %}
+  </div>{% endif %}
+
+  <div class="card"><h2 class="font-semibold mb-1">Tasks</h2>{% for t in tasks %}<div class="text-sm py-0.5"><span class="pill {{ 'st-neg' if t.status=='done' else 'st-na' if t.status=='cancelled' else 'st-pos' if is_overdue(t.due_at) else 'st-warn' }}">{{ t.status }}</span> {{ t.title }} · {{ t.assignee.name }}</div>{% endfor %}
+  {% if ref.appointment.get('date') %}<p class="text-sm mt-2">Appointment: {{ ref.appointment.date }} {{ ref.appointment.time }} {{ ref.appointment.timezone }} @ {{ ref.appointment.facility }} ({{ ref.appointment.confirmation }})</p>{% endif %}
+  {% if ref.appointment.get('history') %}<p class="text-xs text-slate-500">History: {% for h in ref.appointment.history %}{{ h.date }} ({{ h.reason }}); {% endfor %}</p>{% endif %}</div>
+</section></div>
+{% endblock %}
