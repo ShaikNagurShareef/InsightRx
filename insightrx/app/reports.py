@@ -225,7 +225,7 @@ def patient_report(p):
                     "takes precedence. Red bar: score at or above the frozen threshold (black tick).", "small")]
         rows = [cells(["Condition", "Output", "Score vs threshold", "Reliability"])]
         for s in p["systemic"].values():
-            g = ch.gauge(s["score"], s["threshold"], 110) if "score" in s else P("-", "cell")
+            g = ch.gauge(s["score"], s["threshold"], 84) if "score" in s else P("-", "cell")
             rows.append(cells([s["label"], s.get("status", ""), g,
                                s.get("reliability_text") or s.get("reason", "")], bold_first=True))
         story.append(table(rows, [1.5 * inch, 1.2 * inch, 1.35 * inch, 2.75 * inch]))

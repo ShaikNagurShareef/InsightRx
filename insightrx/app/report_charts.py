@@ -198,7 +198,10 @@ def gauge(score, threshold, width=120):
     d = Drawing(width, 14)
     d.add(Rect(0, 4, width, 6, fillColor=colors.HexColor("#eef2f4"), strokeColor=None, rx=3, ry=3))
     s = max(0.0, min(1.0, float(score)))
-    d.add(Rect(0, 4, width * s, 6, fillColor=SIGNAL if score >= threshold else CLEAR, strokeColor=None, rx=3, ry=3))
+    fill = width * s
+    if fill >= 1:                                        # rounded ends only when the bar is long enough to show them
+        r = 3 if fill >= 6 else 0
+        d.add(Rect(0, 4, fill, 6, fillColor=SIGNAL if score >= threshold else CLEAR, strokeColor=None, rx=r, ry=r))
     tx = width * max(0.0, min(1.0, float(threshold)))
     d.add(Line(tx, 1, tx, 13, strokeColor=INK, strokeWidth=1.2))
     return d
