@@ -17,6 +17,17 @@
 | **Technical execution** | DINOv2-L + LoRA ensemble trained on real Brazilian portable-camera data: **AUROC 0.980** on held-out patients. Live GPU worker, FastAPI on Vercel with Neon, strict CSP, tenant and role isolation, audit trail, 44 tests, and a reproducible demo pipeline. |
 | **Commercial fit** | **Manufacturers** pay per qualified med-info engagement and trial referral, inside a compliance firewall. **Clinics** pay per screen, offset by CPT 92228 reads (about $30 each) and quality bonuses. **Impiricus** gains a non-SMS channel on its HCP network plus eye-detected demand per protein target. Per 10,000 patients: 3,520 exam gaps closeable, about $304K in billable reads, and 2,600 people with retinopathy found. |
 
+### MLH: Best Use of Backboard
+
+**Insight Rx Copilot** gives each clinician an evidence-grounded assistant with **persistent memory**, built on [Backboard.io](https://backboard.io):
+- **Retrieval over Insight Rx's own knowledge.** Guideline therapy classes, interaction rules, protein targets with AlphaFold structure insights, CMS quality and billing rules, and guideline passages are uploaded once to a base assistant.
+- **Memory per clinician.** Each clinician gets a private clone of that assistant, so Backboard's memory learns *their* preferences, practice patterns and follow-up intentions across sessions and patients, never mixing clinicians.
+- **A thread per patient,** so context carries across visits. Every answer shows which remembered facts and documents it used.
+- **A memory page** (`/copilot`) where clinicians see, add and delete what the copilot remembers.
+- **Privacy.** Only a de-identified brief is sent (age band, finding labels, medicines, options, alerts, targets), checked by the same restricted-pattern guard as the Gemini path. The LLM is Gemini 2.5 Flash routed through Backboard.
+
+For the Impiricus challenge, memory is what turns a one-off answer into an ongoing, personalised HCP relationship. Code: `insightrx/app/copilot.py`, `insightrx/app/routes_copilot.py`, `tests/test_copilot.py`. Set `BACKBOARD_API_KEY` to enable it.
+
 ### Screenshots
 
 | Screen result | Personalised targets | AlphaFold target view |

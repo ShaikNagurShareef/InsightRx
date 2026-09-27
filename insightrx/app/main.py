@@ -1300,10 +1300,12 @@ def api_result(case_id: int, user: User = Depends(current_user), db: Session = D
 
 
 # ------------------------------------------------------------------ therapeutics layer (routes_therapy.py)
+from .routes_copilot import router as copilot_router  # noqa: E402
 from .routes_therapy import router as therapy_router  # noqa: E402
 from .seed import backfill_medications, ensure_desk  # noqa: E402
 
 app.include_router(therapy_router)
+app.include_router(copilot_router)
 with SessionLocal() as _db:                     # additive demo upgrades for workspaces seeded before this layer
     if _db.query(Tenant).count():
         backfill_medications(_db)

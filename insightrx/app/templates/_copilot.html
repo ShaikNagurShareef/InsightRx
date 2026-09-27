@@ -1,0 +1,33 @@
+{% from "_ui.html" import icon %}
+
+{# Chat transcript + ask form. action: POST URL; prompts: quick questions #}
+{% macro chat(turns, action, enabled, prompts=[], placeholder="Ask about this patient's therapy, targets or next step") -%}
+<div class="copilot" id="copilot">
+  {% if turns %}
+  <ol class="cp-turns">
+    {% for t in turns %}
+    <li class="cp-{{ t.role }}">
+      <span class="cp-who">{{ 'You' if t.role == 'clinician' else 'Copilot' }}</span>
+      <div class="cp-text">{{ t.content }}</div>
+      {% if t.role == 'copilot' and t.meta %}
+        {% if t.meta.memories %}<p class="cp-mem">{{ icon('book') }}<span>Used what it remembers about you: {{ t.meta.memories|join(' · ') }}</span></p>{% endif %}
+        {% if t.meta.files %}<p class="xs muted">Sources: {{ t.meta.files|join(', ') }}</p>{% endif %}
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% endif %}
+  {% if enabled %}
+  <form method="post" action="{{ action }}" class="cp-form" data-busy="Thinking">
+    {% if prompts %}<div class="cp-prompts">{% for p in prompts %}<button type="submit" name="question" value="{{ p }}" class="cp-chip">{{ p }}</button>{% endfor %}</div>{% endif %}
+    <div class="row" style="gap:8px;align-items:flex-end">
+      <div class="field" style="flex:1"><label class="sr-only" for="cp-q">Question</label><textarea id="cp-q" name="question" rows="2" placeholder="{{ placeholder }}"></textarea></div>
+      <button type="submit" class="btn"><span class="spin" aria-hidden="true"></span>{{ icon('send') }}<span data-label>Ask</span></button>
+    </div>
+    <p class="xs muted">Only a de-identified brief is shared (age band, findings, medicines, options, alerts, targets): never the patient reference, photos or dates. The copilot remembers your preferences across patients; <a href="/copilot">see or delete what it remembers</a>.</p>
+  </form>
+  {% else %}
+  <div class="note">{{ icon('alert') }}<span>The copilot is not connected on this deployment (set <code>BACKBOARD_API_KEY</code>).</span></div>
+  {% endif %}
+</div>
+{%- endmacro %}

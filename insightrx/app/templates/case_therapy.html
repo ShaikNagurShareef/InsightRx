@@ -1,4 +1,4 @@
-{% extends "base.html" %}{% from "_ui.html" import icon, status %}{% from "_therapy.html" import therapy_cards, alert_row, finding_chips, sponsored_block, trial_rows, value_chain, priority_list %}
+{% extends "base.html" %}{% from "_ui.html" import icon, status %}{% from "_therapy.html" import therapy_cards, alert_row, finding_chips, sponsored_block, trial_rows, value_chain, priority_list %}{% from "_copilot.html" import chat %}
 {% block title %}Therapy and trials, {{ case.patient.ref }} | Insight Rx{% endblock %}
 {% block crumbs %}<a href="/patients">Patients</a> / <a href="/cases/{{ case.id }}">{{ case.patient.ref }}</a> / Therapy and trials{% endblock %}
 {% block content %}
@@ -38,6 +38,14 @@
         {{ sponsored_block(sponsored) }}
       </div>
     </section>
+
+    {% if user.role in ('referring', 'specialist') %}
+    <section class="panel copilot-panel" aria-labelledby="cp-h">
+      <div class="panel-head"><h2 id="cp-h">Ask Insight Rx Copilot</h2><span class="hint">Remembers your preferences · Backboard</span></div>
+      <div class="panel-body">{{ chat(copilot_turns, "/cases/%d/copilot"|format(case.id), copilot_enabled,
+          ["What should I start first, given these alerts?", "Explain the top target in two sentences for my notes.", "What would the nephrologist want to know before I refer?"]) }}</div>
+    </section>
+    {% endif %}
 
     <section class="panel" aria-labelledby="tr-h">
       <div class="panel-head"><h2 id="tr-h">Recruiting trials near the clinic</h2><span class="hint">ClinicalTrials.gov</span></div>

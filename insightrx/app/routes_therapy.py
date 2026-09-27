@@ -11,6 +11,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from . import copilot
 from . import external
 from . import oculomics as oc
 from . import personalize
@@ -52,7 +53,8 @@ def case_therapy(case_id: int, request: Request, user: User = Depends(current_us
         request, user, db, active="patients", case=case, res=b["res"], fnd=b["fnd"], meds=b["meds"],
         options=b["options"], current_alerts=b["current_alerts"], sponsored=b["sponsored"], priorities=b["priorities"],
         trials=b["trials"], cms=tx.cms(), gap=gap, gap_text=gap_text, signed=signed,
-        patient_line=patient_line(case.patient), topics=TOPICS))
+        patient_line=patient_line(case.patient), topics=TOPICS,
+        copilot_enabled=copilot.enabled(), copilot_turns=copilot.transcript(db, user, f"case:{case.id}")))
 
 
 def case_bundle(db, case, per_topic=2):

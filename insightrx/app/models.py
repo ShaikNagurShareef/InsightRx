@@ -261,3 +261,16 @@ class ScreenResult(Base):
     result: Mapped[dict] = mapped_column(JSON)
     details: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now, onupdate=now)
+
+
+class CopilotMessage(Base):
+    """Local transcript of Insight Rx Copilot turns (the Backboard thread holds the model-side state and memory)."""
+    __tablename__ = "copilot_messages"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    case_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    scope: Mapped[str] = mapped_column(String(40), index=True)        # "case:<id>" or "general"
+    role: Mapped[str] = mapped_column(String(12))                     # clinician | copilot
+    content: Mapped[str] = mapped_column(Text)
+    meta: Mapped[dict | None] = mapped_column(JSON, nullable=True)     # memories and files used, model
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

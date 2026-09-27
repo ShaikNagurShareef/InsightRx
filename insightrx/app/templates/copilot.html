@@ -1,0 +1,47 @@
+{% extends "base.html" %}{% from "_ui.html" import icon %}{% from "_copilot.html" import chat %}
+{% block title %}Copilot | Insight Rx{% endblock %}
+{% block crumbs %}Copilot{% endblock %}
+{% block content %}
+<div class="head">
+  <div><p class="eyebrow">Insight Rx Copilot · memory by Backboard</p><h1>An assistant that remembers how you practise</h1>
+    <p class="sub">Ask about therapy classes, interactions, protein targets or CMS rules. Answers come from Insight Rx's curated knowledge, and the copilot remembers your preferences and follow-up intentions across sessions and patients. It's private to you, and you can see and delete everything it remembers.</p></div>
+</div>
+
+<div class="workspace" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)">
+  <section class="panel" aria-labelledby="chat-h" id="chat">
+    <div class="panel-head"><h2 id="chat-h">Ask the copilot</h2><span class="hint">{{ provider }} · {{ model }} via Backboard</span></div>
+    <div class="panel-body">
+      {% if user.role in ('referring', 'specialist') %}
+      {{ chat(transcript, "/copilot/ask", enabled, ["Which retinal findings change first-line diabetes therapy?", "When does semaglutide need retinal follow-up?", "How does screening close the CMS131 gap?"], "Ask a general question, e.g. which targets have approved drugs for macular edema?") }}
+      {% else %}<p class="small muted">The copilot is for clinicians (referring and specialist roles).</p>{% endif %}
+      {% if recent %}
+      <h3 style="margin-top:var(--s5)">Recent patient conversations</h3>
+      <ul class="small" style="padding-left:18px">{% for r in recent if r.scope.startswith('case:') %}<li><a href="/cases/{{ r.scope[5:] }}/therapy#copilot">Case {{ r.scope[5:] }}</a>: {{ r.content[:90] }}{{ '…' if r.content|length > 90 }}</li>{% endfor %}</ul>
+      {% endif %}
+    </div>
+  </section>
+
+  <aside class="stack-lg">
+    <section class="panel" aria-labelledby="mem-h">
+      <div class="panel-head"><h2 id="mem-h">What it remembers about you</h2><span class="hint">{{ memories|length }} memor{{ 'y' if memories|length == 1 else 'ies' }}</span></div>
+      <div class="panel-body stack">
+        {% if error %}<div class="note warn">{{ icon('alert') }}<span>{{ error }}</span></div>{% endif %}
+        {% if memories %}
+        <ul class="mems">{% for m in memories %}
+          <li><span class="small">{{ m.content }}</span>
+            <form method="post" action="/copilot/memories/{{ m.id }}/delete"><button type="submit" class="btn quiet sm" aria-label="Forget this">{{ icon('x') }}Forget</button></form></li>
+        {% endfor %}</ul>
+        {% elif enabled %}<p class="small muted">Nothing yet. Tell it how you like to practise below, or just ask questions: it learns your preferences as you go.</p>{% endif %}
+        {% if enabled and user.role in ('referring', 'specialist') %}
+        <form method="post" action="/copilot/remember" class="stack" data-busy="Saving">
+          <div class="field"><label for="rem">Teach it a preference</label>
+            <input id="rem" name="text" maxlength="500" placeholder="e.g. I start SGLT2 inhibitors before GLP-1 agonists in kidney disease"></div>
+          <div><button type="submit" class="btn quiet sm"><span class="spin" aria-hidden="true"></span>{{ icon('plus') }}<span data-label>Remember this</span></button></div>
+        </form>
+        {% endif %}
+        <p class="xs muted">Memories are about you as a clinician (preferences, habits, follow-up plans), never about patients. Stored with Backboard.io, separate for every clinician.</p>
+      </div>
+    </section>
+  </aside>
+</div>
+{% endblock %}
