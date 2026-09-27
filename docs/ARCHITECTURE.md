@@ -222,6 +222,7 @@ flowchart LR
 | Database | Neon Postgres (`DATABASE_URL`). Additive schema upgrades run at startup, and demo data is backfilled when missing. |
 | Models | Run `bash scripts/run_vision_tunnel.sh` on a GPU machine (about 3.6 GB in half precision). The worker registers its tunnel URL with the app every 5 minutes. |
 | Local | `bash scripts/run_app.sh` uses SQLite, with the models on the local GPU or SIMULATED mode. |
+| Any other device | `python scripts/export_models.py` produces an ONNX bundle (LoRA merged, manifest and checksums, parity-checked). With `requirements-runtime.txt` and `INSIGHTRX_MODEL_DIR=<bundle>`, the same `VisionService` runs on ONNX Runtime (CPU, CUDA, CoreML or DirectML) without PyTorch. See [PORTABLE_INFERENCE.md](PORTABLE_INFERENCE.md). |
 
 ---
 

@@ -1,0 +1,12 @@
+# Portable inference from an exported ONNX bundle (scripts/export_models.py). No PyTorch needed.
+# Pick ONE onnxruntime package for your device:
+#   CPU (Linux / Windows / macOS, x86 or ARM): onnxruntime
+#   NVIDIA GPU (CUDA 12):                      onnxruntime-gpu
+#   Windows GPU (DirectML):                    onnxruntime-directml
+#   Apple Silicon: onnxruntime (includes the CoreML execution provider)
+onnxruntime>=1.17
+numpy>=1.24
+pillow>=10
+scikit-learn==1.7.2        # must match the version recorded in the bundle's manifest.json
+joblib>=1.3
+pandas>=2.0               # scikit-learn pipelines of the systemic heads

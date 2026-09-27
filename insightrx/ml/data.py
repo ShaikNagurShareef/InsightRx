@@ -10,31 +10,7 @@ from PIL import Image
 from torch.utils.data import Dataset
 
 from . import config as C
-
-MEAN, STD = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
-
-
-class FundusCrop:
-    """Crop the dark border around the fundus field of view and pad to square (from OculoMoE)."""
-
-    def __init__(self, threshold=15, min_fraction=0.01):
-        self.threshold = threshold
-        self.min_fraction = min_fraction
-
-    def __call__(self, img):
-        arr = np.asarray(img.convert('L'))
-        bright = arr > self.threshold
-        rows = np.flatnonzero(bright.mean(1) > self.min_fraction)
-        cols = np.flatnonzero(bright.mean(0) > self.min_fraction)
-        if len(rows) > 10 and len(cols) > 10:
-            img = img.crop((cols[0], rows[0], cols[-1] + 1, rows[-1] + 1))
-        w, h = img.size
-        s = max(w, h)
-        if w != h:
-            canvas = Image.new('RGB', (s, s), (0, 0, 0))
-            canvas.paste(img, ((s - w) // 2, (s - h) // 2))
-            img = canvas
-        return img
+from .preprocess import MEAN, STD, FundusCrop, open_fundus  # noqa: F401  (re-exported: shared with the ONNX runtime)
 
 
 def eval_transform(size):
@@ -50,12 +26,6 @@ def train_transform(size):
                                           interpolation=T.InterpolationMode.BICUBIC),
                       T.RandomHorizontalFlip(), T.RandomRotation(10),
                       T.ColorJitter(0.15, 0.15, 0.1, 0.02), T.ToTensor(), T.Normalize(MEAN, STD)])
-
-
-def open_fundus(path_or_file, size):
-    img = Image.open(path_or_file)
-    img.draft('RGB', (size * 2, size * 2))          # fast DCT-domain JPEG downscale
-    return img.convert('RGB')
 
 
 class FundusDataset(Dataset):

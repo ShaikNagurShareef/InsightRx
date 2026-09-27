@@ -6,7 +6,7 @@
 
 [![Watch the Insight Rx demo (5:35)](docs/demo/poster.jpg)](docs/demo/InsightRx_demo.mp4)
 
-**▶ [Watch the demo video](docs/demo/InsightRx_demo.mp4)** (5:35, narrated, captioned; [captions .srt](docs/demo/InsightRx_demo.srt)) · **[Live app](https://insightrx-hcp.vercel.app)** (access code on request) · **[User guide](docs/USER_GUIDE.md)** · **[Architecture](docs/ARCHITECTURE.md)** · **[Impiricus fit and judging scorecard](docs/IMPIRICUS_FIT.md)** · **[Sample PDF reports](docs/reports/)**
+**▶ [Watch the demo video](docs/demo/InsightRx_demo.mp4)** (5:35, narrated, captioned; [captions .srt](docs/demo/InsightRx_demo.srt)) · **[Live app](https://insightrx-hcp.vercel.app)** (access code on request) · **[User guide](docs/USER_GUIDE.md)** · **[Architecture](docs/ARCHITECTURE.md)** · **[Impiricus fit and judging scorecard](docs/IMPIRICUS_FIT.md)** · **[Sample PDF reports](docs/reports/)** · **[Portable inference (ONNX)](docs/PORTABLE_INFERENCE.md)**
 
 ### Why it wins
 
@@ -209,6 +209,10 @@ The database seeds itself with the synthetic workspace (no images) on first star
 
 Alternative, paid: `python scripts/deploy_space.py` builds a Hugging Face Docker Space from `deploy/space/` (needs HF PRO plus T4 hardware).
 
+### Run on another device (ONNX, no PyTorch)
+
+`python scripts/export_models.py` writes a self-contained ONNX bundle. It contains the LoRA-merged retina models, the systemic encoders and heads, calibration, a manifest with checksums, and a PyTorch-vs-ONNX parity report. Install `requirements-runtime.txt` on any device (CPU, NVIDIA, Apple Silicon or Windows DirectML) and set `INSIGHTRX_MODEL_DIR` to the bundle; `VisionService`, `scripts/predict.py` and the vision worker switch to ONNX Runtime automatically. Verdicts and systemic scores are identical to PyTorch (probabilities within 5e-7). See [docs/PORTABLE_INFERENCE.md](docs/PORTABLE_INFERENCE.md).
+
 ### Test on new retinal images
 
 - **In the app: Try an image.** Upload up to 4 fundus photos to see the quality gate result, DR score against the frozen threshold, grade probabilities, edema signal and attention map. Nothing is stored. Large phone or camera photos are downscaled in the browser so they fit the upload limit.
@@ -253,13 +257,13 @@ The tests cover:
 insightrx/ml/    config, data, model, train_image, evaluate, frozen, systemic_cv, explain (train_systemic: P1-split reference)
 insightrx/app/   main (routes), routes_therapy, therapeutics, personalize, external, reports, models, workflow (state machine / audit / tasks), vision, remote_vision, seed, llm, evidence, templates/
 insightrx/vision_api.py  GPU vision worker API (used by the deployed app through the tunnel)
-scripts/        JobSubmit.sh, train_local.sh, seed_demo.py, run_app.sh, run_vision_tunnel.sh, deploy_space.py, fetch_structures.py
+scripts/        JobSubmit.sh, train_local.sh, seed_demo.py, run_app.sh, run_vision_tunnel.sh, deploy_space.py, fetch_structures.py, export_models.py (portable ONNX bundle)
 scripts/demo/   narrated demo video pipeline (Microsoft VibeVoice voice + Whisper alignment, Playwright recording, ffmpeg captions) + screenshots.py
 api/, vercel.json  Vercel entry point + config (requirements.txt = web app deps; requirements-ml.txt = models)
 deploy/space/   Dockerfile + pinned requirements for the Hugging Face Space
 weights/        released checkpoints (Git LFS) + calibration + aggregate metrics
 tests/          test_workflow.py, test_therapeutics.py
-docs/           USER_GUIDE, ARCHITECTURE, IMPIRICUS_FIT, screenshots/, reports/ (sample PDFs), demo/ (video via Git LFS, captions, slides)
+docs/           USER_GUIDE, ARCHITECTURE, IMPIRICUS_FIT, PORTABLE_INFERENCE, screenshots/, reports/ (sample PDFs), demo/ (video via Git LFS, captions, slides)
 ```
 
 ## Limitations
