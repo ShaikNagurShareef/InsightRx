@@ -9,7 +9,7 @@ This package contains the full application, the trained models and sample retina
 ## What you need
 
 - Python **3.10, 3.11 or 3.12** ([python.org](https://www.python.org/downloads/); on Windows, tick "Add to PATH" and keep the `py` launcher).
-- About 12 GB of free disk space (7 GB package plus dependencies) and 8 GB or more of RAM (16 GB recommended).
+- About 14 GB of free disk space (6.2 GB zip, 6.3 GB unzipped, plus about 1 GB of dependencies) and **12 GB of RAM minimum** (16 GB recommended). The models use about 7 GB of RAM once loaded.
 - Internet access **once**, to install Python packages. The app then runs offline; live trial and NPI lookups fall back to bundled snapshots.
 
 ## Run it
@@ -28,7 +28,7 @@ powershell -ExecutionPolicy Bypass -File run.ps1      # then open http://127.0.0
 
 Sign in as **Dr. Alex Morgan** (referring clinician), then:
 1. **Patients:** six test patients (`TD-01` … `TD-06`), already screened by the models on your CPU.
-2. **Screen:** upload photos from `test_data/mbrset/patients/<scenario>/` (right eye `OD_*.jpg`, left eye `OS_*.jpg`), add age and medicines, and press **Screen**. With 2–4 photos this takes about 30–90 s on a laptop CPU.
+2. **Screen:** upload photos from `test_data/mbrset/patients/<scenario>/` (right eye `OD_*.jpg`, left eye `OS_*.jpg`), add age and medicines, and press **Screen**. Two photos take about 30 s on an 8–12 core CPU. The first page after `run.sh` may take 20–40 s while the models load in the background.
 3. **Therapy and trials** (on a patient): therapy options, interaction alerts, personalized protein targets, the 3D AlphaFold viewer and PDF reports.
 
 Other accounts show the other roles: **Dr. Priya Nair** (specialist), **Taylor Brooks** (coordinator) and **Morgan Lee** (manufacturer medical-information desk).

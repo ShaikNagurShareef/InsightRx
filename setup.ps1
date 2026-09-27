@@ -21,6 +21,7 @@ INSIGHTRX_SECRET=$secret
 INSIGHTRX_APP_ROOT=$root\local_data
 INSIGHTRX_MODEL_DIR=$root\models\insightrx-onnx-v1
 INSIGHTRX_AUTOSEED=1
+INSIGHTRX_WARMUP=1
 # GEMINI_API_KEY=
 # BACKBOARD_API_KEY=
 "@ | Set-Content -Encoding UTF8 .env

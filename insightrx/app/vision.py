@@ -435,13 +435,14 @@ class VisionService:
 
     # -------------------------------------------------------------- explanation maps
     def explain(self, path, head):
-        """PNG overlay of model attention for one image. head: 'dr_referable' | 'quality_poor' | 'edema' | systemic target."""
+        """PNG overlay of model attention for one image. head: 'dr_referable' | 'quality_poor' | 'edema' | systemic target.
+        Needs the PyTorch backend (gradients); returns None otherwise so callers simply omit the map."""
+        if self.mode != "live" or self.backend != "torch":     # checked before any torch import (CPU/ONNX installs)
+            return None
         import torch
         from PIL import Image as P
         from insightrx.ml.data import eval_transform, open_fundus
         from insightrx.ml.explain import overlay_png, patch_relevance, systemic_image_direction
-        if self.mode != "live" or self.backend != "torch":     # gradient maps need the PyTorch weights
-            return None
         if isinstance(path, (bytes, bytearray)):                  # database-stored image
             import tempfile
             with tempfile.NamedTemporaryFile(suffix=".img", delete=False) as fh:
@@ -473,13 +474,19 @@ class VisionService:
 
 
 _service = None
+_service_lock = threading.Lock()
 
 
 def get_service():
     """Local models by default; INSIGHTRX_VISION=remote uses a vision worker over HTTP (e.g. from Vercel).
-    If the models cannot be loaded (missing weights, GPU out of memory) the app keeps running in SIMULATED mode."""
+    If the models cannot be loaded (missing weights, GPU out of memory) the app keeps running in SIMULATED mode.
+    Thread-safe: concurrent requests during the first load wait for it instead of loading their own copy."""
     global _service
-    if _service is None:
+    if _service is not None:
+        return _service
+    with _service_lock:
+        if _service is not None:
+            return _service
         if os.environ.get("INSIGHTRX_VISION") == "remote":
             from .remote_vision import RemoteVisionService
             _service = RemoteVisionService()

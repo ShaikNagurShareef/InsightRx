@@ -1306,6 +1306,9 @@ from .seed import backfill_medications, ensure_desk  # noqa: E402
 
 app.include_router(therapy_router)
 app.include_router(copilot_router)
+if os.environ.get("INSIGHTRX_WARMUP") == "1":       # local installs: load the models in the background at startup
+    import threading
+    threading.Thread(target=get_service, name="model-warmup", daemon=True).start()
 with SessionLocal() as _db:                     # additive demo upgrades for workspaces seeded before this layer
     if _db.query(Tenant).count():
         backfill_medications(_db)

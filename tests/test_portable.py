@@ -76,3 +76,44 @@ def test_exported_bundle_loads_and_verifies():
     from insightrx.app.vision import VisionService
     svc = VisionService(model_dir=BUNDLE)
     assert svc.backend == "onnx" and svc.mode == "live" and len(svc.models) == len(man["retina"]["files"])
+
+
+def test_model_service_loads_once_under_concurrent_requests(monkeypatch):
+    """Requests arriving while the models load must wait for that load, not start their own copy (OOM on CPU hosts)."""
+    import threading
+    import time as _time
+    from insightrx.app import vision
+    made = []
+
+    class SlowService:
+        def __init__(self, *a, **k):
+            made.append(1)
+            _time.sleep(0.3)
+            self.mode = "live"
+
+    monkeypatch.setattr(vision, "_service", None)
+    monkeypatch.setattr(vision, "VisionService", SlowService)
+    monkeypatch.delenv("INSIGHTRX_VISION", raising=False)
+    got = []
+    threads = [threading.Thread(target=lambda: got.append(vision.get_service())) for _ in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert len(made) == 1 and len({id(s) for s in got}) == 1
+
+
+def test_explain_never_imports_torch_on_the_onnx_backend(monkeypatch):
+    """CPU installs have no PyTorch: attention maps must be skipped, not crash the Screen request."""
+    import builtins
+    from insightrx.app.vision import VisionService
+    svc = VisionService(model_dir="/nonexistent")
+    svc.mode, svc.backend = "live", "onnx"
+    real_import = builtins.__import__
+
+    def guarded(name, *a, **k):
+        if name == "torch" or name.startswith("torch."):
+            raise ModuleNotFoundError("No module named 'torch'")
+        return real_import(name, *a, **k)
+    monkeypatch.setattr(builtins, "__import__", guarded)
+    assert svc.explain(b"not-an-image", "dr_referable") is None

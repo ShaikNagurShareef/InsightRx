@@ -25,6 +25,7 @@ INSIGHTRX_SECRET=$SECRET
 INSIGHTRX_APP_ROOT=$(pwd)/local_data
 INSIGHTRX_MODEL_DIR=$(pwd)/models/insightrx-onnx-v1
 INSIGHTRX_AUTOSEED=1
+INSIGHTRX_WARMUP=1
 # Optional integrations (leave empty to run fully offline; live data sources fall back to bundled snapshots)
 # GEMINI_API_KEY=
 # BACKBOARD_API_KEY=
