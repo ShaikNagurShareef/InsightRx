@@ -9,10 +9,15 @@ Insight Rx Copilot: an evidence-grounded assistant with persistent memory for ea
 - Privacy: only a de-identified brief reaches Backboard (age band, finding labels, medicines, therapy options, alerts,
   ranked targets). It is checked against the same restricted-pattern guard as the Gemini path before sending.
 
-Configure with BACKBOARD_API_KEY (and optionally BACKBOARD_LLM_PROVIDER / BACKBOARD_MODEL). Without a key the copilot
+Answering: with GEMINI_API_KEY set, Backboard runs memory only (send_to_llm=false: it extracts and recalls this
+clinician's memories), the matching knowledge passages are retrieved locally from the same documents, and Gemini writes a
+cited answer. Without a Gemini key, Backboard's own LLM answers (needs Backboard LLM credits).
+
+Configure with BACKBOARD_API_KEY (and optionally BACKBOARD_LLM_PROVIDER / BACKBOARD_MODEL). Without it the copilot
 reports itself as unavailable and nothing is sent anywhere.
 """
 import asyncio
+import functools
 import os
 import re
 import tempfile
@@ -20,7 +25,7 @@ import tempfile
 from sqlalchemy import select
 
 from . import therapeutics as tx
-from .llm import FORBIDDEN, RestrictedPayload
+from .llm import FORBIDDEN, GeminiUnavailable, RestrictedPayload, gemini_generate, gemini_key
 from .models import AppSetting, CopilotMessage, now
 
 PROVIDER = os.environ.get("BACKBOARD_LLM_PROVIDER", "google")
@@ -49,6 +54,9 @@ class CopilotUnavailable(Exception):
 
 
 BILLING_NOTICE = re.compile(r"free credit is reserved|Billing page|add credits", re.I)
+TOP_PASSAGES = 6
+_WORD = re.compile(r"[a-z0-9][a-z0-9-]+")
+STOP = frozenset("the and for with what when which does how are is of to in on a an or be it this that should do i my".split())
 
 
 def enabled():
@@ -229,6 +237,45 @@ def case_brief(bundle, res, age, sex):
     return check_outbound(" ".join(lines))
 
 
+# ------------------------------------------------------------------ local retrieval over the same knowledge documents
+@functools.lru_cache(maxsize=1)
+def passages():
+    """[(doc, heading, text)]: each '## ' section of the knowledge documents."""
+    out = []
+    for name, text in knowledge_docs():
+        for block in text.split("\n## ")[1:]:
+            head, _, body = block.partition("\n")
+            out.append((name, head.strip(), body.strip()))
+    return out
+
+
+def _terms(text):
+    return {w for w in _WORD.findall(text.lower()) if w not in STOP}
+
+
+def retrieve(query, k=TOP_PASSAGES):
+    q = _terms(query)
+    scored = []
+    for doc, head, body in passages():
+        h, b = _terms(head), _terms(body)
+        score = 3 * len(q & h) + len(q & b)
+        if score:
+            scored.append((score, doc, head, body))
+    return [(doc, head, body) for _, doc, head, body in sorted(scored, key=lambda x: -x[0])[:k]]
+
+
+def _gemini_answer(question, brief, mems):
+    found = retrieve(f"{question} {brief or ''}")
+    ctx = "\n\n".join(f"[{n + 1}] ({doc.removesuffix('.md').replace('_', ' ')}) {head}\n{body[:900]}"
+                       for n, (doc, head, body) in enumerate(found)) or "(no matching passage)"
+    remembered = "\n".join(f"- {m}" for m in mems) or "- (nothing yet)"
+    prompt = (f"Knowledge passages:\n{ctx}\n\nWhat you remember about this clinician:\n{remembered}\n\n"
+              + (f"De-identified case brief: {brief}\n\n" if brief else "")
+              + f"Clinician question: {question}\n\nCite passages as [n]. If the passages do not cover it, say so.")
+    text, model = gemini_generate(prompt, system=SYSTEM_PROMPT)
+    return text, sorted({doc for doc, _, _ in found}), model
+
+
 # ------------------------------------------------------------------ public API
 def ask(db, user, question, scope="general", brief=None, case_id=None):
     """Ask the copilot. Returns {'answer', 'memories', 'files', 'model'}; stores both turns locally for display."""
@@ -237,25 +284,36 @@ def ask(db, user, question, scope="general", brief=None, case_id=None):
         raise ValueError("empty question")
     check_outbound(question)
     content = (f"De-identified case brief: {brief}\n\nClinician question: {question}" if brief else question)
+    own_llm = bool(gemini_key())
 
     async def go():
         async with _client() as client:
             tid = await _ensure_thread(client, db, user, scope)
-            r = await client.add_message(thread_id=tid, content=content, llm_provider=PROVIDER, model_name=MODEL,
-                                         memory="Auto", memory_citation=True, stream=False)
-            return r
+            if own_llm:                                      # Backboard: memory extraction + recall only
+                return await client.add_message(thread_id=tid, content=content, memory="Auto", memory_citation=True,
+                                                send_to_llm="false", stream=False)
+            return await client.add_message(thread_id=tid, content=content, llm_provider=PROVIDER, model_name=MODEL,
+                                            memory="Auto", memory_citation=True, stream=False)
     r = _with_recovery(db, user, go)
     m = (r.messages or [{}])[-1] if hasattr(r, "messages") else r.__dict__
-    answer = m.get("content") or m.get("message") or ""
     memories = [x.get("memory") or x.get("content") or "" for x in (m.get("retrieved_memories") or [])]
-    files = list(m.get("retrieved_files") or [])
-    model = m.get("model_name") or MODEL
-    if BILLING_NOTICE.search(answer):                      # Backboard answers with a billing notice, not an error
-        raise CopilotUnavailable("The copilot's Backboard account needs LLM credits (memory and retrieval are working). "
-                                 "Add credits or a provider key in Backboard, then try again.")
+    memories = [x for x in memories if x]
+    if own_llm:
+        try:
+            answer, files, model = _gemini_answer(question, brief, memories)
+        except GeminiUnavailable as e:
+            raise CopilotUnavailable("Gemini is busy right now; your question and memories were saved. Try again.") from e
+        model = f"{model} + Backboard memory"
+    else:
+        answer = m.get("content") or m.get("message") or ""
+        files = list(m.get("retrieved_files") or [])
+        model = m.get("model_name") or MODEL
+        if BILLING_NOTICE.search(answer):                  # Backboard answers with a billing notice, not an error
+            raise CopilotUnavailable("The copilot's Backboard account needs LLM credits (memory and retrieval are "
+                                     "working). Add credits in Backboard or set GEMINI_API_KEY, then try again.")
     db.add(CopilotMessage(user_id=user.id, case_id=case_id, scope=scope, role="clinician", content=question))
     db.add(CopilotMessage(user_id=user.id, case_id=case_id, scope=scope, role="copilot", content=answer,
-                          meta={"memories": [x for x in memories if x], "files": files, "model": model}))
+                          meta={"memories": memories, "files": files, "model": model}))
     db.commit()
     return {"answer": answer, "memories": memories, "files": files, "model": model}
 
@@ -292,7 +350,9 @@ def forget(db, user, memory_id):
 def transcript(db, user, scope, limit=20):
     rows = db.scalars(select(CopilotMessage).where(CopilotMessage.user_id == user.id, CopilotMessage.scope == scope)
                       .order_by(CopilotMessage.id.desc()).limit(limit)).all()
-    return list(reversed(rows))
+    rows = list(reversed(rows))
+    bad = {i for i, r in enumerate(rows) if r.role == "copilot" and BILLING_NOTICE.search(r.content or "")}
+    return [r for i, r in enumerate(rows) if i not in bad and i + 1 not in bad]   # drop billing notices + their question
 
 
 def recent_scopes(db, user, limit=8):

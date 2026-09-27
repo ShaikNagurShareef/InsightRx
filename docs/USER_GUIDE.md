@@ -162,6 +162,13 @@ The case page has the following tabs:
 |---|---|
 | ![Performance](screenshots/20_model_performance.png) | ![Oculomics](screenshots/21_how_oculomics_works.png) |
 
+## 11b. Copilot
+
+**Copilot** (sidebar) is a chat assistant for therapy classes, interactions, protein targets and CMS rules. Each patient's **Therapy and trials** page has its own copilot conversation that also sees a de-identified brief of that patient.
+- Answers cite numbered passages from Insight Rx's curated knowledge; the chips under an answer show the sources and what it **remembered** about you.
+- It learns your stated preferences (for example "I check eGFR before SGLT2 inhibitors") and uses them in later answers. See, add or delete memories on the right of the Copilot page.
+- Memory is stored with Backboard.io, separate for every clinician; answers are written by Gemini.
+
 ## 12. Explain the result to the patient
 
 On a case with a completed analysis, **Explain to patient** (top right) opens a plain-language note to read or play to the patient, in **English** or **Português (Brasil)**.

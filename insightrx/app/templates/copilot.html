@@ -3,44 +3,60 @@
 {% block crumbs %}Copilot{% endblock %}
 {% block content %}
 <div class="head">
-  <div><p class="eyebrow">Insight Rx Copilot · memory by Backboard</p><h1>An assistant that remembers how you practise</h1>
-    <p class="sub">Ask about therapy classes, interactions, protein targets or CMS rules. Answers come from Insight Rx's curated knowledge, and the copilot remembers your preferences and follow-up intentions across sessions and patients. It's private to you, and you can see and delete everything it remembers.</p></div>
+  <div><p class="eyebrow">Insight Rx Copilot · memory by Backboard · answers by Gemini</p><h1>An assistant that remembers how you practise</h1>
+    <p class="sub">Grounded in Insight Rx's curated knowledge. It learns your preferences and follow-up habits across patients, privately, and you can see and delete everything it remembers.</p></div>
 </div>
 
-<div class="workspace" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)">
-  <section class="panel" aria-labelledby="chat-h" id="chat">
-    <div class="panel-head"><h2 id="chat-h">Ask the copilot</h2><span class="hint">{{ provider }} · {{ model }} via Backboard</span></div>
-    <div class="panel-body">
-      {% if user.role in ('referring', 'specialist') %}
-      {{ chat(transcript, "/copilot/ask", enabled, ["Which retinal findings change first-line diabetes therapy?", "When does semaglutide need retinal follow-up?", "How does screening close the CMS131 gap?"], "Ask a general question, e.g. which targets have approved drugs for macular edema?") }}
-      {% else %}<p class="small muted">The copilot is for clinicians (referring and specialist roles).</p>{% endif %}
-      {% if recent %}
-      <h3 style="margin-top:var(--s5)">Recent patient conversations</h3>
-      <ul class="small" style="padding-left:18px">{% for r in recent if r.scope.startswith('case:') %}<li><a href="/cases/{{ r.scope[5:] }}/therapy#copilot">Case {{ r.scope[5:] }}</a>: {{ r.content[:90] }}{{ '…' if r.content|length > 90 }}</li>{% endfor %}</ul>
-      {% endif %}
+<div class="cp-page">
+  <section class="panel cp-main" aria-labelledby="chat-h" id="chat">
+    <div class="cp-head">
+      <span class="cp-avatar" aria-hidden="true">Rx</span>
+      <div><h2 id="chat-h">Ask the copilot</h2><p class="xs muted">General questions. Patient questions live on each patient's Therapy page.</p></div>
+      {% if enabled %}<span class="cp-status"><span class="cp-dot" aria-hidden="true"></span>Online</span>{% endif %}
     </div>
+    {% if user.role in ('referring', 'specialist') %}
+    {{ chat(transcript, "/copilot/ask", enabled, ["Which retinal findings change first-line diabetes therapy?", "When does semaglutide need retinal follow-up?", "How does screening close the CMS131 gap?", "Which targets have approved drugs for macular edema?"], "Ask anything: therapy classes, interactions, targets, CMS rules…", engine, "cp") }}
+    {% else %}<div class="panel-body"><p class="small muted">The copilot is for clinicians (referring and specialist roles).</p></div>{% endif %}
   </section>
 
-  <aside class="stack-lg">
+  <aside class="cp-side">
     <section class="panel" aria-labelledby="mem-h">
-      <div class="panel-head"><h2 id="mem-h">What it remembers about you</h2><span class="hint">{{ memories|length }} memor{{ 'y' if memories|length == 1 else 'ies' }}</span></div>
+      <div class="panel-head"><h2 id="mem-h">What it remembers about you</h2><span class="cp-count">{{ memories|length }}</span></div>
       <div class="panel-body stack">
         {% if error %}<div class="note warn">{{ icon('alert') }}<span>{{ error }}</span></div>{% endif %}
         {% if memories %}
         <ul class="mems">{% for m in memories %}
           <li><span class="small">{{ m.content }}</span>
-            <form method="post" action="/copilot/memories/{{ m.id }}/delete"><button type="submit" class="btn quiet sm" aria-label="Forget this">{{ icon('x') }}Forget</button></form></li>
+            <form method="post" action="/copilot/memories/{{ m.id }}/delete"><button type="submit" class="mem-x" aria-label="Forget: {{ m.content }}" title="Forget">{{ icon('x', 'ico-sm') }}</button></form></li>
         {% endfor %}</ul>
-        {% elif enabled %}<p class="small muted">Nothing yet. Tell it how you like to practise below, or just ask questions: it learns your preferences as you go.</p>{% endif %}
+        {% elif enabled %}<p class="small muted">Nothing yet. Teach it a preference, or just ask: it learns as you go.</p>{% endif %}
         {% if enabled and user.role in ('referring', 'specialist') %}
-        <form method="post" action="/copilot/remember" class="stack" data-busy="Saving">
-          <div class="field"><label for="rem">Teach it a preference</label>
-            <input id="rem" name="text" maxlength="500" placeholder="e.g. I start SGLT2 inhibitors before GLP-1 agonists in kidney disease"></div>
-          <div><button type="submit" class="btn quiet sm"><span class="spin" aria-hidden="true"></span>{{ icon('plus') }}<span data-label>Remember this</span></button></div>
+        <form method="post" action="/copilot/remember" class="mem-add" data-busy="Saving">
+          <label class="sr-only" for="rem">Teach it a preference</label>
+          <input id="rem" name="text" maxlength="500" placeholder="e.g. I start SGLT2 inhibitors before GLP-1 agonists in CKD">
+          <button type="submit" class="btn quiet sm"><span class="spin" aria-hidden="true"></span>{{ icon('plus') }}<span data-label>Remember</span></button>
         </form>
         {% endif %}
-        <p class="xs muted">Memories are about you as a clinician (preferences, habits, follow-up plans), never about patients. Stored with Backboard.io, separate for every clinician.</p>
+        <p class="xs muted">About you as a clinician, never about patients. Stored with Backboard.io, separate for every clinician.</p>
       </div>
+    </section>
+
+    {% if recent_cases %}
+    <section class="panel" aria-labelledby="rc-h">
+      <div class="panel-head"><h2 id="rc-h">Recent patient conversations</h2></div>
+      <ul class="cp-recent">{% for r in recent_cases %}
+        <li><a href="/cases/{{ r.scope[5:] }}/therapy#copilot"><span class="cp-case">Case {{ r.scope[5:] }}</span><span class="xs muted">{{ r.content[:80] }}{{ '…' if r.content|length > 80 }}</span></a></li>
+      {% endfor %}</ul>
+    </section>
+    {% endif %}
+
+    <section class="panel panel-pad cp-how" aria-labelledby="how-h">
+      <h2 id="how-h">How it answers</h2>
+      <ol>
+        <li><strong>Remembers</strong><span>Backboard recalls what you've told it: your preferences and follow-up habits.</span></li>
+        <li><strong>Retrieves</strong><span>The matching passages from Insight Rx's guidelines, interaction rules, targets and CMS rules.</span></li>
+        <li><strong>Answers</strong><span>Gemini writes a short answer that cites those passages and says when it is using your preferences.</span></li>
+      </ol>
     </section>
   </aside>
 </div>

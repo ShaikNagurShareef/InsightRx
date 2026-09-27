@@ -58,6 +58,7 @@ class FakeBackboard:
 
     async def add_message(self, thread_id, content, **kw):
         self.s["sent"].append(content)
+        self.s.setdefault("kw", []).append(kw)
         aid = self.s["threads"][thread_id]
         mems = [{"memory": m["content"]} for m in self.s["assistants"][aid]["memories"]]
         return types.SimpleNamespace(messages=[{"content": f"Answer to: {content[-40:]}", "retrieved_memories": mems,
@@ -127,7 +128,7 @@ def test_each_clinician_gets_private_memory(fake_backboard, cp_case):
     assert "dapagliflozin first when eGFR" not in b.get("/copilot").text          # another clinician's clone
     r = a.post("/copilot/ask", data={"question": "Which class first in kidney disease?"})
     assert r.status_code == 303
-    assert "Used what it remembers about you" in a.get("/copilot").text
+    assert "Remembered about you" in a.get("/copilot").text
     kb = [x for x in fake_backboard["assistants"].values() if x["name"] == copilot.BASE_NAME]
     clones = [x for x in fake_backboard["assistants"].values() if x["name"].startswith("Insight Rx Copilot (clinician")]
     assert len(kb) == 1 and len(clones) == 2 and all(len(c["docs"]) == 5 for c in clones)
@@ -162,3 +163,52 @@ def test_billing_notice_is_reported_as_unavailable():
     from insightrx.app import copilot
     assert copilot.BILLING_NOTICE.search("Your free credit is reserved for Memory & RAG, so it can't cover LLM chat.")
     assert not copilot.BILLING_NOTICE.search("Semaglutide needs a retinal exam before starting in patients with DR.")
+
+
+def test_retrieval_finds_the_relevant_knowledge():
+    hits = copilot.retrieve("semaglutide retinopathy worsening")
+    assert hits and any("semaglutide" in (h + b).lower() for _, h, b in hits)
+    assert any(d == "insightrx_interactions.md" for d, _, _ in hits)
+
+
+def test_gemini_answers_with_backboard_memory_only(fake_backboard, monkeypatch):
+    prompts = []
+
+    def fake_generate(prompt, system=None):
+        prompts.append((prompt, system))
+        return "Check the retina before and during semaglutide [1].", "gemini-test"
+    monkeypatch.setenv("GEMINI_API_KEY", "test")
+    monkeypatch.setattr(copilot, "gemini_generate", fake_generate)
+    a = client_as("Dr. Alex Morgan")
+    a.post("/copilot/remember", data={"text": "Prefers to check eGFR before SGLT2 inhibitors"})
+    assert a.post("/copilot/ask", data={"question": "When does semaglutide need retinal follow-up?"}).status_code == 303
+    assert fake_backboard["kw"][-1].get("send_to_llm") == "false"            # Backboard: memory, not its LLM
+    prompt, system = prompts[-1]
+    assert "Prefers to check eGFR" in prompt and "Knowledge passages" in prompt and system == copilot.SYSTEM_PROMPT
+    page = a.get("/copilot").text
+    assert "Check the retina before and during semaglutide" in page and "gemini-test + Backboard memory" in page
+
+
+def test_busy_gemini_reports_unavailable(fake_backboard, monkeypatch):
+    def busy(prompt, system=None):
+        raise copilot.GeminiUnavailable("busy")
+    monkeypatch.setenv("GEMINI_API_KEY", "test")
+    monkeypatch.setattr(copilot, "gemini_generate", busy)
+    r = client_as("Dr. Alex Morgan").post("/copilot/ask", data={"question": "Which class first in kidney disease?"})
+    assert r.status_code == 303 and "busy" in r.headers["location"]
+
+
+def test_answer_rendering_is_escaped_and_formatted():
+    from insightrx.app.routes_copilot import cp_md
+    html = str(cp_md("**Check** the retina [1].\n- one <script>x</script>\n- two"))
+    assert "<strong>Check</strong>" in html and '<sup class="cp-cite">1</sup>' in html
+    assert "<ul><li>one &lt;script&gt;" in html and "<script>" not in html
+    multi = str(cp_md("See *AAO PPP* [4, 6]."))
+    assert "<em>AAO PPP</em>" in multi and multi.count("cp-cite") == 2
+
+
+def test_suggestion_button_question_is_used(fake_backboard, cp_case):
+    pcp = client_as("Dr. Alex Morgan")
+    r = pcp.post(f"/cases/{cp_case}/copilot", data={"question": ["What should I start first?", ""]})
+    assert r.status_code == 303 and r.headers["location"].endswith("#copilot")
+    assert fake_backboard["sent"][-1].endswith("What should I start first?")

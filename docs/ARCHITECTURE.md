@@ -120,7 +120,7 @@ sequenceDiagram
 | `external.py` | Clients for ClinicalTrials.gov v2, CMS NPPES and openFDA. Each has a timeout, a TTL cache and a snapshot fallback. Outbound requests carry only fixed condition or specialty terms plus the clinic ZIP. |
 | `reports.py` / `report_charts.py` | PDF reports (patient, target dossier, portfolio) with vector charts: structure snapshot, pLDDT track, drug landscape and opportunity matrix. |
 | `consult.py`, `trylab.py`, `activity.py`, `evidence.py`, `llm.py` | The guided consult, Screen input parsing, activity statistics, the guideline evidence set, and the Gemini adapter with its restricted-data guard. |
-| `copilot.py`, `routes_copilot.py` | Backboard copilot: a base assistant with the knowledge documents, a private clone per clinician (memory), one thread per patient, outbound guard. |
+| `copilot.py`, `routes_copilot.py` | Copilot: Backboard holds a base assistant with the knowledge documents, a private clone per clinician (memory) and one thread per patient. Each question runs Backboard memory only (`send_to_llm=false`), retrieves the matching knowledge passages locally, and Gemini writes a cited answer. Outbound guard on every question and brief; answers are rendered with an escaping mini-markdown filter. |
 | `explainer.py`, `routes_explainer.py` | Patient explainer: categorical facts → template (English / Brazilian Portuguese) → optional Gemini rewrite with a safety check → optional ElevenLabs audio. |
 | `anchor.py` | Writes review and consultation-package SHA-256 digests to the Solana Memo program and records the transaction in the audit trail. |
 | `timeseries.py` | De-identified finding and workflow events into a Tiger Data hypertable with a daily continuous aggregate; falls back to the app database. |

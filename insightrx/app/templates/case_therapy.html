@@ -41,9 +41,9 @@
 
     {% if user.role in ('referring', 'specialist') %}
     <section class="panel copilot-panel" aria-labelledby="cp-h">
-      <div class="panel-head"><h2 id="cp-h">Ask Insight Rx Copilot</h2><span class="hint">Remembers your preferences · Backboard</span></div>
-      <div class="panel-body">{{ chat(copilot_turns, "/cases/%d/copilot"|format(case.id), copilot_enabled,
-          ["What should I start first, given these alerts?", "Explain the top target in two sentences for my notes.", "What would the nephrologist want to know before I refer?"]) }}</div>
+      <div class="cp-head"><span class="cp-avatar" aria-hidden="true">Rx</span><div><h2 id="cp-h">Ask Insight Rx Copilot</h2><p class="xs muted">About this patient, from a de-identified brief. Remembers your preferences.</p></div></div>
+      {{ chat(copilot_turns, "/cases/%d/copilot"|format(case.id), copilot_enabled,
+          ["What should I start first, given these alerts?", "Explain the top target in two sentences for my notes.", "What would the nephrologist want to know before I refer?"], engine=copilot_engine()) }}
     </section>
     {% endif %}
 

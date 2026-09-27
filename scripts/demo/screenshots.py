@@ -95,6 +95,7 @@ def main():
         page.goto(base + f"/cases/{case_id}/explain?lang=pt"); shot(page, "28_patient_explainer_pt")
         page.goto(base + "/performance?view=trends"); shot(page, "29_finding_trends")
         page.goto(base + f"/cases/{case_id}?tab=timeline"); shot(page, "30_audit_trail_solana")
+        page.goto(base + "/copilot#cp-end"); shot(page, "31_copilot", full=False)
 
         for name, url in [("patient_therapy_report", f"/screen/report.pdf?token={token}"),
                           ("target_dossier_VEGFA", f"/therapeutics/targets/VEGFA/report.pdf?screen={token}"),

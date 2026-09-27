@@ -51,8 +51,8 @@
   }));
 
   // ---- busy state on long actions (analysis, sending)
-  document.querySelectorAll("form[data-busy]").forEach(f => f.addEventListener("submit", () => {
-    const b = f.querySelector("button[type=submit], button:not([type])");
+  document.querySelectorAll("form[data-busy]").forEach(f => f.addEventListener("submit", e => {
+    const b = e.submitter || f.querySelector("button[type=submit], button:not([type])");
     if (!b) return;
     b.classList.add("busy"); b.setAttribute("aria-busy", "true");
     const label = b.querySelector("[data-label]");

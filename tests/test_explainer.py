@@ -52,7 +52,7 @@ class FakeGemini:
         self.reply, self.prompts = reply, []
         self.models = self
 
-    def generate_content(self, model, contents):
+    def generate_content(self, model, contents, **kw):
         self.prompts.append(contents)
         return type("R", (), {"text": self.reply})()
 
@@ -128,7 +128,7 @@ def test_busy_gemini_model_falls_back_to_the_next(monkeypatch):
     fake = use_gemini(monkeypatch, "Hello. " + base)
     tried = []
 
-    def generate(model, contents):
+    def generate(model, contents, **kw):
         tried.append(model)
         if len(tried) == 1:
             raise RuntimeError("503 UNAVAILABLE")

@@ -13,6 +13,33 @@ from .evidence import retrieve
 
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 PROMPT_VERSION = "evidence-brief-v1"
+FALLBACK_MODELS = ("gemini-3.5-flash", "gemini-flash-latest")
+
+
+class GeminiUnavailable(Exception):
+    pass
+
+
+def gemini_key():
+    return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+
+
+def gemini_generate(prompt: str, system: str | None = None) -> tuple[str, str]:
+    """-> (text, model used). Tries GEMINI_MODEL, then fallbacks (busy models return 503)."""
+    import logging
+    if not gemini_key():
+        raise GeminiUnavailable("GEMINI_API_KEY is not set.")
+    from google import genai
+    from google.genai import types
+    client = genai.Client(api_key=gemini_key())
+    config = types.GenerateContentConfig(system_instruction=system) if system else None
+    for model in dict.fromkeys((GEMINI_MODEL, *FALLBACK_MODELS)):
+        try:
+            text = (client.models.generate_content(model=model, contents=prompt, config=config).text or "").strip()
+            return text, model
+        except Exception as e:                               # noqa: BLE001 - try the next model
+            logging.getLogger("insightrx.llm").warning("gemini call failed on %s: %s", model, e)
+    raise GeminiUnavailable("Gemini is busy or unreachable.")
 
 
 class RestrictedPayload(Exception):

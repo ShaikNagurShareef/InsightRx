@@ -1,30 +1,51 @@
 {% from "_ui.html" import icon %}
 
-{# Chat transcript + ask form. action: POST URL; prompts: quick questions #}
-{% macro chat(turns, action, enabled, prompts=[], placeholder="Ask about this patient's therapy, targets or next step") -%}
-<div class="copilot" id="copilot">
+{# Chat transcript + composer. action: POST URL; prompts: suggested questions; engine: who answers #}
+{% macro chat(turns, action, enabled, prompts=[], placeholder="Ask about this patient's therapy, targets or next step", engine=None, anchor="copilot") -%}
+<div class="copilot" id="{{ anchor }}">
+  <div class="cp-log" role="log" aria-live="polite" aria-label="Conversation">
   {% if turns %}
-  <ol class="cp-turns">
+    <ol class="cp-turns">
     {% for t in turns %}
-    <li class="cp-{{ t.role }}">
-      <span class="cp-who">{{ 'You' if t.role == 'clinician' else 'Copilot' }}</span>
-      <div class="cp-text">{{ t.content }}</div>
-      {% if t.role == 'copilot' and t.meta %}
-        {% if t.meta.memories %}<p class="cp-mem">{{ icon('book') }}<span>Used what it remembers about you: {{ t.meta.memories|join(' · ') }}</span></p>{% endif %}
-        {% if t.meta.files %}<p class="xs muted">Sources: {{ t.meta.files|join(', ') }}</p>{% endif %}
-      {% endif %}
-    </li>
+      <li class="cp-turn cp-{{ t.role }}">
+        {% if t.role == 'copilot' %}<span class="cp-avatar" aria-hidden="true">Rx</span>{% endif %}
+        <div class="cp-bubble">
+          <span class="sr-only">{{ 'You' if t.role == 'clinician' else 'Copilot' }}:</span>
+          <div class="cp-text">{{ t.content|cp_md if t.role == 'copilot' else t.content }}</div>
+          {% if t.role == 'copilot' and t.meta %}
+          <div class="cp-meta">
+            {% if t.meta.memories %}<div class="cp-chips" aria-label="Remembered about you"><span class="cp-label">{{ icon('book', 'ico-sm') }}Remembered</span>{% for m in t.meta.memories %}<span class="cp-tag mem">{{ m }}</span>{% endfor %}</div>{% endif %}
+            {% if t.meta.files %}<div class="cp-chips" aria-label="Sources"><span class="cp-label">{{ icon('file', 'ico-sm') }}Sources</span>{% for f in t.meta.files %}<span class="cp-tag">{{ f|replace('insightrx_', '')|replace('.md', '')|replace('_', ' ')|capitalize }}</span>{% endfor %}</div>{% endif %}
+            {% if t.meta.model %}<span class="cp-model">{{ t.meta.model }}</span>{% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </li>
     {% endfor %}
-  </ol>
+    </ol>
+  {% elif enabled %}
+    <div class="cp-empty">
+      <span class="cp-avatar lg" aria-hidden="true">Rx</span>
+      <p class="cp-empty-t">What can I help you decide?</p>
+      <p class="small muted">Therapy classes, interactions, protein targets, CMS rules. Grounded in Insight Rx's curated knowledge and tailored to how you practise.</p>
+    </div>
   {% endif %}
+  <span id="{{ anchor }}-end"></span>
+  </div>
+
   {% if enabled %}
   <form method="post" action="{{ action }}" class="cp-form" data-busy="Thinking">
-    {% if prompts %}<div class="cp-prompts">{% for p in prompts %}<button type="submit" name="question" value="{{ p }}" class="cp-chip">{{ p }}</button>{% endfor %}</div>{% endif %}
-    <div class="row" style="gap:8px;align-items:flex-end">
-      <div class="field" style="flex:1"><label class="sr-only" for="cp-q">Question</label><textarea id="cp-q" name="question" rows="2" placeholder="{{ placeholder }}"></textarea></div>
-      <button type="submit" class="btn"><span class="spin" aria-hidden="true"></span>{{ icon('send') }}<span data-label>Ask</span></button>
+    {% if prompts and not turns %}
+    <div class="cp-suggest">{% for p in prompts %}<button type="submit" name="question" value="{{ p }}" class="cp-card">{{ icon('send', 'ico-sm') }}<span>{{ p }}</span></button>{% endfor %}</div>
+    {% elif prompts %}
+    <div class="cp-prompts">{% for p in prompts %}<button type="submit" name="question" value="{{ p }}" class="cp-chip">{{ p }}</button>{% endfor %}</div>
+    {% endif %}
+    <div class="cp-composer">
+      <label class="sr-only" for="{{ anchor }}-q">Question</label>
+      <textarea id="{{ anchor }}-q" name="question" rows="2" maxlength="1500" placeholder="{{ placeholder }}"></textarea>
+      <button type="submit" class="btn cp-send"><span class="spin" aria-hidden="true"></span>{{ icon('send') }}<span data-label>Ask</span></button>
     </div>
-    <p class="xs muted">Only a de-identified brief is shared (age band, findings, medicines, options, alerts, targets): never the patient reference, photos or dates. The copilot remembers your preferences across patients; <a href="/copilot">see or delete what it remembers</a>.</p>
+    <p class="cp-foot">{% if engine %}<span class="cp-engine">{{ engine }}</span>{% endif %}Only a de-identified brief is shared, never the patient reference, photos or dates. <a href="/copilot">See or delete what it remembers</a>.</p>
   </form>
   {% else %}
   <div class="note">{{ icon('alert') }}<span>The copilot is not connected on this deployment (set <code>BACKBOARD_API_KEY</code>).</span></div>
