@@ -151,10 +151,9 @@ def test_identifying_question_is_refused(fake_backboard, cp_case):
 
 def test_roles_and_disconnected_state(monkeypatch, cp_case):
     monkeypatch.delenv("BACKBOARD_API_KEY", raising=False)
-    assert "not connected" in client_as("Dr. Alex Morgan").get("/copilot").text
-    r = client_as("Dr. Alex Morgan").post("/copilot/ask", data={"question": "hello there"})
-    assert r.status_code == 303 and "not+connected" in r.headers["location"].replace("%20", "+")
-    assert client_as("Morgan Lee, PharmD").post("/copilot/ask", data={"question": "hi"}).status_code == 403
+    assert client_as("Dr. Alex Morgan").get("/copilot").status_code == 404                 # not configured: hidden
+    assert client_as("Dr. Alex Morgan").post("/copilot/ask", data={"question": "hello there"}).status_code == 404
+    assert client_as("Morgan Lee, PharmD").post("/copilot/ask", data={"question": "hi"}).status_code in (403, 404)
     assert client_as("Morgan Lee, PharmD").post(f"/cases/{cp_case}/copilot", data={"question": "hi"}).status_code in (403, 404)
     assert os.environ.get("BACKBOARD_API_KEY") is None
 
@@ -212,3 +211,31 @@ def test_suggestion_button_question_is_used(fake_backboard, cp_case):
     r = pcp.post(f"/cases/{cp_case}/copilot", data={"question": ["What should I start first?", ""]})
     assert r.status_code == 303 and r.headers["location"].endswith("#copilot")
     assert fake_backboard["sent"][-1].endswith("What should I start first?")
+
+
+@pytest.mark.parametrize("name", ["Sam Rivera", "Taylor Brooks"])
+def test_workspace_roles_get_the_general_copilot(fake_backboard, name):
+    c = client_as(name)
+    assert 'class="cp-composer"' in c.get("/copilot").text
+    assert c.post("/copilot/ask", data={"question": "How does screening close the CMS131 gap?"}).status_code == 303
+    assert "How does screening close the CMS131 gap?" in c.get("/copilot").text
+
+
+def test_medinfo_desk_has_no_copilot(fake_backboard):
+    desk = client_as("Morgan Lee, PharmD")
+    assert desk.post("/copilot/ask", data={"question": "Anything"}).status_code == 403
+
+
+def test_copilot_is_hidden_from_roles_without_access(fake_backboard, cp_case):
+    desk, op, pcp = client_as("Morgan Lee, PharmD"), client_as("Sam Rivera"), client_as("Dr. Alex Morgan")
+    assert 'href="/copilot"' not in desk.get("/medinfo").text and desk.get("/copilot").status_code == 403
+    assert 'href="/copilot"' in op.get("/patients").text                     # general copilot: workspace roles
+    assert 'id="cp-h"' in pcp.get(f"/cases/{cp_case}/therapy").text          # patient copilot: case clinicians
+    assert op.post(f"/cases/{cp_case}/copilot", data={"question": "x"}).status_code in (403, 404)
+
+
+def test_copilot_hidden_everywhere_when_not_configured(monkeypatch, cp_case):
+    monkeypatch.delenv("BACKBOARD_API_KEY", raising=False)
+    pcp = client_as("Dr. Alex Morgan")
+    assert 'href="/copilot"' not in pcp.get("/patients").text and pcp.get("/copilot").status_code == 404
+    assert 'id="cp-h"' not in pcp.get(f"/cases/{cp_case}/therapy").text

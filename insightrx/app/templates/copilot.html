@@ -14,9 +14,7 @@
       <div><h2 id="chat-h">Ask the copilot</h2><p class="xs muted">General questions. Patient questions live on each patient's Therapy page.</p></div>
       {% if enabled %}<span class="cp-status"><span class="cp-dot" aria-hidden="true"></span>Online</span>{% endif %}
     </div>
-    {% if user.role in ('referring', 'specialist') %}
     {{ chat(transcript, "/copilot/ask", enabled, ["Which retinal findings change first-line diabetes therapy?", "When does semaglutide need retinal follow-up?", "How does screening close the CMS131 gap?", "Which targets have approved drugs for macular edema?"], "Ask anything: therapy classes, interactions, targets, CMS rules…", engine, "cp") }}
-    {% else %}<div class="panel-body"><p class="small muted">The copilot is for clinicians (referring and specialist roles).</p></div>{% endif %}
   </section>
 
   <aside class="cp-side">
@@ -30,7 +28,7 @@
             <form method="post" action="/copilot/memories/{{ m.id }}/delete"><button type="submit" class="mem-x" aria-label="Forget: {{ m.content }}" title="Forget">{{ icon('x', 'ico-sm') }}</button></form></li>
         {% endfor %}</ul>
         {% elif enabled %}<p class="small muted">Nothing yet. Teach it a preference, or just ask: it learns as you go.</p>{% endif %}
-        {% if enabled and user.role in ('referring', 'specialist') %}
+        {% if enabled %}
         <form method="post" action="/copilot/remember" class="mem-add" data-busy="Saving">
           <label class="sr-only" for="rem">Teach it a preference</label>
           <input id="rem" name="text" maxlength="500" placeholder="e.g. I start SGLT2 inhibitors before GLP-1 agonists in CKD">

@@ -63,6 +63,15 @@ def enabled():
     return bool(os.environ.get("BACKBOARD_API_KEY"))
 
 
+CASE_ROLES = ("referring", "specialist")                                  # patient-level copilot (case owners)
+GENERAL_ROLES = CASE_ROLES + ("operator", "coordinator", "admin")         # never the medical-information desk
+
+
+def can_use(user, scope="general"):
+    """RBAC for the copilot: one rule for access and for visibility (links, pages, panels)."""
+    return bool(user) and enabled() and user.role in (CASE_ROLES if scope == "case" else GENERAL_ROLES)
+
+
 def _client():
     from backboard import BackboardClient
     key = os.environ.get("BACKBOARD_API_KEY")

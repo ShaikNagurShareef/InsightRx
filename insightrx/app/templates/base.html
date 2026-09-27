@@ -25,7 +25,7 @@
       <a href="/patients" {% if active == 'patients' %}aria-current="page"{% endif %}>{{ icon('user') }}Patients</a>
       <a href="/consults" {% if active == 'consults' %}aria-current="page"{% endif %}>{{ icon('send') }}Consults{% if open_tasks %}<span class="count" aria-label="{{ open_tasks }} actions waiting">{{ open_tasks }}</span>{% endif %}</a>
       <a href="/therapeutics" {% if active == 'therapeutics' %}aria-current="page"{% endif %}>{{ icon('flask') }}Therapeutics</a>
-      <a href="/copilot" {% if active == 'copilot' %}aria-current="page"{% endif %}>{{ icon('book') }}Copilot</a>
+      {% if can_copilot(user) %}<a href="/copilot" {% if active == 'copilot' %}aria-current="page"{% endif %}>{{ icon('book') }}Copilot</a>{% endif %}
     {% endif %}
     </nav>
     <div class="side-foot">

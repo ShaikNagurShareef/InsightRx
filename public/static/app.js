@@ -60,6 +60,26 @@
     setTimeout(() => { b.disabled = true; }, 0);
   }));
 
+  // ---- copilot: show the question and a "thinking" bubble at once (the answer takes a few seconds)
+  document.querySelectorAll("form.cp-form").forEach(f => f.addEventListener("submit", e => {
+    const box = f.querySelector("textarea[name=question]");
+    const q = ((e.submitter && e.submitter.value) || (box && box.value) || "").trim();
+    if (!q) { e.preventDefault(); if (box) box.focus(); return; }
+    const log = f.closest(".copilot") && f.closest(".copilot").querySelector(".cp-log");
+    if (!log) return;
+    let list = log.querySelector(".cp-turns");
+    if (!list) { log.querySelector(".cp-empty")?.remove(); list = document.createElement("ol"); list.className = "cp-turns"; log.prepend(list); }
+    const mine = document.createElement("li"); mine.className = "cp-turn cp-clinician";
+    const bubble = document.createElement("div"); bubble.className = "cp-bubble";
+    const text = document.createElement("div"); text.className = "cp-text"; text.textContent = q;
+    bubble.append(text); mine.append(bubble);
+    const wait = document.createElement("li"); wait.className = "cp-turn cp-copilot cp-thinking";
+    wait.innerHTML = '<span class="cp-avatar" aria-hidden="true">Rx</span><div class="cp-bubble"><span class="cp-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="xs muted">Recalling your preferences and reading the knowledge base…</span></div>';
+    list.append(mine, wait);
+    wait.scrollIntoView({ block: "end", behavior: "smooth" });
+    f.querySelectorAll(".cp-card, .cp-chip").forEach(b => { b.disabled = true; });
+  }));
+
   // ---- fundus viewer: thumbnails, attention overlay, opacity
   document.querySelectorAll("[data-eye]").forEach(col => {
     const frame = col.querySelector(".fundus");

@@ -860,3 +860,11 @@ a:hover { text-decoration-color: currentColor; }
 .shell { background: linear-gradient(to right, #fbfbf7 calc(var(--side) - 1px), var(--line) calc(var(--side) - 1px), var(--line) var(--side), transparent var(--side)); }
 @media (max-width: 860px) { .shell { background: none; } }
 @media print { .shell { background: none; } }
+
+/* copilot: pending answer */
+.cp-thinking .cp-bubble { display: flex; align-items: center; gap: 10px; }
+.cp-dots { display: inline-flex; gap: 4px; }
+.cp-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); animation: cp-dot 1.1s infinite ease-in-out; }
+.cp-dots i:nth-child(2) { animation-delay: .15s; } .cp-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes cp-dot { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { .cp-dots i { animation: none; opacity: .7; } }
