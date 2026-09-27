@@ -120,3 +120,19 @@ def test_explainer_page_and_audio_route(monkeypatch):
     audio = pcp.get(f"/cases/{cid}/explain.mp3?lang=en")
     assert audio.status_code == 200 and audio.headers["content-type"] == "audio/mpeg"
     assert op.get(f"/cases/{cid}/explain").status_code == 403                  # operators do not see it
+
+
+def test_busy_gemini_model_falls_back_to_the_next(monkeypatch):
+    f = explainer.facts(RESULT, SNAPSHOT, Review())
+    base = explainer.template(f, "en")
+    fake = use_gemini(monkeypatch, "Hello. " + base)
+    tried = []
+
+    def generate(model, contents):
+        tried.append(model)
+        if len(tried) == 1:
+            raise RuntimeError("503 UNAVAILABLE")
+        return type("R", (), {"text": fake.reply})()
+    fake.generate_content = generate
+    out = explainer.summary(f, "en")
+    assert len(tried) == 2 and out["source"] == f"Gemini ({tried[1]}), checked"

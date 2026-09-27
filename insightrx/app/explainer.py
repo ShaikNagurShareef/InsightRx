@@ -23,6 +23,7 @@ ELEVEN_URL = "https://api.elevenlabs.io/v1/text-to-speech/{voice}"
 ELEVEN_VOICE = os.environ.get("ELEVENLABS_VOICE_ID", "21m00Tcm4TlvDq8ikWAM")      # premade "Rachel"
 ELEVEN_MODEL = os.environ.get("ELEVENLABS_MODEL", "eleven_multilingual_v2")
 MAX_CHARS, CACHE_SIZE = 1200, 64
+FALLBACK_MODELS = ("gemini-3.5-flash", "gemini-flash-latest")
 _DIGIT = re.compile(r"\d")
 log = logging.getLogger("insightrx.explainer")
 _summaries: OrderedDict = OrderedDict()
@@ -159,16 +160,25 @@ def summary(f: dict, lang: str = "en") -> dict:
               "caring nurse is speaking. Keep every fact and the final sentence about the computer program. Do not add "
               "any fact, number, drug, test, time frame or advice that is not in the note. At most 120 words. Reply "
               "with the rewritten note only.\n\nNote: " + check_outbound(base))
+    text, used = "", None
     try:
         from google import genai
         client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"))
-        text = (client.models.generate_content(model=GEMINI_MODEL, contents=prompt).text or "").strip()
     except Exception as e:                                   # noqa: BLE001 - the template is always a safe answer
-        log.warning("gemini patient summary failed: %s", e)
+        log.warning("gemini client unavailable: %s", e)
+        return {"text": base, "source": "template (Gemini unavailable)"}
+    for model in dict.fromkeys((GEMINI_MODEL, *FALLBACK_MODELS)):      # busy models (503) fall through to the next
+        try:
+            text = (client.models.generate_content(model=model, contents=prompt).text or "").strip()
+            used = model
+            break
+        except Exception as e:                               # noqa: BLE001
+            log.warning("gemini patient summary failed on %s: %s", model, e)
+    if not used:
         return {"text": base, "source": "template (Gemini unavailable)"}
     if not _acceptable(text, base):
         return {"text": base, "source": "template (Gemini output failed the safety check)"}
-    return _remember(_summaries, key, {"text": text, "source": f"Gemini ({GEMINI_MODEL}), checked"})
+    return _remember(_summaries, key, {"text": text, "source": f"Gemini ({used}), checked"})
 
 
 def speech(text: str, client: httpx.Client | None = None) -> bytes:

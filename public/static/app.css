@@ -789,3 +789,8 @@ input[type=text], input[type=number], input[type=date], input[type=time], input:
 .stat .v { font-weight: 750; }
 a { text-decoration-color: rgba(185, 60, 10, .35); }
 a:hover { text-decoration-color: currentColor; }
+.spark rect { fill: #cdbfa9; }
+.spark rect.today { fill: var(--blue); }
+.shell { background: linear-gradient(to right, #fbfbf7 calc(var(--side) - 1px), var(--line) calc(var(--side) - 1px), var(--line) var(--side), transparent var(--side)); }
+@media (max-width: 860px) { .shell { background: none; } }
+@media print { .shell { background: none; } }
