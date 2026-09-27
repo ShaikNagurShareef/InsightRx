@@ -91,6 +91,10 @@ def main():
         page.goto(base + "/performance"); shot(page, "20_model_performance")
         page.goto(base + "/oculomics?view=science"); shot(page, "21_how_oculomics_works")
         page.goto(base + "/medinfo"); shot(page, "22_medinfo_clinician")
+        page.goto(base + f"/cases/{case_id}/explain"); shot(page, "27_patient_explainer_en")
+        page.goto(base + f"/cases/{case_id}/explain?lang=pt"); shot(page, "28_patient_explainer_pt")
+        page.goto(base + "/performance?view=trends"); shot(page, "29_finding_trends")
+        page.goto(base + f"/cases/{case_id}?tab=timeline"); shot(page, "30_audit_trail_solana")
 
         for name, url in [("patient_therapy_report", f"/screen/report.pdf?token={token}"),
                           ("target_dossier_VEGFA", f"/therapeutics/targets/VEGFA/report.pdf?screen={token}"),

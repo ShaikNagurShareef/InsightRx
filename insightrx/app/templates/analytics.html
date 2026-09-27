@@ -1,13 +1,28 @@
-{% extends "base.html" %}{% from "_ui.html" import icon %}
+{% extends "base.html" %}{% from "_ui.html" import icon, empty %}
 {% block title %}Model performance | Insight Rx{% endblock %}
 {% block crumbs %}Model performance{% endblock %}
 {% block content %}
 <div class="head">
-  <div><h1>{{ 'How reliable the models are' if view == 'model' else 'How consultations move' }}</h1><p class="sub">{{ 'How consultations move between clinicians.' if view == 'workflow' else 'Measured performance of the models behind every screening result.' }}</p></div>
-  <nav class="seg" aria-label="View"><a href="/performance?view=model" {% if view == 'model' %}aria-current="page"{% endif %}>Models</a><a href="/performance?view=workflow" {% if view == 'workflow' %}aria-current="page"{% endif %}>Consult engagement</a></nav>
+  <div><h1>{{ 'How reliable the models are' if view == 'model' else 'What the clinic is finding' if view == 'trends' else 'How consultations move' }}</h1><p class="sub">{{ 'Daily findings and follow-through over the last 30 days: the eye-detected demand behind each therapy target.' if view == 'trends' else 'How consultations move between clinicians.' if view == 'workflow' else 'Measured performance of the models behind every screening result.' }}</p></div>
+  <nav class="seg" aria-label="View"><a href="/performance?view=model" {% if view == 'model' %}aria-current="page"{% endif %}>Models</a><a href="/performance?view=workflow" {% if view == 'workflow' %}aria-current="page"{% endif %}>Consult engagement</a><a href="/performance?view=trends" {% if view == 'trends' %}aria-current="page"{% endif %}>Finding trends</a></nav>
 </div>
 
-{% if view == 'workflow' %}
+{% if view == 'trends' %}
+<section class="panel panel-pad" aria-labelledby="tr-h">
+  <div class="row-between"><h2 id="tr-h">Last 30 days</h2><span class="xs muted">Source: {{ trends.source }}</span></div>
+  {% set series = trends.series %}
+  {% if series %}
+  <table class="table" style="margin-top:var(--s3)"><thead><tr><th>Signal</th><th class="num">Total</th><th>Per day</th></tr></thead><tbody>
+  {% for key in trend_labels if key in series %}{% set v = series[key] %}{% set mx = [v|max, 1]|max %}
+    <tr><td>{{ trend_labels[key] }}</td><td class="num">{{ v|sum }}</td><td>
+      <svg class="spark" viewBox="0 0 {{ v|length * 8 }} 32" width="240" height="32" role="img" aria-label="{{ trend_labels[key] }} per day: {{ v|join(', ') }}">
+      {% for n in v %}<rect x="{{ loop.index0 * 8 + 1 }}" y="{{ 30 - (26 * n / mx)|round(1) }}" width="6" height="{{ [(26 * n / mx)|round(1), 1]|max }}" rx="1.5" class="{{ 'today' if loop.last else '' }}"><title>{{ n }}</title></rect>{% endfor %}
+      </svg></td></tr>
+  {% endfor %}</tbody></table>
+  {% else %}{{ empty('chart', 'No completed screenings in the last 30 days.') }}{% endif %}
+  <p class="xs muted" style="margin-top:var(--s3)">Events are de-identified: a day, a finding and an organisation, never a patient, case or image.</p>
+</section>
+{% elif view == 'workflow' %}
 <div class="note warn" style="margin-bottom:var(--s5)">{{ icon('alert') }}<span>Simulated demo workflow data. These figures show how Insight Rx measures engagement; they are not a measured clinical benefit.</span></div>
 <div class="grid-4" style="margin-bottom:var(--s5)">
   <div class="panel stat"><div class="k">Consultations sent</div><div class="v">{{ n_sent }}</div><div class="d">all referrals in this organisation</div></div>

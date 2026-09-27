@@ -23,10 +23,12 @@ from starlette.middleware.sessions import SessionMiddleware
 from . import workflow as wf
 from .db import APP_ROOT, IMAGE_STORE, Base, SessionLocal, engine, ensure_columns, get_db
 from . import activity as act
+from . import anchor
 from . import consult
 from . import oculomics as oc
 from . import personalize
 from . import therapeutics as tx
+from . import timeseries
 from . import trylab
 from .llm import draft_package, evidence_brief
 from .models import (AppSetting, AuditEvent, Barrier, Case, Image, Message, ModelRun, Notification, Patient, Referral, Review,
@@ -103,6 +105,8 @@ templates.env.globals.update(ICDR_NAMES=ICDR_NAMES, SYSTEMIC_LABELS=SYSTEMIC_LAB
                              COMMON_MEDS=tx.common_meds())
 templates.env.filters["dt"] = fmt_dt
 templates.env.filters["due"] = fmt_due
+templates.env.filters["solana_tx"] = anchor.tx_in
+templates.env.globals["solana_explorer"] = anchor.explorer_url
 
 
 @app.middleware("http")
@@ -604,6 +608,8 @@ def finish_run(db: Session, case: Case, run: ModelRun, res: dict, actor_id: int,
     case.status = "Unable to assess" if res.get("overall") == "Unable to assess" else "HCP review"
     wf.audit(db, case.tenant_id, case.id, actor_id, "model_run",
              f"run #{run.id} [{run.source}] {res.get('overall')} ({run.model_version})", case.version)
+    if status == "completed":
+        timeseries.record_findings(case.tenant_id, res)
     wf.add_task(db, case, "review", f"Review screening result for {case.patient.ref}", case.owner_id,
                 due=wf.DEMO_DUE["review"])
     wf.notify(db, case.owner, f"Screening result ready to review ({case.patient.ref})", f"/cases/{case.id}")
@@ -828,6 +834,8 @@ def sign_review_core(db: Session, case: Case, user: User, f) -> Review:
     wf.close_tasks(db, case.id, "review")
     wf.audit(db, case.tenant_id, case.id, user.id, "review_signed",
              f"{decision}; next action: {rv.next_action}; sig {sig[:12]}", case.version)
+    anchor.record(db, case, user.id, "review", sig)
+    timeseries.record_workflow(case.tenant_id, "review_signed")
     if decision == "recapture":
         wf.add_task(db, case, "recapture", f"Recapture images for {case.patient.ref}", case.created_by)
     for c, note in sysnotes.items():
@@ -900,6 +908,8 @@ def dispatch_referral(db: Session, user: User, case: Case, review: Review, recip
         return None
     wf.audit(db, case.tenant_id, case.id, user.id, "referral_sent",
              f"#{ref.id} to {recipient.name} ({topic}); package {phash[:12]}", case.version)
+    anchor.record(db, case, user.id, "referral", phash)
+    timeseries.record_workflow(case.tenant_id, "referral_sent")
     wf.add_task(db, case, "acknowledge", f"Acknowledge consultation RL-{ref.id}", recipient.id, ref.id, wf.DEMO_DUE["acknowledge"])
     wf.notify(db, recipient, f"New consultation request RL-{ref.id}", f"/referrals/{ref.id}")
     return ref
@@ -1414,7 +1424,10 @@ def analytics(request: Request, view: str = "model", user: User = Depends(curren
         request, user, db, view=view, active="performance", funnel=[(s, reached[s]) for s in wf.FUNNEL], n_sent=len(refs),
         ack_median=(sorted(lat)[len(lat) // 2] if lat else None), n_ack=len(lat), closed=closed, alt=alt,
         pending=len(refs) - closed - sum(alt.values()), overdue=sum(wf.is_overdue(t.due_at) for t in open_tasks),
-        n_open=len(open_tasks), runs=runs, metrics=svc.metrics, calib=svc.calib, model_version=svc.version))
+        n_open=len(open_tasks), runs=runs, metrics=svc.metrics, calib=svc.calib, model_version=svc.version,
+        trends=timeseries.trends(db, user.tenant_id) if view == "trends" else None,
+        trend_labels={"screened": "Patients screened", "referable_dr": "Referable DR", "macular_edema": "Macular edema",
+                      **SYSTEMIC_LABELS, "review_signed": "Reviews signed", "referral_sent": "Consultations sent"}))
 
 
 # ------------------------------------------------------------------ JSON API (subset of spec §13)
@@ -1461,11 +1474,13 @@ def api_result(case_id: int, user: User = Depends(current_user), db: Session = D
 
 # ------------------------------------------------------------------ therapeutics layer (routes_therapy.py)
 from .routes_copilot import router as copilot_router  # noqa: E402
+from .routes_explainer import router as explainer_router  # noqa: E402
 from .routes_therapy import router as therapy_router  # noqa: E402
 from .seed import backfill_medications, ensure_desk  # noqa: E402
 
 app.include_router(therapy_router)
 app.include_router(copilot_router)
+app.include_router(explainer_router)
 if os.environ.get("INSIGHTRX_WARMUP") == "1":       # local installs: load the models in the background at startup
     import threading
     threading.Thread(target=get_service, name="model-warmup", daemon=True).start()

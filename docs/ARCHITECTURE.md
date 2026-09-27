@@ -48,7 +48,13 @@ flowchart LR
     FDA["openFDA / DailyMed"]
   end
 
-  GEM["Google Gemini<br/>(drafting only,<br/>restricted-data guard)"]
+  GEM["Google Gemini<br/>(drafting, patient explainer,<br/>restricted-data guard)"]
+  subgraph MLH["Optional partner services (de-identified only)"]
+    BB["Backboard.io<br/>copilot memory"]
+    EL["ElevenLabs<br/>patient read-aloud"]
+    SOL["Solana devnet<br/>Memo: digest anchors"]
+    TIG[("Tiger Data<br/>hypertable + continuous aggregate")]
+  end
   DESK["Manufacturer<br/>medical-information desk"]
 
   CAM --> HCP --> APP
@@ -59,6 +65,7 @@ flowchart LR
   RT --> CT & NPI & FDA
   AF & PDB & UNI & CH -. "fetched at build time<br/>scripts/fetch_structures.py" .-> RT
   APP --> GEM
+  APP --> BB & EL & SOL & TIG
   RT <--> DESK
 ```
 
@@ -113,6 +120,10 @@ sequenceDiagram
 | `external.py` | Clients for ClinicalTrials.gov v2, CMS NPPES and openFDA. Each has a timeout, a TTL cache and a snapshot fallback. Outbound requests carry only fixed condition or specialty terms plus the clinic ZIP. |
 | `reports.py` / `report_charts.py` | PDF reports (patient, target dossier, portfolio) with vector charts: structure snapshot, pLDDT track, drug landscape and opportunity matrix. |
 | `consult.py`, `trylab.py`, `activity.py`, `evidence.py`, `llm.py` | The guided consult, Screen input parsing, activity statistics, the guideline evidence set, and the Gemini adapter with its restricted-data guard. |
+| `copilot.py`, `routes_copilot.py` | Backboard copilot: a base assistant with the knowledge documents, a private clone per clinician (memory), one thread per patient, outbound guard. |
+| `explainer.py`, `routes_explainer.py` | Patient explainer: categorical facts → template (English / Brazilian Portuguese) → optional Gemini rewrite with a safety check → optional ElevenLabs audio. |
+| `anchor.py` | Writes review and consultation-package SHA-256 digests to the Solana Memo program and records the transaction in the audit trail. |
+| `timeseries.py` | De-identified finding and workflow events into a Tiger Data hypertable with a daily continuous aggregate; falls back to the app database. |
 | `templates/`, `public/static/` | Server-rendered UI, the design system (`app.css`), `app.js`, the 3D viewer (`molview.js` + self-hosted `3Dmol-min.js`), and structure files. |
 
 ### 3.2 Machine learning (`insightrx/ml/`, `insightrx/vision_api.py`)
@@ -202,6 +213,7 @@ erDiagram
 | Web security | Strict CSP (`script-src 'self'`, no inline scripts), `X-Frame-Options: DENY`, `nosniff`, a referrer policy, upload type and size checks with a decompression-bomb bound, and escaped PDF text. |
 | Outbound privacy | Public APIs receive only fixed condition or specialty terms and the clinic ZIP, never patient fields; tests assert this. Gemini never receives restricted data. |
 | Med-info firewall | The desk sees the clinician, the drug, the question and an **age band plus finding labels**. It never sees the patient reference, images or history, and nothing it returns changes scores or ranking. |
+| Partner services | Backboard, Gemini and ElevenLabs receive only de-identified text that passes the restricted-pattern guard. Solana receives only a SHA-256 digest (`insightrx:v1:<kind>:<sha256>`). Tiger Data receives a day, an organisation and a finding label, never a patient, case or image. Every service is optional and fails safely. |
 | Secrets | Kept in `.env` (git-ignored) and Vercel env only. Legacy `RETILINK_*` names map to `INSIGHTRX_*`. |
 
 ---
@@ -221,6 +233,7 @@ flowchart LR
 | Web | Vercel Python function (`api/index.py`). `vercel.json` rewrites everything except `/static/` to FastAPI, and static files are served by the CDN. |
 | Database | Neon Postgres (`DATABASE_URL`). Additive schema upgrades run at startup, and demo data is backfilled when missing. |
 | Models | Run `bash scripts/run_vision_tunnel.sh` on a GPU machine (about 3.6 GB in half precision). The worker registers its tunnel URL with the app every 5 minutes. |
+| Partner services | Optional env vars: `BACKBOARD_API_KEY`, `GEMINI_API_KEY`, `ELEVENLABS_API_KEY`, `SOLANA_ANCHOR_KEYPAIR` (+ `SOLANA_RPC_URL`, `SOLANA_CLUSTER`), `TIGER_DATABASE_URL` (then `python -m insightrx.app.timeseries backfill`). |
 | Local | `bash scripts/run_app.sh` uses SQLite, with the models on the local GPU or SIMULATED mode. |
 | Any other device | `python scripts/export_models.py` produces an ONNX bundle (LoRA merged, manifest and checksums, parity-checked). With `requirements-runtime.txt` and `INSIGHTRX_MODEL_DIR=<bundle>`, the same `VisionService` runs on ONNX Runtime (CPU, CUDA, CoreML or DirectML) without PyTorch. See [PORTABLE_INFERENCE.md](PORTABLE_INFERENCE.md). |
 
@@ -228,7 +241,7 @@ flowchart LR
 
 ## 7. Testing and quality
 
-- `pytest tests/` runs 44 tests. They cover the workflow state machine, tenant and role isolation, idempotent referrals and signatures, the Gemini guard, therapy mapping, interaction rules, the sponsorship firewall, outbound privacy, network fallbacks, the med-info desk's lack of case access, medicine round-trips, target priorities, PDF endpoints and PDF text escaping.
+- `pytest tests/` runs 84 tests. They cover the MLH integrations (Solana memo contents and signature validity, Gemini fallback, ElevenLabs caching, Tiger events), the copilot, portable ONNX parity and queued analyses, as well as the workflow state machine, tenant and role isolation, idempotent referrals and signatures, the Gemini guard, therapy mapping, interaction rules, the sponsorship firewall, outbound privacy, network fallbacks, the med-info desk's lack of case access, medicine round-trips, target priorities, PDF endpoints and PDF text escaping.
 - UI checks use Playwright screenshots at 390, 768, 1024, 1280 and 1440 px, plus a text-overlap detector.
 - The demo video is reproducible: `bash scripts/demo/make_demo.sh` runs VibeVoice narration (Whisper-aligned), then Playwright recording, then ffmpeg captions.
 

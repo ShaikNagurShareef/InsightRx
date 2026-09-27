@@ -689,3 +689,103 @@ button[data-spin][aria-pressed="true"] { background: var(--mol-wash); border-col
 @keyframes pulse { 70% { box-shadow: 0 0 0 12px rgba(29, 95, 168, 0); } 100% { box-shadow: 0 0 0 0 rgba(29, 95, 168, 0); } }
 .pending-photo { margin: 0; text-align: center; }
 .pending-photo img { border-radius: 10px; object-fit: cover; }
+
+/* ------------------------------------------------------------------ patient explainer */
+.explainer-text { font-size: 1.15rem; line-height: 1.65; max-width: 62ch; white-space: pre-line; }
+.explainer audio { width: min(100%, 420px); }
+
+/* ==================================================================
+   Theme: warm, editorial, Y Combinator-inspired (cream paper, black ink, one orange accent).
+   Visual layer only: tokens and surface styles. Layout, flows and clinical imagery (fundus, body map,
+   status colours) are unchanged; semantic signal / clear / caution colours keep their meaning.
+   ================================================================== */
+:root {
+  --ink: #111111;
+  --ink-2: #3a3a36;
+  --ink-3: #6b6a63;
+  --paper: #f5f5ee;
+  --panel: #ffffff;
+  --line: #e2e0d5;
+  --line-2: #eeede5;
+  --blue: #e8590c;          /* accent (kept under the old token name so every component follows) */
+  --blue-ink: #c2410c;
+  --blue-wash: #fff1e6;
+  --accent-text: #b93c0a;   /* accent for text on cream/white: WCAG AA */
+  --r-sm: 8px;
+  --r: 14px;
+  --shadow: 0 1px 0 rgba(17, 17, 17, .03);
+  --shadow-hover: 0 6px 24px rgba(17, 17, 17, .07);
+  --t-xl: 2.125rem;
+}
+body { letter-spacing: -.003em; }
+h1 { font-weight: 750; letter-spacing: -.025em; }
+h2 { font-weight: 700; letter-spacing: -.015em; }
+a { color: var(--accent-text); }
+a:hover { color: var(--ink); }
+::selection { background: #ffd8bf; }
+
+/* sidebar: light, like a clean site nav */
+.side { background: #fbfbf7; color: var(--ink-2); border-right: 1px solid var(--line); }
+.brand, .brand:hover { color: var(--ink); }
+.brand svg { color: var(--blue); }
+.nav a { color: var(--ink-2); font-weight: 550; border-radius: 10px; }
+.nav a:hover { background: var(--line-2); color: var(--ink); }
+.nav a[aria-current="page"] { background: var(--blue-wash); color: var(--accent-text); box-shadow: none; font-weight: 650; }
+.nav .count { background: var(--blue); }
+.side-foot { border-top-color: var(--line); }
+.side-foot a { color: var(--ink-3); }
+.side-foot a:hover, .side-foot a[aria-current="page"] { background: var(--line-2); color: var(--ink); }
+.who .name { color: var(--ink); }
+.who .role { color: var(--ink-3); }
+.avatar { background: var(--ink); }
+
+.topbar { background: rgba(245, 245, 238, .9); border-bottom-color: var(--line); }
+.content { padding-top: var(--s6); }
+.head { margin-bottom: var(--s6); }
+.head .sub { font-size: var(--t-md); line-height: 1.55; max-width: 72ch; }
+.eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: var(--t-xs); font-weight: 700; color: var(--accent-text); }
+
+/* cards: flat white on cream, soft lift on hover for links */
+.panel { border-color: var(--line); box-shadow: var(--shadow); }
+a.panel, .panel.link { transition: box-shadow .15s, transform .15s; }
+a.panel:hover, .panel.link:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+.panel-head { border-bottom-color: var(--line-2); }
+
+/* buttons: solid orange primary, pill quiet buttons */
+.btn { border-radius: 10px; font-weight: 650; letter-spacing: -.005em; }
+.btn.quiet { border-color: var(--line); background: var(--panel); }
+.btn.quiet:hover { border-color: var(--ink); background: var(--panel); }
+
+/* tabs and segmented controls: ink text, orange underline */
+.tabs { border-bottom-color: var(--line); }
+.tabs a[aria-current="page"] { color: var(--ink); border-color: var(--blue); }
+.seg { border-color: var(--line); border-radius: 999px; }
+.seg a, .seg label { border-left-color: var(--line); }
+.seg a[aria-current="page"], .seg label:has(input:checked) { background: var(--ink); color: #fff; }
+
+input[type=text], input[type=number], input[type=date], input[type=time], input:not([type]), select, textarea { border-color: #d6d4c8; }
+
+/* warm the remaining chrome (not the body map, fundus images or clinical status colours) */
+.choice:hover, .medchip span:hover { border-color: #c9c6b8; }
+.seg { border-color: var(--line); }
+.table tbody tr:hover { background: #fbfaf4; }
+.drop { border-color: #d3d0c2; background: #fbfbf7; }
+.drop:hover { border-color: var(--blue); background: var(--blue-wash); }
+.fundus.empty { border-color: #d3d0c2; background: #f1f0e8; color: var(--ink-3); }
+.oc-hero { background: linear-gradient(180deg, #fff, #faf9f3); }
+.mol-view { background: radial-gradient(circle at 50% 45%, #fff, #f6f5ee); }
+.sponsored { background: repeating-linear-gradient(135deg, #fbfbf7, #fbfbf7 8px, #f4f3ec 8px, #f4f3ec 16px); }
+.pulse-dot { box-shadow: 0 0 0 0 rgba(232, 89, 12, .5); animation-name: pulse-accent; }
+@keyframes pulse-accent { 70% { box-shadow: 0 0 0 12px rgba(232, 89, 12, 0); } 100% { box-shadow: 0 0 0 0 rgba(232, 89, 12, 0); } }
+
+/* sign-in: black editorial hero, like a YC launch page */
+.access { background: radial-gradient(circle at 30% 20%, #2a2723, #111 60%); }
+.landing .story { background: #111; color: #e9e7de; }
+.landing .story .lede { color: #bdbab0; }
+.loop .step::before { background: #34322d; }
+.loop .dot { background: #2a2825; }
+.proof div { border-top-color: var(--blue); }
+.stat > span { display: block; }
+.stat .v { font-weight: 750; }
+a { text-decoration-color: rgba(185, 60, 10, .35); }
+a:hover { text-decoration-color: currentColor; }

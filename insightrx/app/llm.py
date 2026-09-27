@@ -11,7 +11,7 @@ import re
 
 from .evidence import retrieve
 
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 PROMPT_VERSION = "evidence-brief-v1"
 
 

@@ -156,3 +156,9 @@ def test_roles_and_disconnected_state(monkeypatch, cp_case):
     assert client_as("Morgan Lee, PharmD").post("/copilot/ask", data={"question": "hi"}).status_code == 403
     assert client_as("Morgan Lee, PharmD").post(f"/cases/{cp_case}/copilot", data={"question": "hi"}).status_code in (403, 404)
     assert os.environ.get("BACKBOARD_API_KEY") is None
+
+
+def test_billing_notice_is_reported_as_unavailable():
+    from insightrx.app import copilot
+    assert copilot.BILLING_NOTICE.search("Your free credit is reserved for Memory & RAG, so it can't cover LLM chat.")
+    assert not copilot.BILLING_NOTICE.search("Semaglutide needs a retinal exam before starting in patients with DR.")

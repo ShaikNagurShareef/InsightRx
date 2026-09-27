@@ -14,19 +14,22 @@
 |---|---|
 | **Impact on the HCP** | At the moment of decision, one photo gives a referable-DR verdict with attention maps, a whole-body view, guideline therapy with eye-specific drug-safety alerts, ranked protein targets, trials, and a one-click consult or referral letter. It also closes the diabetic eye-exam quality gap the clinician is measured on. |
 | **Originality** | Screening tools stop at "refer". Insight Rx carries the retinal phenotype to the **protein target, drug and physician for each patient**, and measures **AlphaFold confidence at the exact drug-contact residues** from real PDB complexes. |
-| **Technical execution** | DINOv2-L + LoRA ensemble trained on real Brazilian portable-camera data: **AUROC 0.980** on held-out patients. Live GPU worker, FastAPI on Vercel with Neon, strict CSP, tenant and role isolation, audit trail, 44 tests, and a reproducible demo pipeline. |
+| **Technical execution** | DINOv2-L + LoRA ensemble trained on real Brazilian portable-camera data: **AUROC 0.980** on held-out patients. Live GPU worker, FastAPI on Vercel with Neon, strict CSP, tenant and role isolation, audit trail, 84 tests, and a reproducible demo pipeline. |
 | **Commercial fit** | **Manufacturers** pay per qualified med-info engagement and trial referral, inside a compliance firewall. **Clinics** pay per screen, offset by CPT 92228 reads (about $30 each) and quality bonuses. **Impiricus** gains a non-SMS channel on its HCP network plus eye-detected demand per protein target. Per 10,000 patients: 3,520 exam gaps closeable, about $304K in billable reads, and 2,600 people with retinopathy found. |
 
-### MLH: Best Use of Backboard
+### MLH prize tracks
 
-**Insight Rx Copilot** gives each clinician an evidence-grounded assistant with **persistent memory**, built on [Backboard.io](https://backboard.io):
-- **Retrieval over Insight Rx's own knowledge.** Guideline therapy classes, interaction rules, protein targets with AlphaFold structure insights, CMS quality and billing rules, and guideline passages are uploaded once to a base assistant.
-- **Memory per clinician.** Each clinician gets a private clone of that assistant, so Backboard's memory learns *their* preferences, practice patterns and follow-up intentions across sessions and patients, never mixing clinicians.
-- **A thread per patient,** so context carries across visits. Every answer shows which remembered facts and documents it used.
-- **A memory page** (`/copilot`) where clinicians see, add and delete what the copilot remembers.
-- **Privacy.** Only a de-identified brief is sent (age band, finding labels, medicines, options, alerts, targets), checked by the same restricted-pattern guard as the Gemini path. The LLM is Gemini 2.5 Flash routed through Backboard.
+Every integration is optional (the app runs without its key), sends only de-identified data, and is covered by tests.
 
-For the Impiricus challenge, memory is what turns a one-off answer into an ongoing, personalised HCP relationship. Code: `insightrx/app/copilot.py`, `insightrx/app/routes_copilot.py`, `tests/test_copilot.py`. Set `BACKBOARD_API_KEY` to enable it.
+| Track | What it does in Insight Rx | Code | Switch on with |
+|---|---|---|---|
+| **Backboard** | **Copilot with persistent memory.** A base assistant holds Insight Rx's knowledge (therapy classes, interactions, protein targets with AlphaFold insights, CMS rules). Each clinician gets a private clone, so memory learns *their* preferences and follow-ups; there is one thread per patient; `/copilot` shows and deletes memories. | `copilot.py`, `routes_copilot.py` | `BACKBOARD_API_KEY` |
+| **Gemini API** | **Patient explainer.** Gemini 3.8 Flash rewrites the screening result as a warm, plain-language note in **English or Brazilian Portuguese**. Output that adds numbers or identifiers, or drops facts, is rejected and the deterministic template is shown. Gemini also drafts guideline evidence briefs. | `explainer.py`, `llm.py` | `GEMINI_API_KEY` |
+| **ElevenLabs** | **Read-aloud for patients.** The explainer is spoken with the multilingual voice model, for patients with low literacy or low vision, which is common in diabetic eye disease. Audio is cached per text. | `explainer.py`, `routes_explainer.py` | `ELEVENLABS_API_KEY` |
+| **Solana** | **Tamper-evident signatures.** Each signed review and sent consultation package writes its SHA-256 digest (only the digest) to the Solana Memo program. The audit trail links to Solana Explorer, so anyone can prove a record existed unchanged at that time without trusting our database. | `anchor.py` | `SOLANA_ANCHOR_KEYPAIR` (devnet) |
+| **Tiger Data** | **Finding trends.** Every screening emits de-identified finding events (referable DR, edema, each systemic signal) and workflow events into a TimescaleDB **hypertable**, rolled up by a real-time **continuous aggregate**. This is the "eye-detected demand per target over time" series (Performance → Finding trends). | `timeseries.py` | `TIGER_DATABASE_URL` |
+
+For the Impiricus challenge: memory turns one-off answers into an ongoing HCP relationship; the explainer and voice extend the moment of care to the patient; anchoring makes signed clinical records verifiable; and the trend series is the demand signal manufacturers pay for.
 
 ### Screenshots
 
@@ -37,8 +40,10 @@ For the Impiricus challenge, memory is what turns a one-off answer into an ongoi
 | ![](docs/screenshots/06_target_vegfa_complex.png) | ![](docs/screenshots/13_case_therapy_trials.png) | ![](docs/screenshots/25_medinfo_manufacturer_desk.png) |
 | **NPI Registry referral** | **CMS quality and billing** | **Model performance** |
 | ![](docs/screenshots/15_refer_out_npi_registry.png) | ![](docs/screenshots/19_cms_quality_billing.png) | ![](docs/screenshots/20_model_performance.png) |
+| **Patient explainer (Gemini + ElevenLabs)** | **Finding trends (Tiger Data)** | **Audit trail (Solana)** |
+| ![](docs/screenshots/28_patient_explainer_pt.png) | ![](docs/screenshots/29_finding_trends.png) | ![](docs/screenshots/30_audit_trail_solana.png) |
 
-All 26 screens are in [docs/screenshots](docs/screenshots/), and the [user guide](docs/USER_GUIDE.md) walks through them.
+All 30 screens are in [docs/screenshots](docs/screenshots/), and the [user guide](docs/USER_GUIDE.md) walks through them.
 
 ## How it works
 
@@ -261,6 +266,7 @@ The tests cover:
 - **Consultations:** a double-submitted referral creates only one referral; illegal state transitions are rejected; a signature is invalidated when the case changes; the recipient must be granted access.
 - **Safety:** unusable or one-eye cases never produce a reassuring result; the Gemini payload guard works.
 - **Full handoff:** a complete two-HCP exchange from send to close.
+- **MLH integrations:** the Solana memo carries only a digest and is a valid signed transaction; Gemini output that adds numbers or identifiers falls back to the template; ElevenLabs audio is cached and fails safely; Tiger events are de-identified and never break a request.
 
 ## Layout
 

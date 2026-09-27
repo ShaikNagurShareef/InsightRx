@@ -14,6 +14,7 @@ reports itself as unavailable and nothing is sent anywhere.
 """
 import asyncio
 import os
+import re
 import tempfile
 
 from sqlalchemy import select
@@ -45,6 +46,9 @@ no ages, dates, identifiers, image descriptions or individual results."""
 
 class CopilotUnavailable(Exception):
     pass
+
+
+BILLING_NOTICE = re.compile(r"free credit is reserved|Billing page|add credits", re.I)
 
 
 def enabled():
@@ -168,7 +172,8 @@ async def _ensure_base(client, db):
             doc = await client.upload_document_to_assistant(a.assistant_id, path)
             for _ in range(60):                               # wait until indexed so clones copy the embeddings
                 st = await client.get_document_status(doc.document_id)
-                if str(st.status).lower() in ("completed", "indexed", "ready", "processed", "failed", "error"):
+                if str(getattr(st.status, "value", st.status)).lower().rsplit(".", 1)[-1] in (
+                        "completed", "indexed", "ready", "processed", "failed", "error"):
                     break
                 await asyncio.sleep(2)
     _put(db, key, str(a.assistant_id))
@@ -245,6 +250,9 @@ def ask(db, user, question, scope="general", brief=None, case_id=None):
     memories = [x.get("memory") or x.get("content") or "" for x in (m.get("retrieved_memories") or [])]
     files = list(m.get("retrieved_files") or [])
     model = m.get("model_name") or MODEL
+    if BILLING_NOTICE.search(answer):                      # Backboard answers with a billing notice, not an error
+        raise CopilotUnavailable("The copilot's Backboard account needs LLM credits (memory and retrieval are working). "
+                                 "Add credits or a provider key in Backboard, then try again.")
     db.add(CopilotMessage(user_id=user.id, case_id=case_id, scope=scope, role="clinician", content=question))
     db.add(CopilotMessage(user_id=user.id, case_id=case_id, scope=scope, role="copilot", content=answer,
                           meta={"memories": [x for x in memories if x], "files": files, "model": model}))

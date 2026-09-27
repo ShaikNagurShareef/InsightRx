@@ -12,7 +12,10 @@
     <h1 class="row" style="gap:12px">{{ case.patient.ref }} {{ case_stage(case.status) }}{% if case.urgent_concern %}<span class="tag signal">{{ icon('alert') }}Clinician-entered urgent concern</span>{% endif %}</h1>
     <p class="sub">{{ patient_line }}{{ case.device }}. Case version {{ case.version }}.</p>
   </div>
+  <div class="row" style="gap:8px">
+  {% if res and not run_stale and user.role in ('referring', 'specialist') %}<a class="btn quiet" href="/cases/{{ case.id }}/explain">{{ icon('user') }}Explain to patient</a>{% endif %}
   {% if user.role == 'referring' and user.id == case.owner_id %}<a class="btn" href="/cases/{{ case.id }}/consult">{{ icon('send') }}Consult a specialist</a>{% endif %}
+  </div>
 </div>
 <div class="panel" style="padding:6px 10px;margin-bottom:var(--s5)">{{ relay(legs) }}</div>
 {% if run and run.status == 'pending' %}{% set pr = run.result.progress or {} %}
@@ -372,7 +375,9 @@
     <li><span class="pip {{ 'now' if loop.last else 'done' }}"></span>
       <div class="when">{{ e.created_at|dt }}{% if e.version %}, version {{ e.version }}{% endif %}</div>
       <div class="what"><strong>{{ e.action|replace('_', ' ')|capitalize }}</strong> by {{ actors[e.actor_id].name if e.actor_id in actors else 'the system' }}</div>
-      {% if e.detail %}<div class="xs muted">{{ e.detail }}</div>{% endif %}</li>
+      {% if e.detail %}<div class="xs muted">{{ e.detail }}</div>{% endif %}
+      {% set tx = e.detail|solana_tx if e.action == 'anchored_on_solana' else None %}
+      {% if tx %}<a class="xs" href="{{ solana_explorer(tx) }}" target="_blank" rel="noopener">Verify on Solana Explorer</a>{% endif %}</li>
   {% endfor %}</ol>
 </section>
 {% endif %}

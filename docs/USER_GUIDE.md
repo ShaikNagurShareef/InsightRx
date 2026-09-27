@@ -18,7 +18,10 @@ Insight Rx is used by clinicians at the point of care. You take retinal photos, 
 9. [Patients, consults and roles](#9-patients-consults-and-roles)
 10. [CMS quality and billing](#10-cms-quality-and-billing)
 11. [Model performance and how oculomics works](#11-model-performance-and-how-oculomics-works)
-12. [Tips and limits](#12-tips-and-limits)
+12. [Explain the result to the patient](#12-explain-the-result-to-the-patient)
+13. [Finding trends](#13-finding-trends)
+14. [Verifiable signatures on Solana](#14-verifiable-signatures-on-solana)
+15. [Tips and limits](#15-tips-and-limits)
 
 ---
 
@@ -159,7 +162,31 @@ The case page has the following tabs:
 |---|---|
 | ![Performance](screenshots/20_model_performance.png) | ![Oculomics](screenshots/21_how_oculomics_works.png) |
 
-## 12. Tips and limits
+## 12. Explain the result to the patient
+
+On a case with a completed analysis, **Explain to patient** (top right) opens a plain-language note to read or play to the patient, in **English** or **Português (Brasil)**.
+- The note is built from categorical facts only: which eye shows signs, possible swelling, organs worth discussing, and the next step from your signed review. It contains no scores, names or identifiers.
+- With a Gemini key, Gemini rewrites it in warm, simple words. A rewrite that adds any number or identifier, or drops content, is rejected, and the page says the template was used.
+- With an ElevenLabs key, a player reads the note aloud with a natural multilingual voice.
+- If the case is not signed yet, the page reminds you to review before sharing.
+
+| English | Português (Brasil) |
+|---|---|
+| ![Explainer EN](screenshots/27_patient_explainer_en.png) | ![Explainer PT](screenshots/28_patient_explainer_pt.png) |
+
+## 13. Finding trends
+
+**Model performance → Finding trends** shows the last 30 days per day: patients screened, referable DR, macular edema, each systemic research signal, reviews signed and consultations sent. With `TIGER_DATABASE_URL` set, the series comes from a Tiger Data continuous aggregate; otherwise it is computed from the app database. Events are de-identified.
+
+![Finding trends](screenshots/29_finding_trends.png)
+
+## 14. Verifiable signatures on Solana
+
+When you sign a review or send a consultation, Insight Rx already computes a SHA-256 signature over the case version, images, model run and your interpretation. With Solana anchoring on, that digest (and nothing else) is written to the Solana blockchain. The **Audit trail** tab then shows **Anchored on solana** with a **Verify on Solana Explorer** link, so a record can be proven unchanged later without trusting the Insight Rx database.
+
+![Audit trail](screenshots/30_audit_trail_solana.png)
+
+## 15. Tips and limits
 
 - The top bar shows **Vision model live** when the GPU worker is online, and **simulated** otherwise. Simulated outputs are labelled everywhere.
 - Photos on Screen are held for one hour. Save the patient to keep them.

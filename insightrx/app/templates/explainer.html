@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% from "_ui.html" import icon, empty %}
+{% block title %}For the patient | Insight Rx{% endblock %}
+{% block crumbs %}<a href="/patients">Patients</a> / <a href="/cases/{{ case.id }}">Case {{ case.id }}</a> / For the patient{% endblock %}
+{% block content %}
+<div class="head">
+  <div><p class="eyebrow">Patient explainer · words by Gemini, voice by ElevenLabs</p><h1>Explain the result to {{ case.patient.ref }}</h1>
+    <p class="sub">A plain-language version of this screening to read or play to the patient. It contains no scores, names or identifiers, and it never says more than the analysis and your signed review.</p></div>
+</div>
+
+<nav class="tabs" aria-label="Language">{% for k, l in langs.items() %}
+  <a href="/cases/{{ case.id }}/explain?lang={{ k }}" {% if lang == k %}aria-current="page"{% endif %}>{{ l }}</a>{% endfor %}
+</nav>
+
+{% if summary %}
+<section class="panel panel-pad stack explainer" lang="{{ 'pt-BR' if lang == 'pt' else 'en' }}">
+  <p class="explainer-text">{{ summary.text }}</p>
+  {% if voice %}
+  <audio controls preload="none" src="/cases/{{ case.id }}/explain.mp3?lang={{ lang }}">Your browser cannot play audio.</audio>
+  {% else %}<p class="xs muted">Read-aloud turns on when ELEVENLABS_API_KEY is set.</p>{% endif %}
+  <p class="xs muted">Source: {{ summary.source }}{% if not gemini %}; plain-language rewriting turns on when GEMINI_API_KEY is set{% endif %}.{% if not facts.signed %} Not yet signed by a clinician: review before sharing.{% endif %}</p>
+</section>
+{% else %}{{ empty('user', 'There is no completed analysis for the current version of this case yet.', 'Back to the case', '/cases/%d'|format(case.id)) }}{% endif %}
+{% endblock %}
