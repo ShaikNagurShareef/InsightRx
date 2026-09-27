@@ -19,3 +19,7 @@ skills-lock.json
 # credentialed PhysioNet images (mBRSET/BRSET): never commit or deploy
 test_data/*
 !test_data/README.md
+
+# local installs created by setup.sh / setup.ps1
+.venv/
+local_data/

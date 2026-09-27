@@ -1,0 +1,9 @@
+# Everything needed to run the full Insight Rx app on a laptop or server WITHOUT a GPU or cluster.
+# Models run on CPU through ONNX Runtime from models/insightrx-onnx-v1 (no PyTorch needed).
+-r requirements.txt
+uvicorn==0.37.0
+onnxruntime>=1.17        # NVIDIA GPU: onnxruntime-gpu | Windows GPU: onnxruntime-directml (optional speed-up)
+scikit-learn==1.7.2      # must match models/insightrx-onnx-v1/manifest.json
+joblib>=1.3
+pandas>=2.0
+pytest>=8                # optional: run the test suite
