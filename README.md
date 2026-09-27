@@ -43,7 +43,7 @@ For the Impiricus challenge: memory turns one-off answers into an ongoing HCP re
 | **Patient explainer (Gemini + ElevenLabs)** | **Finding trends (Tiger Data)** | **Audit trail (Solana)** |
 | ![](docs/screenshots/28_patient_explainer_pt.png) | ![](docs/screenshots/29_finding_trends.png) | ![](docs/screenshots/30_audit_trail_solana.png) |
 
-All 30 screens are in [docs/screenshots](docs/screenshots/), and the [user guide](docs/USER_GUIDE.md) walks through them.
+All 31 screens are in [docs/screenshots](docs/screenshots/), and the [user guide](docs/USER_GUIDE.md) walks through them.
 
 ## How it works
 

@@ -169,6 +169,8 @@ The case page has the following tabs:
 - It learns your stated preferences (for example "I check eGFR before SGLT2 inhibitors") and uses them in later answers. See, add or delete memories on the right of the Copilot page.
 - Memory is stored with Backboard.io, separate for every clinician; answers are written by Gemini.
 
+![Copilot](screenshots/31_copilot.png)
+
 ## 12. Explain the result to the patient
 
 On a case with a completed analysis, **Explain to patient** (top right) opens a plain-language note to read or play to the patient, in **English** or **Português (Brasil)**.
