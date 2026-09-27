@@ -1,9 +1,10 @@
 {% extends "base.html" %}{% from "_ui.html" import icon, status, stage, case_stage, relay, empty %}{% from "_oculomics.html" import body_map, state_tag, tier_tag, contrib_bars, patient_inputs %}
 {% block title %}{{ case.patient.ref }} | Insight Rx{% endblock %}
 {% block crumbs %}<a href="/patients">Patients</a> / Case {{ case.id }}{% endblock %}
+{% block head %}{% if run and run.status == 'pending' %}<meta http-equiv="refresh" content="8">{% endif %}{% endblock %}
 {% block content %}
 {% set res = run.result if run and run.status == 'completed' else None %}
-{% set live = run and run.source == 'live' and not run_stale %}
+{% set live = run and run.status == 'completed' and run.source == 'live' and not run_stale %}
 
 <div class="head" style="margin-bottom:var(--s4)">
   <div>
@@ -14,6 +15,9 @@
   {% if user.role == 'referring' and user.id == case.owner_id %}<a class="btn" href="/cases/{{ case.id }}/consult">{{ icon('send') }}Consult a specialist</a>{% endif %}
 </div>
 <div class="panel" style="padding:6px 10px;margin-bottom:var(--s5)">{{ relay(legs) }}</div>
+{% if run and run.status == 'pending' %}{% set pr = run.result.progress or {} %}
+<div class="note" style="margin-bottom:var(--s5)" aria-live="polite"><span class="pulse-dot" aria-hidden="true"></span><span><strong>Analysing on the Insight Rx vision service</strong>{% if pr.status == 'queued' and pr.position %}: {{ pr.position }} analysis ahead{% elif pr.eta_s %}: about {{ (pr.eta_s / 60)|round(0, 'ceil')|int }} min left{% endif %}. This page updates itself when the result is ready.</span></div>
+{% endif %}
 
 <nav class="tabs" aria-label="Case sections">
 {% for k, l in [('retinal', 'Screening'), ('systemic', 'Systemic health'), ('therapy', 'Therapy and trials'), ('review', 'Review and sign'), ('consult', 'Consultation'), ('referrals', 'Consultations sent'), ('timeline', 'Audit trail')] %}
@@ -112,6 +116,8 @@
   <aside class="stack" style="position:sticky;top:76px">
     {% if not run %}
     <div class="verdict"><div class="state" style="color:var(--ink-2)">{{ icon('eye') }}Not analysed yet</div><p class="explain">No result is not a negative result. Add photos of both eyes, then run the analysis.</p></div>
+    {% elif run.status == 'pending' %}
+    <div class="verdict"><div class="state" style="color:var(--ink-2)"><span class="pulse-dot" aria-hidden="true"></span>Analysing</div><p class="explain">The photos are being analysed by the Insight Rx vision service. The result appears here automatically.</p></div>
     {% elif run.status == 'failed' %}
     <div class="verdict caution"><div class="state">{{ icon('alert') }}Model unavailable</div><p class="explain">Continue with a manual clinical review; the model result is not required to sign or refer.</p></div>
     {% else %}

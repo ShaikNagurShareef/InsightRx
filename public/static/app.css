@@ -683,3 +683,9 @@ button[data-spin][aria-pressed="true"] { background: var(--mol-wash); border-col
 .cp-chip:hover { border-color: var(--blue); color: var(--blue); }
 .mems { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .mems li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: var(--r-sm); }
+
+/* queued analysis (remote CPU worker) */
+.pulse-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 0 0 rgba(29, 95, 168, .5); animation: pulse 1.6s infinite; flex: none; }
+@keyframes pulse { 70% { box-shadow: 0 0 0 12px rgba(29, 95, 168, 0); } 100% { box-shadow: 0 0 0 0 rgba(29, 95, 168, 0); } }
+.pending-photo { margin: 0; text-align: center; }
+.pending-photo img { border-radius: 10px; object-fit: cover; }

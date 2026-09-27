@@ -1,0 +1,24 @@
+{% extends "base.html" %}{% from "_ui.html" import icon %}
+{% block title %}Analysing | Insight Rx{% endblock %}
+{% block head %}<meta http-equiv="refresh" content="6">{% endblock %}
+{% block crumbs %}Screen a patient{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>Analysing {{ n }} photo{{ 's' if n != 1 }}</h1>
+    <p class="sub">The models are running on the Insight Rx vision service (Hugging Face, CPU). This page updates itself; the result opens as soon as it is ready.</p></div>
+</div>
+<section class="panel panel-pad stack" aria-live="polite">
+  <div class="row" style="gap:14px;align-items:center">
+    <span class="pulse-dot" aria-hidden="true"></span>
+    <p class="small"><strong>
+      {% if st.status == 'queued' %}Queued{% if st.position %}: {{ st.position }} analysis ahead{% endif %}
+      {% elif st.status == 'running' %}Running the retina ensemble and systemic models{% if st.elapsed_s %} ({{ st.elapsed_s }} s so far){% endif %}
+      {% elif st.status == 'unreachable' %}Waking the vision service (it sleeps when idle; first request takes 1–2 minutes)
+      {% else %}Working{% endif %}</strong>
+      {% if st.eta_s %}<span class="muted"> · about {{ (st.eta_s / 60)|round(0, 'ceil')|int if st.eta_s > 90 else st.eta_s }} {{ 'min' if st.eta_s > 90 else 's' }} left</span>{% endif %}</p>
+  </div>
+  <p class="xs muted">Each photo goes through the full validated ensemble (2 models, each on the photo and its mirror image) plus the whole-body encoders: about 40–60 s per photo on the free CPU tier.</p>
+  <div class="row" style="gap:10px;flex-wrap:wrap">{% for p in photos %}<figure class="pending-photo"><img src="{{ p.src }}" alt="{{ {'OD': 'Right eye', 'OS': 'Left eye'}.get(p.eye, 'Photo') }}" width="120" height="120"><figcaption class="xs muted">{{ {'OD': 'Right eye', 'OS': 'Left eye'}.get(p.eye, 'Eye not set') }}</figcaption></figure>{% endfor %}</div>
+  <p class="xs"><a href="/screen/result?token={{ token }}">Check now</a> · You can leave this page; photos and results are held for 1 hour.</p>
+</section>
+{% endblock %}

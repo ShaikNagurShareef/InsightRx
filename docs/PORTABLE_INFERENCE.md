@@ -89,3 +89,13 @@ To force a provider, set `INSIGHTRX_ORT_PROVIDERS=CPUExecutionProvider`. On a 12
 - The retina models are a fine-tune of DINOv2 (Apache-2.0), trained on **mBRSET**, which is credentialed PhysioNet data. Share them according to your data-use obligations.
 - The **RETFound encoders** come from a gated model under non-commercial terms. Keep bundles that contain them private, or export with `--no-encoders` for anything public.
 - The bundle is **not** stored in this Git repository. It is 5.7 GB, above GitHub's free LFS quota, and the RETFound terms would forbid it. Use `scripts/export_models.py` to regenerate it, or share it privately (for example a private Hugging Face model repo or `rsync`).
+
+## 6. Hosted copy and remote workers
+
+- **Model repo:** the bundle is published to the **private** Hugging Face repo `nagur-shareef-shaik/insightrx-onnx`. Any worker can fetch it with `huggingface_hub.snapshot_download(..., token=...)` instead of copying files by hand.
+- **Live app worker:** the live app's vision worker runs on the GSU GPU workstation behind a Cloudflare tunnel (`scripts/run_vision_tunnel.sh`). It answers synchronously in seconds.
+- **Slow workers:** for CPU-only hosts, the worker also exposes a job queue (`POST /jobs`, `GET /jobs/{id}`). Setting `INSIGHTRX_VISION_ASYNC=1` in the web app makes Screen and case analyses queue and poll:
+  - pages show "Analysing…" and refresh themselves;
+  - saving a screened patient reuses its result;
+  - lost jobs are resubmitted.
+- **Hugging Face Space:** `scripts/deploy_hf.py` and `deploy/hf_space/` deploy that worker as a private Docker Space that downloads the bundle at startup. Since 2026, Hugging Face requires **PRO** to run Docker or Gradio Spaces on a personal account, so that step returns 402 on a free account; the model upload works on any account.

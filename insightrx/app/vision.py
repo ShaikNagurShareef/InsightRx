@@ -83,10 +83,10 @@ def ort_providers():
 class OnnxEncoder:
     """Frozen systemic encoder exported to ONNX; same interface as insightrx.ml.frozen.FrozenEncoder.encode."""
 
-    def __init__(self, path, size, draft, providers):
+    def __init__(self, path, size, draft, providers, opts=None):
         import onnxruntime as ort
         self.size, self.draft = size, draft
-        self.session = ort.InferenceSession(path, providers=providers)
+        self.session = ort.InferenceSession(path, sess_options=opts, providers=providers)
 
     def encode(self, paths, device=None, batch=8):
         from insightrx.ml.preprocess import preprocess
@@ -126,6 +126,7 @@ def suitability(path):
 
 
 class VisionService:
+    is_async = False                                    # local models answer synchronously
     def __init__(self, model_dir=MODEL_DIR):
         self.model_dir = model_dir
         self.lock = threading.Lock()
@@ -188,13 +189,16 @@ class VisionService:
         self.providers = ort_providers()
         opts = ort.SessionOptions()
         opts.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        if os.environ.get("INSIGHTRX_ORT_THREADS"):              # e.g. 2 on a free Hugging Face CPU Space
+            opts.intra_op_num_threads = int(os.environ["INSIGHTRX_ORT_THREADS"])
+            opts.inter_op_num_threads = 1
         self.models = [ort.InferenceSession(os.path.join(self.model_dir, f), sess_options=opts, providers=self.providers)
                        for f in man["retina"]["files"]]
         self.heads = [(h["name"], h["type"], h["outputs"]) for h in man["retina"]["heads"]]
         self.size = man["retina"]["image_size"]
         self.device = self.models[0].get_providers()[0]
         self.encoders = {bb: OnnxEncoder(os.path.join(self.model_dir, e["file"]), e["image_size"], e.get("jpeg_draft"),
-                                         self.providers) for bb, e in man.get("encoders", {}).items()}
+                                         self.providers, opts) for bb, e in man.get("encoders", {}).items()}
         sp = os.path.join(self.model_dir, man["systemic"]["file"])
         if os.path.exists(sp):
             self.systemic = joblib.load(sp)
@@ -475,6 +479,11 @@ class VisionService:
 
 _service = None
 _service_lock = threading.Lock()
+
+
+def service_ready():
+    """True once the models are loaded (never blocks)."""
+    return _service is not None
 
 
 def get_service():
