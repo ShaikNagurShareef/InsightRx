@@ -1,4 +1,5 @@
 {% from "_ui.html" import icon %}
+{% set SOURCE_NAMES = {"insightrx_therapy_classes.md": "Therapy classes", "insightrx_interactions.md": "Interaction rules", "insightrx_targets.md": "Protein targets", "insightrx_cms_quality_billing.md": "CMS quality & billing", "insightrx_guideline_passages.md": "Guideline passages"} %}
 
 {# Chat transcript + composer. action: POST URL; prompts: suggested questions; engine: who answers #}
 {% macro chat(turns, action, enabled, prompts=[], placeholder="Ask about this patient's therapy, targets or next step", engine=None, anchor="copilot") -%}
@@ -15,7 +16,7 @@
           {% if t.role == 'copilot' and t.meta %}
           <div class="cp-meta">
             {% if t.meta.memories %}<div class="cp-chips" aria-label="Remembered about you"><span class="cp-label">{{ icon('book', 'ico-sm') }}Remembered</span>{% for m in t.meta.memories %}<span class="cp-tag mem">{{ m }}</span>{% endfor %}</div>{% endif %}
-            {% if t.meta.files %}<div class="cp-chips" aria-label="Sources"><span class="cp-label">{{ icon('file', 'ico-sm') }}Sources</span>{% for f in t.meta.files %}<span class="cp-tag">{{ f|replace('insightrx_', '')|replace('.md', '')|replace('_', ' ')|capitalize }}</span>{% endfor %}</div>{% endif %}
+            {% if t.meta.files %}<div class="cp-chips" aria-label="Sources"><span class="cp-label">{{ icon('file', 'ico-sm') }}Sources</span>{% for f in t.meta.files %}<span class="cp-tag">{{ SOURCE_NAMES.get(f, f|replace('insightrx_', '')|replace('.md', '')|replace('_', ' ')|capitalize) }}</span>{% endfor %}</div>{% endif %}
             {% if t.meta.model %}<span class="cp-model">{{ t.meta.model }}</span>{% endif %}
           </div>
           {% endif %}

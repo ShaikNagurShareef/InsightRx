@@ -239,3 +239,9 @@ def test_copilot_hidden_everywhere_when_not_configured(monkeypatch, cp_case):
     pcp = client_as("Dr. Alex Morgan")
     assert 'href="/copilot"' not in pcp.get("/patients").text and pcp.get("/copilot").status_code == 404
     assert 'id="cp-h"' not in pcp.get(f"/cases/{cp_case}/therapy").text
+
+
+def test_sources_have_readable_names(fake_backboard):
+    a = client_as("Dr. Casey Patel")
+    a.post("/copilot/ask", data={"question": "Which interaction rules apply to pioglitazone?"})
+    assert "Interaction rules" in a.get("/copilot").text
